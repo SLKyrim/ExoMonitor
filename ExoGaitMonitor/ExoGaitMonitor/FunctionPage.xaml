@@ -1,0 +1,139 @@
+﻿<Page x:Class="ExoGaitMonitor.FunctionPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:ExoGaitMonitor"
+      mc:Ignorable="d" 
+      Title="FunctionPage" ShowsNavigationUI="False"
+      d:DesignHeight="480" d:DesignWidth="1020"
+      Loaded="FunctionPage_Loaded">
+    <DockPanel Name="rootPanel" Background="White">
+        <!--状态栏-->
+        <StatusBar DockPanel.Dock="Bottom" x:Name="statusBar" Background="#FF007ACC" Padding="2">
+            <!--状态栏文本框-->
+            <StatusBarItem HorizontalAlignment="Left">
+                <TextBlock Name="statusInfoTextBlock" Foreground="White">外骨骼控制界面</TextBlock>
+            </StatusBarItem>
+            <!--显示当前时间-->
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock Name="timeDateTextBlock" Foreground="White"></TextBlock>
+            </StatusBarItem>
+        </StatusBar>
+        <!--主界面-->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="8*"/>
+            </Grid.ColumnDefinitions>
+            <DockPanel Grid.Column="1">
+                <!--电机参数显示组-->
+                <GroupBox Header="电机参数显示组" DockPanel.Dock="Top" Margin="5,5,0,5" BorderThickness="1" BorderBrush="#FF7199E0">
+                    <DockPanel>
+                        <!--电机1左膝-->
+                        <GroupBox Header="电机1左膝" DockPanel.Dock="Left" Margin="5,0,0,5" BorderThickness="1" BorderBrush="#FF7199E0">
+                            <StackPanel Orientation="Vertical">
+                                <StackPanel Orientation="Horizontal">
+                                    <Label x:Name="Motor1_label1"  Content="位置   ：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor1_position_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label x:Name="Motor1_label2" Content="相角   ：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor1_phaseAngle_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label x:Name="Motor1_label3" Content="速度   ：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor1_velocity_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label x:Name="Motor1_label4" Content="加速度：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor1_accel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label x:Name="Motor1_label5" Content="轨迹速：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor1_decel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+                        <!--电机2左髋-->
+                        <GroupBox Header="电机2左髋" DockPanel.Dock="Left" Margin="5,0,0,5" BorderThickness="1" BorderBrush="#FF7199E0">
+                            <StackPanel Orientation="Vertical">
+                                <StackPanel Orientation="Horizontal">
+                                    <Label  Content="{Binding ElementName=Motor1_label1, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor2_position_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="{Binding ElementName=Motor1_label2, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor2_phaseAngle_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="{Binding ElementName=Motor1_label3, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor2_velocity_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="{Binding ElementName=Motor1_label4, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor2_accel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="{Binding ElementName=Motor1_label5, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor2_decel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+                        <!--电机3右髋-->
+                        <GroupBox Header="电机3右髋" DockPanel.Dock="Left" Margin="5,0,0,5" BorderThickness="1" BorderBrush="#FF7199E0">
+                            <StackPanel Orientation="Vertical">
+                                <StackPanel Orientation="Horizontal">
+                                    <Label  Content="{Binding ElementName=Motor1_label1, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor3_position_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="{Binding ElementName=Motor1_label2, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor3_phaseAngle_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="{Binding ElementName=Motor1_label3, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor3_velocity_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="{Binding ElementName=Motor1_label4, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor3_accel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="{Binding ElementName=Motor1_label5, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor3_decel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+                        <!--电机4右膝-->
+                        <GroupBox Header="电机4右膝" DockPanel.Dock="Left" Margin="5,0,0,5" BorderThickness="1" BorderBrush="#FF7199E0">
+                            <StackPanel Orientation="Vertical">
+                                <StackPanel Orientation="Horizontal">
+                                    <Label  Content="{Binding ElementName=Motor1_label1, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor4_position_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="{Binding ElementName=Motor1_label2, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor4_phaseAngle_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="{Binding ElementName=Motor1_label3, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor4_velocity_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="{Binding ElementName=Motor1_label4, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor4_accel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="{Binding ElementName=Motor1_label5, Path=Content}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <TextBox x:Name="Motor4_decel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+
+                    </DockPanel>
+                </GroupBox>
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</Page>
