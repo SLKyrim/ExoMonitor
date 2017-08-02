@@ -17,6 +17,7 @@ using System.IO;
 using System.Windows.Threading;
 using System.Xml.Serialization;
 using CMLCOMLib;
+using System.Diagnostics;
 
 namespace ExoGaitMonitor
 {
@@ -34,14 +35,16 @@ namespace ExoGaitMonitor
         private ProfileSettingsObj profileSettingsObj; //声明驱动器属性
         private canOpenObj canObj; //声明网络接口
 
-        private DispatcherTimer ShowTimer;
+        private DispatcherTimer ShowCurTimeTimer; //显示当前时间的计时器
+        private DispatcherTimer ShowTextTimer; //输出电机参数的计时器
+        private DispatcherTimer WriteDataTimer; //写入数据委托的计时器
         private void FunctionPage_Loaded(object sender, RoutedEventArgs e)//打开窗口后进行的初始化操作
         {
             //显示当前时间的计时器
-            ShowTimer = new System.Windows.Threading.DispatcherTimer();
-            ShowTimer.Tick += new EventHandler(ShowCurTimer); 
-            ShowTimer.Interval = new TimeSpan(0, 0, 0, 1, 0); 
-            ShowTimer.Start();
+            ShowCurTimeTimer = new DispatcherTimer();
+            ShowCurTimeTimer.Tick += new EventHandler(ShowCurTimer);
+            ShowCurTimeTimer.Interval = new TimeSpan(0, 0, 0, 1, 0);
+            ShowCurTimeTimer.Start();
 
             try
             {
@@ -78,17 +81,25 @@ namespace ExoGaitMonitor
             }
             catch
             {
-                MessageBox.Show("fuck");
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
                 statusInfoTextBlock.Text = "窗口初始化失败！";
             }
 
             //输出电机参数文本的计时器
-            ShowTimer = new System.Windows.Threading.DispatcherTimer();
-            ShowTimer.Tick += new EventHandler(textTimer);
-            ShowTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
-            ShowTimer.Start();
+            ShowTextTimer = new DispatcherTimer();
+            ShowTextTimer.Tick += new EventHandler(textTimer);
+            ShowTextTimer.Interval = TimeSpan.FromMilliseconds(100);
+            ShowTextTimer.Start();
+
+            if (startFlag == true)//按下【开始】按钮后，开始写入数据的计时器启动
+            {
+                WriteDataTimer = new DispatcherTimer();
+                WriteDataTimer.Tick += new EventHandler(testTimer);
+                WriteDataTimer.Interval = TimeSpan.FromMilliseconds(100);
+                WriteDataTimer.Start();
+            }
         }
+
         public void ShowCurTimer(object sender, EventArgs e)//取当前时间的委托
         {
             string timeDateString = "";
@@ -102,6 +113,7 @@ namespace ExoGaitMonitor
                 now.Second.ToString("00"));
 
             timeDateTextBlock.Text = timeDateString;
+
         }
 
         public void textTimer(object sender, EventArgs e)//输出电机参数到相应文本框的委托
@@ -135,5 +147,90 @@ namespace ExoGaitMonitor
             Motor4_decel_textBox.Text = ampObj[3].TrajectoryVel.ToString("F"); //由轨迹计算而得的速度
         }
 
+        private double[] trajectory = new double[700]; //步态数据轨迹
+        private bool startFlag = false; //【开始】按钮是否按下的标志
+
+        private void startButton_Click(object sender, RoutedEventArgs e)//点击【开始】按钮时执行
+        {
+            startFlag = true;
+            endButton.IsEnabled = true;
+            startButton.IsEnabled = false;
+
+            string[] str = File.ReadAllLines("文件路径", Encoding.Default);
+            int lines = str.GetLength(0); //获取str第0维的元素数
+            for (int i = 0; i < lines; i++)
+            {
+                trajectory[i] = (int)double.Parse(str[i]);
+            }
+
+            ampObj[0].PositionActual = 0; //此处先用第一个电机做测试
+        }
+
+        int timeCountor = 0; //记录录入数据个数的计数器
+        private void endButton_Click(object sender, RoutedEventArgs e)//点击【停止】按钮时执行
+        {
+            startFlag = false;
+            endButton.IsEnabled = false;
+            startButton.IsEnabled = true;
+
+            ampObj[0].HaltMove();
+            timeCountor = 0;
+            toText.Close();
+        }
+
+        private Stopwatch st = new Stopwatch();
+        double error = 0;
+        double e_i = 0; //积分误差
+        double error_last = 0;
+        double Kp = 0.1;
+        double Ki = 0.0001;
+        double Kd = 2;
+        StreamWriter toText = new StreamWriter("data.txt", true);//打开记录数据文本
+        public void testTimer(object sender, EventArgs e)//测试功能的委托
+        {
+            st.Stop();
+            long time_err = st.ElapsedMilliseconds;
+            st.Restart();
+            if (time_err < 1)
+                time_err = 20;
+
+            error = trajectory[timeCountor] - ampObj[0].PositionActual;
+
+            e_i += error;
+
+            profileSettingsObj.ProfileVel = Math.Abs(Kp * error + Ki * e_i + Kd * (error - error_last)) * 1000 / time_err;
+            profileSettingsObj.ProfileAccel = Math.Abs((profileSettingsObj.ProfileVel - ampObj[0].VelocityActual) * 1);
+            profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+            ampObj[0].ProfileSettings = profileSettingsObj;
+
+            error_last = error;
+
+            if (error > 0)
+            {
+                ampObj[0].MoveRel(1);
+            }
+            else if (error < 0)
+            {
+                ampObj[0].MoveRel(-1);
+            }
+
+            timeCountor++;
+
+            if (timeCountor > 699)
+            {
+                ampObj[0].HaltMove();
+            }
+
+            if (timeCountor < 699)
+            {
+                toText.Write(timeCountor.ToString() + '\t' +
+                    ampObj[0].PositionActual.ToString("F") + '\t' +
+                    ampObj[0].PhaseAngle.ToString() + '\t' +
+                    ampObj[0].VelocityActual.ToString("F") + '\t' +
+                    ampObj[0].TrajectoryAcc.ToString("F") + '\t' +
+                    ampObj[0].TrajectoryVel.ToString("F"));
+            }
+ 
+        }
     }
 }
