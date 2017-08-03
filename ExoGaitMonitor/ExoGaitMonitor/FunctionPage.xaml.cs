@@ -91,13 +91,6 @@ namespace ExoGaitMonitor
             ShowTextTimer.Interval = TimeSpan.FromMilliseconds(100);
             ShowTextTimer.Start();
 
-            if (startFlag == true)//按下【开始】按钮后，开始写入数据的计时器启动
-            {
-                WriteDataTimer = new DispatcherTimer();
-                WriteDataTimer.Tick += new EventHandler(testTimer);
-                WriteDataTimer.Interval = TimeSpan.FromMilliseconds(100);
-                WriteDataTimer.Start();
-            }
         }
 
         public void ShowCurTimer(object sender, EventArgs e)//取当前时间的委托
@@ -164,6 +157,11 @@ namespace ExoGaitMonitor
             }
 
             ampObj[0].PositionActual = 0; //此处先用第一个电机做测试
+
+            WriteDataTimer = new DispatcherTimer();
+            WriteDataTimer.Tick += new EventHandler(testTimer);
+            WriteDataTimer.Interval = TimeSpan.FromMilliseconds(100);
+            WriteDataTimer.Start();
         }
 
         int timeCountor = 0; //记录录入数据个数的计数器
@@ -175,7 +173,8 @@ namespace ExoGaitMonitor
 
             ampObj[0].HaltMove();
             timeCountor = 0;
-            toText.Close();
+
+            WriteDataTimer.Stop();
         }
 
         private Stopwatch st = new Stopwatch();
@@ -185,9 +184,11 @@ namespace ExoGaitMonitor
         double Kp = 0.1;
         double Ki = 0.0001;
         double Kd = 2;
-        StreamWriter toText = new StreamWriter("data.txt", true);//打开记录数据文本
+        
         public void testTimer(object sender, EventArgs e)//测试功能的委托
         {
+            StreamWriter toText = new StreamWriter("data.txt", true);//打开记录数据文本,可于
+
             st.Stop();
             long time_err = st.ElapsedMilliseconds;
             st.Restart();
@@ -230,7 +231,9 @@ namespace ExoGaitMonitor
                     ampObj[0].TrajectoryAcc.ToString("F") + '\t' +
                     ampObj[0].TrajectoryVel.ToString("F"));
             }
- 
+
+            toText.Close();
+
         }
     }
 }
