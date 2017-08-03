@@ -16,8 +16,9 @@ namespace test
             string str3 = "3.03";
             string str4 = "4.04";
             string str5 = "5.05";
- 
+
             StreamWriter sw = new StreamWriter("names.txt", true); //实现不覆盖写入文本
+            //FileStream sw = new FileStream("names.txt", FileMode.Append, FileAccess.ReadWrite);
 
             for (int i = 0; i < 5; i++)
             {

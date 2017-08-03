@@ -43,14 +43,14 @@ namespace wpftest
 
         
         int count = 0;
-        string str = "fuck";
+        string str = "SLKyrim";
         public void testTimer(object sender, EventArgs e)
         {
             StreamWriter toText = new StreamWriter("data.txt", true);
 
             if (count < 699)
             {
-                toText.WriteLine(str + '\t' + str);
+                toText.WriteLine(count.ToString() + ".\t" + str);
             }
 
             toText.Close();
