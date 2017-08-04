@@ -31,27 +31,62 @@
                 <!--操作面板-->
                 <GroupBox Header="控制面板" DockPanel.Dock="Top" Margin="5,5,0,5" BorderThickness="1" BorderBrush="#FF7199E0">
                     <DockPanel>
+                        <Grid Margin="10" DockPanel.Dock="Top">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="10*"></ColumnDefinition>
+                                <ColumnDefinition Width="10*"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="10*"></RowDefinition>
+                                <RowDefinition Height="10*"></RowDefinition>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="角度设定 ： "  VerticalAlignment="Center" Grid.Column="0" Margin="3" Grid.Row="0"></TextBlock>
+                            <TextBox x:Name="angleSetTextBox" VerticalAlignment="Center" Grid.Column="1" Margin="3" Grid.Row="0">30</TextBox>
+                            <TextBlock Text="电机号数 ： "  VerticalAlignment="Center" Grid.Column="0" Margin="3" Grid.Row="1"></TextBlock>
+                            <TextBox x:Name="motorNumberTextBox" VerticalAlignment="Center" Grid.Column="1" Margin="3" Grid.Row="1">1</TextBox>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,0" DockPanel.Dock="Top">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="10*"></ColumnDefinition>
+                                <ColumnDefinition Width="10*"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="10*"></RowDefinition>
+                                <RowDefinition Height="10*"></RowDefinition>
+                            </Grid.RowDefinitions>
+                            <Button x:Name="angleSetButton" Grid.Column="0" Grid.Row="0" Height="19" VerticalAlignment="Top" Margin="3" Click="angleSetButton_Click">执行</Button>
+                            <Button x:Name="emergencyStopButton" IsEnabled="False" Grid.Column="1" Grid.Row="0" Height="19" VerticalAlignment="Top" Background="Red" Margin="3" Click="emergencyStopButton_Click">急停</Button>
+                            <Button x:Name="zeroPointSetButton" Grid.Column="0" IsEnabled="False" Grid.Row="1" Height="19" VerticalAlignment="Top" Margin="3" Click="zeroPointSetButton_Click">设置原点</Button>
+                            <Button x:Name="getZeroPointButton" Grid.Column="1" Grid.Row="1" Height="19" VerticalAlignment="Top" Margin="3" Click="getZeroPointButton_Click">回归原点</Button>
+                        </Grid>
                         <Grid DockPanel.Dock="Top">
                             <StackPanel Margin="5">
-                                <TextBlock Foreground="#FF0078D7" FontSize="16" Padding="5">主要功能：</TextBlock>
-                                <TextBlock Padding="5">1. </TextBlock>
-                                <TextBlock Padding="5">2. </TextBlock>
-                                <TextBlock Padding="5">3. </TextBlock>
-                                <TextBlock Foreground="#FF0078D7" FontSize="16" Padding="5">快捷键提示：</TextBlock>
-                                <TextBlock Padding="5">1. </TextBlock>
-                                <TextBlock Padding="5">2. </TextBlock>
-                                <TextBlock Padding="5">3. </TextBlock>
+                                <TextBlock Foreground="#FF0078D7" FontSize="16" Padding="5">电机描述：</TextBlock>
+                                <TextBlock Padding="5">电机1左膝，向后弯曲角为负</TextBlock>
+                                <TextBlock Padding="5">电机2左髋，向后弯曲角为负</TextBlock>
+                                <TextBlock Padding="5">电机3右髋，向后弯曲角为正</TextBlock>
+                                <TextBlock Padding="5">电机4右膝，向后弯曲角为正</TextBlock>
+                                <TextBlock Foreground="#FF0078D7" FontSize="16" Padding="5">操作说明：</TextBlock>
+                                <TextBlock Padding="5">1.</TextBlock>
+                                <TextBlock Padding="5">2.</TextBlock>
                             </StackPanel>
                         </Grid>
-                        <Grid DockPanel.Dock="Bottom">
+                        <Grid DockPanel.Dock="Bottom" >
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="10*"/>
                                 <ColumnDefinition Width="10*"/>
                             </Grid.ColumnDefinitions>
-                            <Button x:Name="startButton" Height="25" Grid.Column="0" Margin="8" VerticalAlignment="Bottom" Padding="5" Click="startButton_Click">开始</Button>
-                            <Button x:Name="endButton" Height="25" IsEnabled="False" Grid.Column="1" Margin="8" VerticalAlignment="Bottom" Padding="5" Click="endButton_Click">停止</Button>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="53*"/>
+                                <RowDefinition Height="34*"/>
+                            </Grid.RowDefinitions>
+                            <Button x:Name="getDataButton" Grid.Column="0" Grid.Row="0" Margin="3" VerticalAlignment="Bottom" Padding="5" Click="getDataButton_Click">采集数据</Button>
+                            <Button x:Name="endGetDataButton" IsEnabled="False" Grid.Column="1" Grid.Row="0" Margin="3" VerticalAlignment="Bottom" Padding="5" Click="endGetDataButton_Click">采集停止</Button>
+                            <Button x:Name="startButton" Grid.Column="0" Grid.Row="1" Margin="3" VerticalAlignment="Bottom" Padding="5" Click="startButton_Click">开始步态</Button>
+                            <Button x:Name="endButton" IsEnabled="False" Grid.Column="1" Grid.Row="1" Margin="3" VerticalAlignment="Bottom" Padding="5" Click="endButton_Click">步态停止</Button>
                         </Grid>
-                    
+
                     </DockPanel>
                 </GroupBox>
             </DockPanel>
@@ -69,7 +104,7 @@
                                             <TextBox x:Name="Motor1_position_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
-                                            <Label x:Name="Motor1_label2" Content="相角   ：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                            <Label x:Name="Motor1_label2" Content="电流   ：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                                             <TextBox x:Name="Motor1_phaseAngle_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
