@@ -31,13 +31,43 @@
                 <!--操作面板-->
                 <GroupBox Header="控制面板" DockPanel.Dock="Top" Margin="5,5,0,5" BorderThickness="1" BorderBrush="#FF7199E0">
                     <DockPanel>
+                        <Grid Margin="10" DockPanel.Dock="Top">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="10*"></ColumnDefinition>
+                                <ColumnDefinition Width="10*"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="10*"></RowDefinition>
+                                <RowDefinition Height="10*"></RowDefinition>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="角度设定 ： "  VerticalAlignment="Center" Grid.Column="0" Margin="3" Grid.Row="0"></TextBlock>
+                            <TextBox x:Name="angleSetTextBox" VerticalAlignment="Center" Grid.Column="1" Margin="3" Grid.Row="0">30</TextBox>
+                            <TextBlock Text="电机号数 ： "  VerticalAlignment="Center" Grid.Column="0" Margin="3" Grid.Row="1"></TextBlock>
+                            <TextBox x:Name="motorNumberTextBox" VerticalAlignment="Center" Grid.Column="1" Margin="3" Grid.Row="1">1</TextBox>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,0" DockPanel.Dock="Top">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="10*"></ColumnDefinition>
+                                <ColumnDefinition Width="10*"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="10*"></RowDefinition>
+                                <RowDefinition Height="10*"></RowDefinition>
+                            </Grid.RowDefinitions>
+                            <Button x:Name="angleSetButton" Grid.Column="0" Grid.Row="0" Height="19" VerticalAlignment="Top" Margin="3" Click="angleSetButton_Click">执行</Button>
+                            <Button x:Name="emergencyStopButton" IsEnabled="False" Grid.Column="1" Grid.Row="0" Height="19" VerticalAlignment="Top" Background="Red" Margin="3" Click="emergencyStopButton_Click">急停</Button>
+                            <Button x:Name="zeroPointSetButton" Grid.Column="0" IsEnabled="False" Grid.Row="1" Height="19" VerticalAlignment="Top" Margin="3" Click="zeroPointSetButton_Click">设置原点</Button>
+                            <Button x:Name="getZeroPointButton" Grid.Column="1" Grid.Row="1" Height="19" VerticalAlignment="Top" Margin="3" Click="getZeroPointButton_Click">回归原点</Button>
+                        </Grid>
                         <Grid DockPanel.Dock="Top">
                             <StackPanel Margin="5">
-                                <TextBlock Foreground="#FF0078D7" FontSize="16" Padding="5">主要功能：</TextBlock>
-                                <TextBlock Padding="5">1. </TextBlock>
-                                <TextBlock Padding="5">2. </TextBlock>
-                                <TextBlock Padding="5">3. </TextBlock>
-                                <TextBlock Foreground="#FF0078D7" FontSize="16" Padding="5">快捷键提示：</TextBlock>
+                                <TextBlock Foreground="#FF0078D7" FontSize="16" Padding="5">电机描述：</TextBlock>
+                                <TextBlock Padding="5">电机1左膝，向后弯曲角为负 </TextBlock>
+                                <TextBlock Padding="5">电机2左髋，向后弯曲角为负 </TextBlock>
+                                <TextBlock Padding="5">电机3右髋，向后弯曲角为正 </TextBlock>
+                                <TextBlock Padding="5">电机4右膝，向后弯曲角为正</TextBlock>
+                                <TextBlock Foreground="#FF0078D7" FontSize="16" Padding="5">操作说明：</TextBlock>
                                 <TextBlock Padding="5">1. </TextBlock>
                                 <TextBlock Padding="5">2. </TextBlock>
                                 <TextBlock Padding="5">3. </TextBlock>

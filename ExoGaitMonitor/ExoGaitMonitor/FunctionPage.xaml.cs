@@ -93,6 +93,99 @@ namespace ExoGaitMonitor
 
         }
 
+        private double[] trajectory = new double[700]; //步态数据轨迹
+
+        #region 按钮
+
+        private void startButton_Click(object sender, RoutedEventArgs e)//点击【开始】按钮时执行
+        {
+            endButton.IsEnabled = true;
+            startButton.IsEnabled = false;
+
+            string[] str = File.ReadAllLines("C:\\Users\\Administrator\\Desktop\\ExoGaitControl\\GaitData.txt", Encoding.Default);
+            int lines = str.GetLength(0); //获取str第0维的元素数
+            for (int i = 0; i < lines; i++)
+            {
+                trajectory[i] = (int)double.Parse(str[i]);
+            }
+
+            ampObj[0].PositionActual = 0; //此处先用第一个电机做测试
+
+            WriteDataTimer = new DispatcherTimer();
+            WriteDataTimer.Tick += new EventHandler(testTimer);
+            WriteDataTimer.Interval = TimeSpan.FromMilliseconds(20);// 该时钟频率决定电机运行速度
+            WriteDataTimer.Start();
+        }
+
+        int timeCountor = 0; //记录录入数据个数的计数器
+        private void endButton_Click(object sender, RoutedEventArgs e)//点击【停止】按钮时执行
+        {
+            endButton.IsEnabled = false;
+            startButton.IsEnabled = true;
+
+            ampObj[0].HaltMove();
+            timeCountor = 0;
+
+            WriteDataTimer.Stop();
+        }
+
+        private DispatcherTimer AngleSetTimer; //电机按设置转角转动的计时器
+        private void angleSetButton_Click(object sender, RoutedEventArgs e)
+        {
+            angleSetButton.IsEnabled = false;
+            emergencyStopButton.IsEnabled = true;
+            zeroPointSetButton.IsEnabled = true;
+            int motorNumber = Convert.ToInt16(motorNumberTextBox.Text);
+            int i = motorNumber - 1;
+
+            ampObj[i].PositionActual = 0;
+
+            AngleSetTimer = new DispatcherTimer();
+            AngleSetTimer.Tick += new EventHandler(angleSetTimer);
+            AngleSetTimer.Interval = TimeSpan.FromMilliseconds(20);// 该时钟频率决定电机运行速度
+            AngleSetTimer.Start();
+        }
+
+        private void emergencyStopButton_Click(object sender, RoutedEventArgs e)
+        {
+            emergencyStopButton.IsEnabled = false;
+            angleSetButton.IsEnabled = true;
+            int motorNumber = Convert.ToInt16(motorNumberTextBox.Text);
+            int i = motorNumber - 1;
+
+            ampObj[i].HaltMove();
+            AngleSetTimer.Stop();
+
+        }
+
+        private void zeroPointSetButton_Click(object sender, RoutedEventArgs e)
+        {
+            ampObj[0].PositionActual = 0;
+            ampObj[1].PositionActual = 0;
+            ampObj[2].PositionActual = 0;
+            ampObj[3].PositionActual = 0;
+        }
+
+        private DispatcherTimer GetZeroPointTimer; //回归原点的计时器
+        private void getZeroPointButton_Click(object sender, RoutedEventArgs e)
+        {
+            GetZeroPointTimer = new DispatcherTimer();
+            GetZeroPointTimer.Tick += new EventHandler(getZeroPointTimer);
+            GetZeroPointTimer.Interval = TimeSpan.FromMilliseconds(20);// 该时钟频率决定电机运行速度
+            GetZeroPointTimer.Start();
+        }
+        #endregion
+
+        private Stopwatch st = new Stopwatch();
+        double error = 0;
+        double e_i = 0; //积分误差
+        double error_last = 0;
+        double Kp = 0.1;
+        double Ki = 0.0001;
+        double Kd = 2;
+
+        #region 计时器 
+
         public void ShowCurTimer(object sender, EventArgs e)//取当前时间的委托
         {
             string timeDateString = "";
@@ -109,82 +202,42 @@ namespace ExoGaitMonitor
 
         }
 
+        private double[] ampObjAngleActual = new double[4];//电机的转角
         public void textTimer(object sender, EventArgs e)//输出电机参数到相应文本框的委托
         {
+            ampObjAngleActual[0] = ampObj[0].PositionActual / 6400;
+            ampObjAngleActual[1] = ampObj[1].PositionActual / 6400;
+            ampObjAngleActual[2] = ampObj[2].PositionActual / 6400;
+            ampObjAngleActual[3] = ampObj[3].PositionActual / 6400;
             //电机1(左膝)的文本框输出
-            Motor1_position_textBox.Text = ampObj[0].PositionActual.ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
+            Motor1_position_textBox.Text = ampObjAngleActual[0].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
             Motor1_phaseAngle_textBox.Text = ampObj[0].PhaseAngle.ToString(); //电机相位角; short是16位有符号整数类型
             Motor1_velocity_textBox.Text = ampObj[0].VelocityActual.ToString("F"); //电机实际速度
             Motor1_accel_textBox.Text = ampObj[0].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
             Motor1_decel_textBox.Text = ampObj[0].TrajectoryVel.ToString("F"); //由轨迹计算而得的速度
 
             //电机2(左髋)的文本框输出
-            Motor2_position_textBox.Text = ampObj[1].PositionActual.ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
+            Motor2_position_textBox.Text = ampObjAngleActual[1].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
             Motor2_phaseAngle_textBox.Text = ampObj[1].PhaseAngle.ToString(); //电机相位角; short是16位有符号整数类型
             Motor2_velocity_textBox.Text = ampObj[1].VelocityActual.ToString("F"); //电机实际速度
             Motor2_accel_textBox.Text = ampObj[1].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
             Motor2_decel_textBox.Text = ampObj[1].TrajectoryVel.ToString("F"); //由轨迹计算而得的速度
 
             //电机3(右髋)的文本框输出
-            Motor3_position_textBox.Text = ampObj[2].PositionActual.ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
+            Motor3_position_textBox.Text = ampObjAngleActual[2].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
             Motor3_phaseAngle_textBox.Text = ampObj[2].PhaseAngle.ToString(); //电机相位角; short是16位有符号整数类型
             Motor3_velocity_textBox.Text = ampObj[2].VelocityActual.ToString("F"); //电机实际速度
             Motor3_accel_textBox.Text = ampObj[2].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
             Motor3_decel_textBox.Text = ampObj[2].TrajectoryVel.ToString("F"); //由轨迹计算而得的速度
 
             //电机4(右膝)的文本框输出
-            Motor4_position_textBox.Text = ampObj[3].PositionActual.ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
+            Motor4_position_textBox.Text = ampObjAngleActual[3].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
             Motor4_phaseAngle_textBox.Text = ampObj[3].PhaseAngle.ToString(); //电机相位角; short是16位有符号整数类型
             Motor4_velocity_textBox.Text = ampObj[3].VelocityActual.ToString("F"); //电机实际速度
             Motor4_accel_textBox.Text = ampObj[3].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
             Motor4_decel_textBox.Text = ampObj[3].TrajectoryVel.ToString("F"); //由轨迹计算而得的速度
         }
 
-        private double[] trajectory = new double[700]; //步态数据轨迹
-        private bool startFlag = false; //【开始】按钮是否按下的标志
-
-        private void startButton_Click(object sender, RoutedEventArgs e)//点击【开始】按钮时执行
-        {
-            startFlag = true;
-            endButton.IsEnabled = true;
-            startButton.IsEnabled = false;
-
-            string[] str = File.ReadAllLines("文件路径", Encoding.Default);
-            int lines = str.GetLength(0); //获取str第0维的元素数
-            for (int i = 0; i < lines; i++)
-            {
-                trajectory[i] = (int)double.Parse(str[i]);
-            }
-
-            ampObj[0].PositionActual = 0; //此处先用第一个电机做测试
-
-            WriteDataTimer = new DispatcherTimer();
-            WriteDataTimer.Tick += new EventHandler(testTimer);
-            WriteDataTimer.Interval = TimeSpan.FromMilliseconds(100);
-            WriteDataTimer.Start();
-        }
-
-        int timeCountor = 0; //记录录入数据个数的计数器
-        private void endButton_Click(object sender, RoutedEventArgs e)//点击【停止】按钮时执行
-        {
-            startFlag = false;
-            endButton.IsEnabled = false;
-            startButton.IsEnabled = true;
-
-            ampObj[0].HaltMove();
-            timeCountor = 0;
-
-            WriteDataTimer.Stop();
-        }
-
-        private Stopwatch st = new Stopwatch();
-        double error = 0;
-        double e_i = 0; //积分误差
-        double error_last = 0;
-        double Kp = 0.1;
-        double Ki = 0.0001;
-        double Kd = 2;
-        
         public void testTimer(object sender, EventArgs e)//测试功能的委托
         {
             StreamWriter toText = new StreamWriter("data.txt", true);//打开记录数据文本,可于
@@ -224,16 +277,268 @@ namespace ExoGaitMonitor
 
             if (timeCountor < 699)
             {
-                toText.Write(timeCountor.ToString() + '\t' +
-                    ampObj[0].PositionActual.ToString("F") + '\t' +
-                    ampObj[0].PhaseAngle.ToString() + '\t' +
+                toText.WriteLine(timeCountor.ToString() + '\t' +
                     ampObj[0].VelocityActual.ToString("F") + '\t' +
-                    ampObj[0].TrajectoryAcc.ToString("F") + '\t' +
-                    ampObj[0].TrajectoryVel.ToString("F"));
+                    profileSettingsObj.ProfileVel.ToString("F") + '\t' +
+                    time_err.ToString("F"));
             }
 
             toText.Close();
 
         }
+
+        public void angleSetTimer(object sender, EventArgs e)//电机按设置角度转动的委托
+        {
+            double angleSet = Convert.ToDouble(angleSetTextBox.Text);
+            int motorNumber = Convert.ToInt16(motorNumberTextBox.Text);
+            int i = motorNumber - 1;
+
+            ampObjAngleActual[i] = ampObj[i].PositionActual / 6400;
+
+
+            if (angleSet > 0)
+            {
+                if (ampObjAngleActual[i] < angleSet)
+                {
+                    profileSettingsObj.ProfileVel = 50000;
+                    profileSettingsObj.ProfileAccel = 50000;
+                    profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                    ampObj[i].ProfileSettings = profileSettingsObj;
+
+                    if (ampObjAngleActual[i] > (angleSet - 5))
+                    {
+                        profileSettingsObj.ProfileVel = 25000;
+                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[i].ProfileSettings = profileSettingsObj;
+                    }
+                    ampObj[i].MoveRel(1);
+                }
+                else
+                {
+                    ampObj[i].HaltMove();
+                    angleSetButton.IsEnabled = true;
+                    AngleSetTimer.Stop();
+                }
+            }
+
+            if (angleSet < 0)
+            {
+                if (ampObjAngleActual[i] > angleSet)
+                {
+                    profileSettingsObj.ProfileVel = 50000;
+                    profileSettingsObj.ProfileAccel = 50000;
+                    profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                    ampObj[i].ProfileSettings = profileSettingsObj;
+
+                    if (ampObjAngleActual[i] < (angleSet + 5))
+                    {
+                        profileSettingsObj.ProfileVel = 25000;
+                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[i].ProfileSettings = profileSettingsObj;
+                    }
+                    ampObj[i].MoveRel(-1);
+                }
+                else
+                {
+                    ampObj[i].HaltMove();
+                    angleSetButton.IsEnabled = true;
+                    AngleSetTimer.Stop();
+                }
+            }
+
+        }
+
+        public void getZeroPointTimer(object sender, EventArgs e)//回归原点的委托
+        {
+            ampObjAngleActual[0] = ampObj[0].PositionActual / 6400;
+            ampObjAngleActual[1] = ampObj[1].PositionActual / 6400;
+            ampObjAngleActual[2] = ampObj[2].PositionActual / 6400;
+            ampObjAngleActual[3] = ampObj[3].PositionActual / 6400;
+
+            if (Math.Abs(ampObjAngleActual[0]) > 3)//电机1回归原点
+            {
+                if (ampObjAngleActual[0] > 0)//此时电机1应往后转
+                {
+                    if (ampObjAngleActual[0] > 10)
+                    {
+                        profileSettingsObj.ProfileVel = 50000;
+                        profileSettingsObj.ProfileAccel = 50000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[0].ProfileSettings = profileSettingsObj;
+                    }
+                    else
+                    {
+                        profileSettingsObj.ProfileVel = 25000;
+                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[0].ProfileSettings = profileSettingsObj;
+                    }
+                    ampObj[0].MoveRel(-1);     
+                }
+                else//此时电机1应往前转
+                {
+                    if (ampObjAngleActual[0] < -10)
+                    {
+                        profileSettingsObj.ProfileVel = 50000;
+                        profileSettingsObj.ProfileAccel = 50000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[0].ProfileSettings = profileSettingsObj;
+                    }
+                    else
+                    {
+                        profileSettingsObj.ProfileVel = 25000;
+                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[0].ProfileSettings = profileSettingsObj;
+                    }
+                    ampObj[0].MoveRel(1);
+                }
+            }
+            else
+            {
+                ampObj[0].HaltMove();
+            }
+
+            if (Math.Abs(ampObjAngleActual[1]) > 3)//电机2回归原点
+            {
+                if (ampObjAngleActual[1] > 0)//此时电机2应往后转
+                {
+                    if (ampObjAngleActual[1] > 10)
+                    {
+                        profileSettingsObj.ProfileVel = 50000;
+                        profileSettingsObj.ProfileAccel = 50000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[1].ProfileSettings = profileSettingsObj;
+                    }
+                    else
+                    {
+                        profileSettingsObj.ProfileVel = 25000;
+                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[1].ProfileSettings = profileSettingsObj;
+                    }
+                    ampObj[1].MoveRel(-1);
+                }
+                else//此时电机2应往前转
+                {
+                    if (ampObjAngleActual[1] < -10)
+                    {
+                        profileSettingsObj.ProfileVel = 50000;
+                        profileSettingsObj.ProfileAccel = 50000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[1].ProfileSettings = profileSettingsObj;
+                    }
+                    else
+                    {
+                        profileSettingsObj.ProfileVel = 25000;
+                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[1].ProfileSettings = profileSettingsObj;
+                    }
+                    ampObj[1].MoveRel(1);
+                }
+            }
+            else
+            {
+                ampObj[1].HaltMove();
+            }
+
+            if (Math.Abs(ampObjAngleActual[2]) > 3)//电机3回归原点
+            {
+                if (ampObjAngleActual[2] > 0)//此时电机3应往前转
+                {
+                    if (ampObjAngleActual[2] > 10)
+                    {
+                        profileSettingsObj.ProfileVel = 50000;
+                        profileSettingsObj.ProfileAccel = 50000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[2].ProfileSettings = profileSettingsObj;
+                    }
+                    else
+                    {
+                        profileSettingsObj.ProfileVel = 25000;
+                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[2].ProfileSettings = profileSettingsObj;
+                    }
+                    ampObj[2].MoveRel(-1);
+                }
+                else//此时电机3应往后转
+                {
+                    if (ampObjAngleActual[2] < -10)
+                    {
+                        profileSettingsObj.ProfileVel = 50000;
+                        profileSettingsObj.ProfileAccel = 50000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[2].ProfileSettings = profileSettingsObj;
+                    }
+                    else
+                    {
+                        profileSettingsObj.ProfileVel = 25000;
+                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[2].ProfileSettings = profileSettingsObj;
+                    }
+                    ampObj[2].MoveRel(1);
+                }
+            }
+            else
+            {
+                ampObj[2].HaltMove();
+            }
+
+            if (Math.Abs(ampObjAngleActual[3]) > 3)//电机4回归原点
+            {
+                if (ampObjAngleActual[3] > 0)//此时电机4应往前转
+                {
+                    if (ampObjAngleActual[3] > 10)
+                    {
+                        profileSettingsObj.ProfileVel = 50000;
+                        profileSettingsObj.ProfileAccel = 50000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[3].ProfileSettings = profileSettingsObj;
+                    }
+                    else
+                    {
+                        profileSettingsObj.ProfileVel = 25000;
+                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[3].ProfileSettings = profileSettingsObj;
+                    }
+                    ampObj[3].MoveRel(-1);
+                }
+                else//此时电机4应往后转
+                {
+                    if (ampObjAngleActual[3] < -10)
+                    {
+                        profileSettingsObj.ProfileVel = 50000;
+                        profileSettingsObj.ProfileAccel = 50000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[3].ProfileSettings = profileSettingsObj;
+                    }
+                    else
+                    {
+                        profileSettingsObj.ProfileVel = 25000;
+                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                        ampObj[3].ProfileSettings = profileSettingsObj;
+                    }
+                    ampObj[3].MoveRel(1);
+                }
+            }
+            else
+            {
+                ampObj[3].HaltMove();
+            }
+
+            if (Math.Abs(ampObjAngleActual[0]) < 3 && Math.Abs(ampObjAngleActual[1]) < 3 && Math.Abs(ampObjAngleActual[2]) < 3 && Math.Abs(ampObjAngleActual[3]) < 3)
+            {
+                GetZeroPointTimer.Stop();
+            }
+        }
+
+        #endregion
     }
 }
