@@ -18,6 +18,7 @@ using System.Windows.Threading;
 using System.Xml.Serialization;
 using CMLCOMLib;
 using System.Diagnostics;
+using Visifire.Charts;
 
 namespace ExoGaitMonitor
 {
@@ -67,9 +68,12 @@ namespace ExoGaitMonitor
 
                 for (int i = 0; i < 4; i++)
                 {
-                    profileSettingsObj.ProfileAccel = ampObj[i].VelocityLoopSettings.VelLoopMaxAcc;
-                    profileSettingsObj.ProfileDecel = ampObj[i].VelocityLoopSettings.VelLoopMaxDec;
-                    profileSettingsObj.ProfileVel = ampObj[i].VelocityLoopSettings.VelLoopMaxVel;
+                    //profileSettingsObj.ProfileAccel = ampObj[i].VelocityLoopSettings.VelLoopMaxAcc;
+                    //profileSettingsObj.ProfileDecel = ampObj[i].VelocityLoopSettings.VelLoopMaxDec;
+                    //profileSettingsObj.ProfileVel = ampObj[i].VelocityLoopSettings.VelLoopMaxVel;
+                    profileSettingsObj.ProfileAccel = 0.0;
+                    profileSettingsObj.ProfileDecel = 0.0;
+                    profileSettingsObj.ProfileVel = 0.0;
                     ampObj[i].ProfileSettings = profileSettingsObj;
                 }
 
@@ -93,8 +97,11 @@ namespace ExoGaitMonitor
 
         }
 
-        private double[] trajectory = new double[700]; //步态采集数据轨迹
-        private double[,] trajectories = new double[1000,4]; //输入四个关节的步态数据
+        private double[] trajectory = new double[1100]; //步态采集数据轨迹
+        private double[,] trajectories = new double[1001,4]; //输入四个关节的步态数据
+        private double[,] tempPositionActual = new double[1001, 4]; //记录步态进行时电机的实际位置
+        private int[] countor = new int[1001];
+        private double[,] originalTrajectories = new double[1001, 4]; //保存初始输入数据
 
         #region 按钮
 
@@ -107,10 +114,13 @@ namespace ExoGaitMonitor
             int lines = str.GetLength(0); //获取str第0维的元素数
             for (int i = 0; i < lines; i++)
             {
-                trajectory[i] = (int)double.Parse(str[i]);
+                trajectory[i] = (int) (double.Parse(str[i]) * 6400);
             }
 
             ampObj[0].PositionActual = 0; //此处先用第一个电机做测试
+            ampObj[1].PositionActual = 0;
+            ampObj[2].PositionActual = 0;
+            ampObj[3].PositionActual = 0;
 
             WriteDataTimer = new DispatcherTimer();
             WriteDataTimer.Tick += new EventHandler(testTimer);
@@ -190,25 +200,59 @@ namespace ExoGaitMonitor
                 for (int j = 0; j < 4; j++)
                 {
                     trajectories[i, j] = (int)(double.Parse(str[j]) * 6400);
+                    originalTrajectories[i, j] = (int)(double.Parse(str[j]) * 6400);
                 }
             }
 
             timeCountor = 0;
+
+            ampObj[0].PositionActual = 0;
+            ampObj[1].PositionActual = 0;
+            ampObj[2].PositionActual = 0;
+            ampObj[3].PositionActual = 0;
 
             GaitStartTimer = new DispatcherTimer();
             GaitStartTimer.Tick += new EventHandler(gaitStartTimer);
             GaitStartTimer.Interval = TimeSpan.FromMilliseconds(20);// 该时钟频率决定电机运行速度
             GaitStartTimer.Start();
         }
-
+  
+        
         private void endButton_Click(object sender, RoutedEventArgs e)//点击【步态结束】按钮时执行
         {
+            startButton.IsEnabled = true;
+            endButton.IsEnabled = false;
+
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+            statusInfoTextBlock.Text = "执行完毕";
+
             ampObj[0].HaltMove();
             ampObj[1].HaltMove();
             ampObj[2].HaltMove();
             ampObj[3].HaltMove();
 
             GaitStartTimer.Stop();
+
+            for (int i = 0; i < 1001; i++)
+            {
+                countor[i] = i;
+
+                for (int j = 0; j < 4; j++)
+                {
+                    trajectories[i, j] = trajectories[i, j] / 6400;
+                    tempPositionActual[i, j] = tempPositionActual[i, j] / 6400;
+                    originalTrajectories[i, j] = originalTrajectories[i, j] / 6400;
+                    
+                }
+            }
+
+            Motor1.Children.Clear();
+            Motor2.Children.Clear();
+            Motor3.Children.Clear();
+            Motor4.Children.Clear();
+
+            plotChart(originalTrajectories, tempPositionActual, countor);
+
         }
         #endregion
 
@@ -276,6 +320,10 @@ namespace ExoGaitMonitor
 
         public void testTimer(object sender, EventArgs e)//测试功能的委托
         {
+
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+            statusInfoTextBlock.Text = "正在执行";
+
             StreamWriter toText = new StreamWriter("data.txt", true);//打开记录数据文本,可于
 
             st.Stop();
@@ -284,39 +332,39 @@ namespace ExoGaitMonitor
             if (time_err < 1)
                 time_err = 20;
 
-            error = trajectory[timeCountor] - ampObj[0].PositionActual;
+            error = trajectory[timeCountor] - ampObj[3].PositionActual * -1;
 
             e_i += error;
 
-            profileSettingsObj.ProfileVel = Math.Abs(Kp * error + Ki * e_i + Kd * (error - error_last)) * 1000 / time_err;
-            profileSettingsObj.ProfileAccel = Math.Abs((profileSettingsObj.ProfileVel - ampObj[0].VelocityActual) * 1);
+            profileSettingsObj.ProfileVel = Math.Abs(0.2 * Kp * error + Ki * e_i + Kd * (error - error_last)) * 500 / time_err;
+            profileSettingsObj.ProfileAccel = Math.Abs((profileSettingsObj.ProfileVel - ampObj[3].VelocityActual) * 1);
             profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
-            ampObj[0].ProfileSettings = profileSettingsObj;
+            ampObj[3].ProfileSettings = profileSettingsObj;
 
             error_last = error;
 
             if (error > 0)
             {
-                ampObj[0].MoveRel(1);
+                ampObj[3].MoveRel(-1);
             }
             else if (error < 0)
             {
-                ampObj[0].MoveRel(-1);
+                ampObj[3].MoveRel(1);
             }
 
             timeCountor++;
 
-            if (timeCountor > 699)
+            if (timeCountor > 411)
             {
-                ampObj[0].HaltMove();
+                ampObj[3].HaltMove();
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+                statusInfoTextBlock.Text = "执行完毕";
             }
 
-            if (timeCountor < 699)
+            if (timeCountor < 411)
             {
                 toText.WriteLine(timeCountor.ToString() + '\t' +
-                    ampObj[0].VelocityActual.ToString("F") + '\t' +
-                    profileSettingsObj.ProfileVel.ToString("F") + '\t' +
-                    time_err.ToString("F"));
+                    ampObj[3].PositionActual.ToString());
             }
 
             toText.Close();
@@ -602,18 +650,28 @@ namespace ExoGaitMonitor
         double e_i4 = 0;
         public void gaitStartTimer(object sender, EventArgs e)//开始步态的委托
         {
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+            statusInfoTextBlock.Text = "正在执行";
+
+            StreamWriter toText = new StreamWriter("data.txt", true);//打开记录数据文本,可于
+
+
+
             st.Stop();
             long time_err = st.ElapsedMilliseconds;
             st.Restart();
             if (time_err < 1) time_err = 20;
 
+            trajectories[timeCountor, 3] = trajectories[timeCountor, 3] * 0.6;//左膝
+            trajectories[timeCountor, 1] = trajectories[timeCountor, 1] * 0.8;//右膝
+
             #region 电机1左膝
-            //Read error between Target and Actual values.
-            error1 = trajectories[timeCountor, 3] - ampObj[0].PositionActual;
+            //Read error between Target and Actual values. 
+            error1 = trajectories[timeCountor, 3] - ampObj[0].PositionActual * -1;
             //Intergral error
             e_i1 += error1;
 
-            profileSettingsObj.ProfileVel = Math.Abs(Kp * error1 + Ki * e_i1 + Kd * (error1 - error_last1)) * 1000 / time_err;
+            profileSettingsObj.ProfileVel = Math.Abs(3.5 * Kp * error1 + Ki / 10 * e_i1 + Kd * (error1 - error_last1)) * 1000 / time_err;
             profileSettingsObj.ProfileAccel = Math.Abs((profileSettingsObj.ProfileVel - ampObj[0].VelocityActual) * 1);
             profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
             ampObj[0].ProfileSettings = profileSettingsObj;
@@ -622,17 +680,17 @@ namespace ExoGaitMonitor
 
             if (error1 > 0)
             {
-                ampObj[0].MoveRel(1);
+                ampObj[0].MoveRel(-1);
             }
             else if (error1 < 0)
             {
-                ampObj[0].MoveRel(-1);
+                ampObj[0].MoveRel(1);
             }
             #endregion
 
             #region 电机2左髋
             //Read error between Target and Actual values.
-            error2 = trajectories[timeCountor, 2] - ampObj[1].PositionActual;
+            error2 = trajectories[timeCountor, 2] - ampObj[1].PositionActual * -1;
             //Intergral error
             e_i2 += error2;
 
@@ -645,17 +703,17 @@ namespace ExoGaitMonitor
 
             if (error2 > 0)
             {
-                ampObj[1].MoveRel(1);
+                ampObj[1].MoveRel(-1);
             }
             else if (error2 < 0)
             {
-                ampObj[1].MoveRel(-1);
+                ampObj[1].MoveRel(1);
             }
             #endregion
 
             #region 电机3右髋
             //Read error between Target and Actual values.
-            error3 = trajectories[timeCountor, 0] - ampObj[2].PositionActual;
+            error3 = trajectories[timeCountor, 0] - ampObj[2].PositionActual * -1;
             //Intergral error
             e_i3 += error3;
 
@@ -668,22 +726,22 @@ namespace ExoGaitMonitor
 
             if (error3 > 0)
             {
-                ampObj[2].MoveRel(1);
+                ampObj[2].MoveRel(-1);
             }
             else if (error3 < 0)
             {
-                ampObj[2].MoveRel(-1);
+                ampObj[2].MoveRel(1);
             }
             #endregion
 
             #region 电机4右膝
             //Read error between Target and Actual values.
-            error4 = trajectories[timeCountor, 1] - ampObj[3].PositionActual;
+            error4 = trajectories[timeCountor, 1] - ampObj[3].PositionActual * -1;
             //Intergral error
             e_i4 += error4;
 
-            profileSettingsObj.ProfileVel = Math.Abs(Kp * error4 + Ki * e_i4 + Kd * (error4 - error_last4)) * 1000 / time_err;
-            profileSettingsObj.ProfileAccel = Math.Abs((profileSettingsObj.ProfileVel - ampObj[3].VelocityActual) * 1);
+            profileSettingsObj.ProfileVel = Math.Abs(3.5 * Kp * error4 + Ki / 10 * e_i4 + Kd * (error4 - error_last4)) * 600 / time_err;
+            profileSettingsObj.ProfileAccel = Math.Abs((profileSettingsObj.ProfileVel - ampObj[3].VelocityActual) * 0.5);
             profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
             ampObj[3].ProfileSettings = profileSettingsObj;
 
@@ -691,11 +749,11 @@ namespace ExoGaitMonitor
 
             if (error4 > 0)
             {
-                ampObj[3].MoveRel(1);
+                ampObj[3].MoveRel(-1);
             }
             else if (error4 < 0)
             {
-                ampObj[3].MoveRel(-1);
+                ampObj[3].MoveRel(1);
             }
             //chart1.Series[0].Points.AddXY(CurrentTime, trajectory[CurrentTime, 0]);
             //chart1.Series[1].Points.AddXY(CurrentTime, ampObj[0].PositionActual);
@@ -705,18 +763,412 @@ namespace ExoGaitMonitor
 
             timeCountor++;
 
-            if (timeCountor > 999)
+            for(int i = 0; i < 4; i++)
             {
+                tempPositionActual[timeCountor, i] = ampObj[i].PositionActual;
+            }
+            
+
+            if (timeCountor > 499)
+            {
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+                statusInfoTextBlock.Text = "执行完毕";
+
                 ampObj[0].HaltMove();
                 ampObj[1].HaltMove();
                 ampObj[2].HaltMove();
                 ampObj[3].HaltMove();
                 GaitStartTimer.Stop();
             }
+
+            if (timeCountor < 500)
+            {
+                toText.WriteLine(timeCountor.ToString() + '\t' +
+                    ampObj[0].PositionActual.ToString() + '\t' +
+                    ampObj[1].PositionActual.ToString() + '\t' +
+                    ampObj[2].PositionActual.ToString());
+            }
+
+            toText.Close();
         }
-     
+
         #endregion
 
+        public void plotChart(double[,] trajectories, double[,] positionActual, int[] countor)//绘制轨迹的方法
+        {
+            #region 电机1左膝
+            //创建一个图标
+            Chart chart_motor1 = new Chart();
 
+            //设置图标的宽度和高度
+            chart_motor1.Width = 500;
+            chart_motor1.Height = 180;
+            chart_motor1.Margin = new Thickness(5, 5, 5, 5);
+            //是否启用打印和保持图片
+            chart_motor1.ToolBarEnabled = false;
+
+            //设置图标的属性
+            chart_motor1.ScrollingEnabled = false;//是否启用或禁用滚动
+            chart_motor1.View3D = false;//3D效果显示
+
+            Axis yAxis_motor1 = new Axis();
+            //设置图标中Y轴的最小值永远为-90           
+            yAxis_motor1.AxisMinimum = -15;
+            //设置图标中Y轴的最大值永远为90           
+            yAxis_motor1.AxisMaximum = 80;
+            //设置图表中Y轴的后缀          
+            yAxis_motor1.Suffix = "°";
+            chart_motor1.AxesY.Add(yAxis_motor1);
+
+            // 创建一个新的数据线。               
+            DataSeries dataSeries_input_motor1 = new DataSeries();
+            // 设置数据线的格式。               
+            dataSeries_input_motor1.LegendText = "输入步态";
+
+            dataSeries_input_motor1.RenderAs = RenderAs.Spline;//折线图
+
+            dataSeries_input_motor1.XValueType = ChartValueTypes.Numeric;
+            // 设置输入轨迹数据点              
+            DataPoint dataPoint_input_motor1;
+            for (int i = 0; i < 500; i++)
+            {
+                // 创建一个数据点的实例。                   
+                dataPoint_input_motor1 = new DataPoint();
+                // 设置X轴点                    
+                dataPoint_input_motor1.XValue = countor[i];
+                //设置Y轴点                   
+                dataPoint_input_motor1.YValue = trajectories[i, 3];
+                dataPoint_input_motor1.MarkerSize = 1;
+                //dataPoint.Tag = tableName.Split('(')[0];
+                //设置数据点颜色                  
+                // dataPoint.Color = new SolidColorBrush(Colors.LightGray);                   
+                dataPoint_input_motor1.MouseLeftButtonDown += new MouseButtonEventHandler(dataPoint_MouseLeftButtonDown);
+                //添加数据点                   
+                dataSeries_input_motor1.DataPoints.Add(dataPoint_input_motor1);
+            }
+
+            // 添加数据线到数据序列。                
+            chart_motor1.Series.Add(dataSeries_input_motor1);
+
+
+            // 创建一个新的数据线。               
+            DataSeries dataSeries_actual_motor1 = new DataSeries();
+            // 设置数据线的格式。         
+
+            dataSeries_actual_motor1.LegendText = "实际步态";
+
+            dataSeries_actual_motor1.RenderAs = RenderAs.Spline;//折线图
+
+            dataSeries_actual_motor1.XValueType = ChartValueTypes.Numeric;
+            // 设置数据点              
+
+            DataPoint dataPoint_actual_motor1;
+            for (int i = 0; i < 500; i++)
+            {
+                // 创建一个数据点的实例。                   
+                dataPoint_actual_motor1 = new DataPoint();
+                // 设置X轴点                    
+                dataPoint_actual_motor1.XValue = countor[i];
+                //设置Y轴点                   
+                dataPoint_actual_motor1.YValue = positionActual[i, 0] * -1;
+                dataPoint_actual_motor1.MarkerSize = 1;
+                //dataPoint2.Tag = tableName.Split('(')[0];
+                //设置数据点颜色                  
+                // dataPoint.Color = new SolidColorBrush(Colors.LightGray);                   
+                dataPoint_actual_motor1.MouseLeftButtonDown += new MouseButtonEventHandler(dataPoint_MouseLeftButtonDown);
+                //添加数据点                   
+                dataSeries_actual_motor1.DataPoints.Add(dataPoint_actual_motor1);
+            }
+            // 添加数据线到数据序列。                
+            chart_motor1.Series.Add(dataSeries_actual_motor1);
+
+            //将生产的图表增加到Grid，然后通过Grid添加到上层Grid.           
+            Grid gr1 = new Grid();
+            gr1.Children.Add(chart_motor1);
+            Motor1.Children.Add(gr1);
+            #endregion
+
+            #region 电机2左髋
+            //创建一个图标
+            Chart chart_motor2 = new Chart();
+
+            //设置图标的宽度和高度
+            chart_motor2.Width = 500;
+            chart_motor2.Height = 180;
+            chart_motor2.Margin = new Thickness(5, 5, 5, 5);
+            //是否启用打印和保持图片
+            chart_motor2.ToolBarEnabled = false;
+
+            //设置图标的属性
+            chart_motor2.ScrollingEnabled = false;//是否启用或禁用滚动
+            chart_motor2.View3D = false;//3D效果显示
+
+            Axis yAxis_motor2 = new Axis();
+            //设置图标中Y轴的最小值永远为-90           
+            yAxis_motor2.AxisMinimum = -15;
+            //设置图标中Y轴的最大值永远为90           
+            yAxis_motor2.AxisMaximum = 80;
+            //设置图表中Y轴的后缀          
+            yAxis_motor2.Suffix = "°";
+            chart_motor2.AxesY.Add(yAxis_motor2);
+
+            // 创建一个新的数据线。               
+            DataSeries dataSeries_input_motor2 = new DataSeries();
+            // 设置数据线的格式。               
+            dataSeries_input_motor2.LegendText = "输入步态";
+
+            dataSeries_input_motor2.RenderAs = RenderAs.Spline;//折线图
+
+            dataSeries_input_motor2.XValueType = ChartValueTypes.Numeric;
+            // 设置输入轨迹数据点              
+            DataPoint dataPoint_input_motor2;
+            for (int i = 0; i < 500; i++)
+            {
+                // 创建一个数据点的实例。                   
+                dataPoint_input_motor2 = new DataPoint();
+                // 设置X轴点                    
+                dataPoint_input_motor2.XValue = countor[i];
+                //设置Y轴点                   
+                dataPoint_input_motor2.YValue = trajectories[i, 2] * -1;
+                dataPoint_input_motor2.MarkerSize = 1;
+                //dataPoint.Tag = tableName.Split('(')[0];
+                //设置数据点颜色                  
+                // dataPoint.Color = new SolidColorBrush(Colors.LightGray);                   
+                dataPoint_input_motor2.MouseLeftButtonDown += new MouseButtonEventHandler(dataPoint_MouseLeftButtonDown);
+                //添加数据点                   
+                dataSeries_input_motor2.DataPoints.Add(dataPoint_input_motor2);
+            }
+
+            // 添加数据线到数据序列。                
+            chart_motor2.Series.Add(dataSeries_input_motor2);
+
+
+            // 创建一个新的数据线。               
+            DataSeries dataSeries_actual_motor2 = new DataSeries();
+            // 设置数据线的格式。         
+
+            dataSeries_actual_motor2.LegendText = "实际步态";
+
+            dataSeries_actual_motor2.RenderAs = RenderAs.Spline;//折线图
+
+            dataSeries_actual_motor2.XValueType = ChartValueTypes.Numeric;
+            // 设置数据点              
+
+            DataPoint dataPoint_actual_motor2;
+            for (int i = 0; i < 500; i++)
+            {
+                // 创建一个数据点的实例。                   
+                dataPoint_actual_motor2 = new DataPoint();
+                // 设置X轴点                    
+                dataPoint_actual_motor2.XValue = countor[i];
+                //设置Y轴点                   
+                dataPoint_actual_motor2.YValue = positionActual[i, 1];
+                dataPoint_actual_motor2.MarkerSize = 1;
+                //dataPoint2.Tag = tableName.Split('(')[0];
+                //设置数据点颜色                  
+                // dataPoint.Color = new SolidColorBrush(Colors.LightGray);                   
+                dataPoint_actual_motor2.MouseLeftButtonDown += new MouseButtonEventHandler(dataPoint_MouseLeftButtonDown);
+                //添加数据点                   
+                dataSeries_actual_motor2.DataPoints.Add(dataPoint_actual_motor2);
+            }
+            // 添加数据线到数据序列。                
+            chart_motor2.Series.Add(dataSeries_actual_motor2);
+
+            //将生产的图表增加到Grid，然后通过Grid添加到上层Grid.           
+            Grid gr2 = new Grid();
+            gr2.Children.Add(chart_motor2);
+            Motor2.Children.Add(gr2);
+            #endregion
+
+            #region 电机3右髋
+            //创建一个图标
+            Chart chart_motor3 = new Chart();
+
+            //设置图标的宽度和高度
+            chart_motor3.Width = 500;
+            chart_motor3.Height = 180;
+            chart_motor3.Margin = new Thickness(5, 5, 5, 5);
+            //是否启用打印和保持图片
+            chart_motor3.ToolBarEnabled = false;
+
+            //设置图标的属性
+            chart_motor3.ScrollingEnabled = false;//是否启用或禁用滚动
+            chart_motor3.View3D = false;//3D效果显示
+
+            Axis yAxis_motor3 = new Axis();
+            //设置图标中Y轴的最小值永远为-90           
+            yAxis_motor3.AxisMinimum = -15;
+            //设置图标中Y轴的最大值永远为90           
+            yAxis_motor3.AxisMaximum = 80;
+            //设置图表中Y轴的后缀          
+            yAxis_motor3.Suffix = "°";
+            chart_motor3.AxesY.Add(yAxis_motor3);
+
+            // 创建一个新的数据线。               
+            DataSeries dataSeries_input_motor3 = new DataSeries();
+            // 设置数据线的格式。               
+            dataSeries_input_motor3.LegendText = "输入步态";
+
+            dataSeries_input_motor3.RenderAs = RenderAs.Spline;//折线图
+
+            dataSeries_input_motor3.XValueType = ChartValueTypes.Numeric;
+            // 设置输入轨迹数据点              
+            DataPoint dataPoint_input_motor3;
+            for (int i = 0; i < 500; i++)
+            {
+                // 创建一个数据点的实例。                   
+                dataPoint_input_motor3 = new DataPoint();
+                // 设置X轴点                    
+                dataPoint_input_motor3.XValue = countor[i];
+                //设置Y轴点                   
+                dataPoint_input_motor3.YValue = trajectories[i, 0];
+                dataPoint_input_motor3.MarkerSize = 1;
+                //dataPoint.Tag = tableName.Split('(')[0];
+                //设置数据点颜色                  
+                // dataPoint.Color = new SolidColorBrush(Colors.LightGray);                   
+                dataPoint_input_motor3.MouseLeftButtonDown += new MouseButtonEventHandler(dataPoint_MouseLeftButtonDown);
+                //添加数据点                   
+                dataSeries_input_motor3.DataPoints.Add(dataPoint_input_motor3);
+            }
+
+            // 添加数据线到数据序列。                
+            chart_motor3.Series.Add(dataSeries_input_motor3);
+
+
+            // 创建一个新的数据线。               
+            DataSeries dataSeries_actual_motor3 = new DataSeries();
+            // 设置数据线的格式。         
+
+            dataSeries_actual_motor3.LegendText = "实际步态";
+
+            dataSeries_actual_motor3.RenderAs = RenderAs.Spline;//折线图
+
+            dataSeries_actual_motor3.XValueType = ChartValueTypes.Numeric;
+            // 设置数据点              
+
+            DataPoint dataPoint_actual_motor3;
+            for (int i = 0; i < 500; i++)
+            {
+                // 创建一个数据点的实例。                   
+                dataPoint_actual_motor3 = new DataPoint();
+                // 设置X轴点                    
+                dataPoint_actual_motor3.XValue = countor[i];
+                //设置Y轴点                   
+                dataPoint_actual_motor3.YValue = positionActual[i, 2] * -1;
+                dataPoint_actual_motor3.MarkerSize = 1;
+                //dataPoint2.Tag = tableName.Split('(')[0];
+                //设置数据点颜色                  
+                // dataPoint.Color = new SolidColorBrush(Colors.LightGray);                   
+                dataPoint_actual_motor3.MouseLeftButtonDown += new MouseButtonEventHandler(dataPoint_MouseLeftButtonDown);
+                //添加数据点                   
+                dataSeries_actual_motor3.DataPoints.Add(dataPoint_actual_motor3);
+            }
+            // 添加数据线到数据序列。                
+            chart_motor3.Series.Add(dataSeries_actual_motor3);
+
+            //将生产的图表增加到Grid，然后通过Grid添加到上层Grid.           
+            Grid gr3 = new Grid();
+            gr3.Children.Add(chart_motor3);
+            Motor3.Children.Add(gr3);
+            #endregion
+
+            #region 电机4右膝
+            //创建一个图标
+            Chart chart_motor4 = new Chart();
+
+            //设置图标的宽度和高度
+            chart_motor4.Width = 500;
+            chart_motor4.Height = 180;
+            chart_motor4.Margin = new Thickness(5, 5, 5, 5);
+            //是否启用打印和保持图片
+            chart_motor4.ToolBarEnabled = false;
+
+            //设置图标的属性
+            chart_motor4.ScrollingEnabled = false;//是否启用或禁用滚动
+            chart_motor4.View3D = false;//3D效果显示
+
+            Axis yAxis_motor4 = new Axis();
+            //设置图标中Y轴的最小值永远为-90           
+            yAxis_motor4.AxisMinimum = -15;
+            //设置图标中Y轴的最大值永远为90           
+            yAxis_motor4.AxisMaximum = 80;
+            //设置图表中Y轴的后缀          
+            yAxis_motor4.Suffix = "°";
+            chart_motor4.AxesY.Add(yAxis_motor4);
+
+            // 创建一个新的数据线。               
+            DataSeries dataSeries_input_motor4 = new DataSeries();
+            // 设置数据线的格式。               
+            dataSeries_input_motor4.LegendText = "输入步态";
+
+            dataSeries_input_motor4.RenderAs = RenderAs.Spline;//折线图
+
+            dataSeries_input_motor4.XValueType = ChartValueTypes.Numeric;
+            // 设置输入轨迹数据点              
+            DataPoint dataPoint_input_motor4;
+            for (int i = 0; i < 500; i++)
+            {
+                // 创建一个数据点的实例。                   
+                dataPoint_input_motor4 = new DataPoint();
+                // 设置X轴点                    
+                dataPoint_input_motor4.XValue = countor[i];
+                //设置Y轴点                   
+                dataPoint_input_motor4.YValue = trajectories[i, 1] * -1;
+                dataPoint_input_motor4.MarkerSize = 1;
+                //dataPoint.Tag = tableName.Split('(')[0];
+                //设置数据点颜色                  
+                // dataPoint.Color = new SolidColorBrush(Colors.LightGray);                   
+                dataPoint_input_motor4.MouseLeftButtonDown += new MouseButtonEventHandler(dataPoint_MouseLeftButtonDown);
+                //添加数据点                   
+                dataSeries_input_motor4.DataPoints.Add(dataPoint_input_motor4);
+            }
+
+            // 添加数据线到数据序列。                
+            chart_motor4.Series.Add(dataSeries_input_motor4);
+
+
+            // 创建一个新的数据线。               
+            DataSeries dataSeries_actual_motor4 = new DataSeries();
+            // 设置数据线的格式。         
+
+            dataSeries_actual_motor4.LegendText = "实际步态";
+
+            dataSeries_actual_motor4.RenderAs = RenderAs.Spline;//折线图
+
+            dataSeries_actual_motor4.XValueType = ChartValueTypes.Numeric;
+            // 设置数据点              
+
+            DataPoint dataPoint_actual_motor4;
+            for (int i = 0; i < 500; i++)
+            {
+                // 创建一个数据点的实例。                   
+                dataPoint_actual_motor4 = new DataPoint();
+                // 设置X轴点                    
+                dataPoint_actual_motor4.XValue = countor[i];
+                //设置Y轴点                   
+                dataPoint_actual_motor4.YValue = positionActual[i, 3];
+                dataPoint_actual_motor4.MarkerSize = 1;
+                //dataPoint2.Tag = tableName.Split('(')[0];
+                //设置数据点颜色                  
+                // dataPoint.Color = new SolidColorBrush(Colors.LightGray);                   
+                dataPoint_actual_motor4.MouseLeftButtonDown += new MouseButtonEventHandler(dataPoint_MouseLeftButtonDown);
+                //添加数据点                   
+                dataSeries_actual_motor4.DataPoints.Add(dataPoint_actual_motor4);
+            }
+            // 添加数据线到数据序列。                
+            chart_motor4.Series.Add(dataSeries_actual_motor4);
+
+            //将生产的图表增加到Grid，然后通过Grid添加到上层Grid.           
+            Grid gr4 = new Grid();
+            gr4.Children.Add(chart_motor4);
+            Motor4.Children.Add(gr4);
+            #endregion
+        }
+
+        void dataPoint_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)// 显示数据点值的委托
+        {
+            DataPoint dp = sender as DataPoint;
+            MessageBox.Show(dp.YValue.ToString());
+        }
     }
 }
