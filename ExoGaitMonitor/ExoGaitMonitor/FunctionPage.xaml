@@ -79,13 +79,13 @@
                                 <ColumnDefinition Width="10*"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="53*"/>
-                                <RowDefinition Height="34*"/>
+                                <RowDefinition Height="10*"/>
+                                <RowDefinition Height="10*"/>
+                                <RowDefinition Height="10*"/>
+                                <RowDefinition Height="10*"/>
                             </Grid.RowDefinitions>
-                            <Button x:Name="getDataButton" Grid.Column="0" Grid.Row="0" Margin="3" VerticalAlignment="Bottom" Padding="5" Click="getDataButton_Click" Content="采集数据"/>
-                            <Button x:Name="endGetDataButton" IsEnabled="False" Grid.Column="1" Grid.Row="0" Margin="3" VerticalAlignment="Bottom" Padding="5" Click="endGetDataButton_Click" Content="采集停止"/>
-                            <Button x:Name="startButton" Grid.Column="0" Grid.Row="1" Margin="3" VerticalAlignment="Bottom" Padding="5" Click="startButton_Click" Content="开始步态"/>
-                            <Button x:Name="endButton" IsEnabled="False" Grid.Column="1" Grid.Row="1" Margin="3" VerticalAlignment="Bottom" Padding="5" Click="endButton_Click" Content="步态停止"/>
+                            <Button x:Name="endButton" Grid.Column="1" Grid.Row="3" Margin="3" VerticalAlignment="Bottom" Padding="5" Click="endButton_Click" Content="停止"/>
+                            <Button x:Name="startButton" Content="开始" HorizontalAlignment="Left" Margin="3,0,0,3" Grid.Column="0" Grid.Row="3" VerticalAlignment="Bottom" Padding="5" Click="startButton_Click" Width="94"/>
                         </Grid>
 
                     </DockPanel>
@@ -150,7 +150,7 @@
                                         <TextBox x:Name="Motor1_accel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal">
-                                        <Label x:Name="Motor1_label5" Content="轨迹速：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                        <Label x:Name="Motor1_label5" Content="计数/圈: " HorizontalAlignment="Left" VerticalAlignment="Top"/>
                                         <TextBox x:Name="Motor1_decel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
                                     </StackPanel>
                                 </StackPanel>
