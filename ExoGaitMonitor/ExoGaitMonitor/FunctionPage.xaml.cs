@@ -181,7 +181,15 @@ namespace ExoGaitMonitor
             ampObj[0].PositionActual.ToString() + '\t' +
             ampObj[1].PositionActual.ToString() + '\t' +
             ampObj[2].PositionActual.ToString() + '\t' +
-            ampObj[3].PositionActual.ToString());
+            ampObj[3].PositionActual.ToString() + '\t' +
+            ampObj[0].VelocityActual.ToString() + '\t' +
+            ampObj[1].VelocityActual.ToString() + '\t' +
+            ampObj[2].VelocityActual.ToString() + '\t' +
+            ampObj[3].VelocityActual.ToString() + '\t' +
+            ampObj[0].TrajectoryAcc.ToString() + '\t' +
+            ampObj[1].TrajectoryAcc.ToString() + '\t' +
+            ampObj[2].TrajectoryAcc.ToString() + '\t' +
+            ampObj[3].TrajectoryAcc.ToString());
             timeCountor++;
             toText.Close();
 
@@ -198,14 +206,14 @@ namespace ExoGaitMonitor
         {
 
             #region 获取原始数据
-            string[] ral = File.ReadAllLines("C:\\Users\\Administrator\\Desktop\\ExoGaitControl\\GaitData_1.txt", Encoding.Default);
+            string[] ral = File.ReadAllLines("C:\\Users\\Administrator\\Desktop\\ExoGaitMonitor\\GaitData.txt", Encoding.Default);
 
             for (int i = 0; i < ARRAY_LEN; i++)
             {
                 string[] str = (ral[i] ?? string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
                 for (int j = 0; j < ARRAY_COL; j++)
                 {
-                    pvtPositions[i, j] = double.Parse(str[j]) / (360.0 / RATIO) * userUnits[j] * -1;
+                    pvtPositions[i, j] = double.Parse(str[j]) / (360.0 / RATIO) * userUnits[j] * -0.6;
                 }
             }
             #endregion
@@ -247,7 +255,7 @@ namespace ExoGaitMonitor
             #region 三次扩充
             for (int i = 0; i < ThirdRich; i++)
             {
-                Rich3times[i] = 15; //时间间隔
+                Rich3times[i] = 10; //时间间隔
                 for (int j = 0; j < ARRAY_COL; j++)
                 {
                     if (i % 2 == 0)//偶数位存放原始数据
@@ -378,28 +386,28 @@ namespace ExoGaitMonitor
             Motor1_phaseAngle_textBox.Text = (ampObj[0].CurrentActual * 0.01).ToString("F"); //电机电流
             Motor1_velocity_textBox.Text = ampObj[0].VelocityActual.ToString("F"); //电机实际速度
             Motor1_accel_textBox.Text = ampObj[0].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
-            Motor1_decel_textBox.Text = userUnits[0].ToString(); //由轨迹计算而得的速度
+            Motor1_decel_textBox.Text = userUnits[0].ToString(); //编码器用户自定义单位：counts/圈
 
             //电机2(左髋)的文本框输出
             Motor2_position_textBox.Text = ampObjAngleActual[1].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
             Motor2_phaseAngle_textBox.Text = (ampObj[1].CurrentActual * 0.01).ToString("F");
             Motor2_velocity_textBox.Text = ampObj[1].VelocityActual.ToString("F"); //电机实际速度
             Motor2_accel_textBox.Text = ampObj[1].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
-            Motor2_decel_textBox.Text = userUnits[1].ToString(); //由轨迹计算而得的速度
+            Motor2_decel_textBox.Text = userUnits[1].ToString(); 
 
             //电机3(右髋)的文本框输出
             Motor3_position_textBox.Text = ampObjAngleActual[2].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
             Motor3_phaseAngle_textBox.Text = (ampObj[2].CurrentActual * 0.01).ToString("F");
             Motor3_velocity_textBox.Text = ampObj[2].VelocityActual.ToString("F"); //电机实际速度
             Motor3_accel_textBox.Text = ampObj[2].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
-            Motor3_decel_textBox.Text = userUnits[2].ToString(); //由轨迹计算而得的速度
+            Motor3_decel_textBox.Text = userUnits[2].ToString(); 
 
             //电机4(右膝)的文本框输出
             Motor4_position_textBox.Text = ampObjAngleActual[3].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
             Motor4_phaseAngle_textBox.Text = (ampObj[3].CurrentActual * 0.01).ToString("F");
             Motor4_velocity_textBox.Text = ampObj[3].VelocityActual.ToString("F"); //电机实际速度
             Motor4_accel_textBox.Text = ampObj[3].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
-            Motor4_decel_textBox.Text = userUnits[3].ToString(); //由轨迹计算而得的速度
+            Motor4_decel_textBox.Text = userUnits[3].ToString(); 
         }
 
         public void angleSetTimer(object sender, EventArgs e)//电机按设置角度转动的委托
