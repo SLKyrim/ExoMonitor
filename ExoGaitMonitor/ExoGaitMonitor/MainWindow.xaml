@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:ExoGaitMonitor"
         mc:Ignorable="d" WindowStartupLocation="CenterScreen" WindowState="Maximized"
         Title="外骨骼控制界面" Icon="Images/SingleLong.png" 
-        Height="524" Width="1040">
+        Height="524" Width="1040" Closed="MainWindow_OnClosed">
     <Grid>
         <Frame Source="FunctionPage.xaml"  NavigationUIVisibility="Hidden" Navigated="Frame_Navigated" ></Frame>
     </Grid>

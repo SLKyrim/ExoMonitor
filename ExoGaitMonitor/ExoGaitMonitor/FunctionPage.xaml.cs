@@ -83,6 +83,14 @@ namespace ExoGaitMonitor
         private int[] Rich3times = new int[ThirdRich];//三次扩充后的times
 
         private int timeCountor = 0; //计数器，写数据的计时器用到
+
+        Methods methods = new Methods();
+
+        //串口
+        public string[] SPCount = null;           //用来存储计算机串口名称数组
+        public int comcount = 0;                  //用来存储计算机可用串口数目，初始化为0
+        public bool flag = false;
+        public string sensor1_com = null;         //传感器1所用串口
         #endregion
 
         private void FunctionPage_Loaded(object sender, RoutedEventArgs e)//打开窗口后进行的初始化操作
@@ -302,6 +310,34 @@ namespace ExoGaitMonitor
 
         #endregion
 
+        #region ComboBox
+        private void Sensor1_comboBox_DropDownClosed(object sender, EventArgs e)//传感器1串口下拉菜单收回时发生
+        {
+            ComboBoxItem item = Sensor1_comboBox.SelectedItem as ComboBoxItem; //下拉窗口当前选中的项赋给item
+            string tempstr = item.Content.ToString();                        //将选中的项目转为字串存储在tempstr中
+
+            for (int i = 0; i < SPCount.Length; i++)
+            {
+                if (tempstr == "串口" + SPCount[i])
+                {
+                    try
+                    {
+                        sensor1_com = SPCount[i];
+                        methods.sensor1_SerialPort_Init(SPCount[i]);
+                    }
+                    catch
+                    {
+                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                        statusInfoTextBlock.Text = "未正确选择串口!";
+                    }
+                    
+                }
+            }
+        }
+
+        #endregion
+
+
         #region 按钮
 
         private void angleSetButton_Click(object sender, RoutedEventArgs e)//点击【执行】按钮时执行
@@ -370,6 +406,72 @@ namespace ExoGaitMonitor
 
             timeDateTextBlock.Text = timeDateString;
 
+            ScanPorts();//扫描可用串口
+        }
+
+        public void ScanPorts()//扫描可用串口
+        {
+            SPCount = methods.CheckSerialPortCount();      //获得计算机可用串口名称数组
+
+            ComboBoxItem tempComboBoxItem = new ComboBoxItem();
+
+            if (comcount != SPCount.Length)            //SPCount.length其实就是可用串口的个数
+            {
+                //当可用串口计数器与实际可用串口个数不相符时
+                //初始化下拉窗口并将flag初始化为false
+
+                Sensor1_comboBox.Items.Clear();
+
+
+                tempComboBoxItem = new ComboBoxItem();
+                tempComboBoxItem.Content = "请选择串口";
+                Sensor1_comboBox.Items.Add(tempComboBoxItem);
+                Sensor1_comboBox.SelectedIndex = 0;
+
+                sensor1_com = null;
+                flag = false;
+
+                if (comcount != 0)
+                {
+                    //在操作过程中增加或减少串口时发生
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                    statusInfoTextBlock.Text = "串口数目已改变，请重新选择串口！";
+                }
+
+                comcount = SPCount.Length;     //将可用串口计数器与现在可用串口个数匹配
+            }
+
+            if (!flag)
+            {
+                if (SPCount.Length > 0)
+                {
+                    //有可用串口时执行
+                    comcount = SPCount.Length;
+
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+                    statusInfoTextBlock.Text = "检测到" + SPCount.Length + "个串口!";
+
+                    for (int i = 0; i < SPCount.Length; i++)
+                    {
+                        //分别将可用串口添加到各个下拉窗口中
+                        string tempstr = "串口" + SPCount[i];
+
+                        tempComboBoxItem = new ComboBoxItem();
+                        tempComboBoxItem.Content = tempstr;
+                        Sensor1_comboBox.Items.Add(tempComboBoxItem);
+
+                    }
+
+                    flag = true;
+
+                }
+                else
+                {
+                    comcount = 0;
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                    statusInfoTextBlock.Text = "未检测到串口!";
+                }
+            }
         }
 
         public void textTimer(object sender, EventArgs e)//输出电机参数到相应文本框的委托
@@ -1090,6 +1192,7 @@ namespace ExoGaitMonitor
         }
 
         #endregion
+
 
     }
 }
