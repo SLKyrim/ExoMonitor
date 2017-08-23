@@ -43,6 +43,7 @@ namespace ExoGaitMonitor
         private DispatcherTimer AngleSetTimer; //电机按设置转角转动的计时器
         private DispatcherTimer GetZeroPointTimer; //回归原点的计时器
         private DispatcherTimer TempTimer; //写电机实际位置数据的计时器
+        private DispatcherTimer SensorTimer; //传感器读写计时器
 
         private double[] trajectory = new double[1100]; //步态采集数据轨迹
         private double[,] trajectories = new double[1001, 4]; //输入四个关节的步态数据
@@ -170,6 +171,11 @@ namespace ExoGaitMonitor
             TempTimer.Tick += new EventHandler(tempTimer);
             TempTimer.Interval = TimeSpan.FromMilliseconds(Rich3times[0]);
             TempTimer.Start();
+
+            SensorTimer = new DispatcherTimer();
+            SensorTimer.Tick += new EventHandler(methods.WriteCMD);
+            SensorTimer.Interval = TimeSpan.FromMilliseconds(100);
+            SensorTimer.Start();
         }
 
         public void tempTimer(object sender, EventArgs e)//写电机实际位置的委托
