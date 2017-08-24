@@ -20,10 +20,6 @@ namespace ExoGaitMonitor
         #endregion
 
         #region 传感器1串口
-        FunctionPage functionpage = new FunctionPage();
-        public double presKg = new double();
-        public string presVolt = "";
-        public Int16 presVoltDec;
 
         public void sensor1_SerialPort_Init(string comstring)//传感器1串口初始化
         {
@@ -34,7 +30,7 @@ namespace ExoGaitMonitor
                     sensor1_SerialPort.Close();
                 }
             }
-            
+
             sensor1_SerialPort = new SerialPort();
             sensor1_SerialPort.PortName = comstring;
             sensor1_SerialPort.BaudRate = 115200;
@@ -46,22 +42,34 @@ namespace ExoGaitMonitor
 
         private void sensor1_DataReceived(object sender, SerialDataReceivedEventArgs e)//传感器1串口接收数据
         {
-            byte[] bytes = new byte[7];          //声明一个临时数组存储当前来的串口数据
-            sensor1_SerialPort.Read(bytes, 0, 7);  //读取串口内部缓冲区数据到buf数组
-            sensor1_SerialPort.DiscardInBuffer();          //清空串口内部缓存
-            //string presVolt = bytes[4].ToString();
-            presVolt = "";
-            for (int i = 3; i < 5; i++)
+            try
             {
-                presVolt += bytes[i].ToString("X2");
+                int bufferlen = sensor1_SerialPort.BytesToRead;    //先记录下来，避免某种原因，人为的原因，操作几次之间时间长，缓存不一致
+                if (bufferlen >= 27)                             //一个电机有使能，方向，转速，电流4个参数，前两个各占1个位，后两个各占2个位，故一个电机数据占6各位，加上一个开始位，两个停止位，故总有1+6*4+2=27位
+                {
+                    byte[] bytes = new byte[bufferlen];          //声明一个临时数组存储当前来的串口数据
+                    sensor1_SerialPort.Read(bytes, 0, bufferlen);  //读取串口内部缓冲区数据到buf数组
+                    sensor1_SerialPort.DiscardInBuffer();          //清空串口内部缓存
+                    //处理和存储数据
+                    Int16 endFlag = BitConverter.ToInt16(bytes, 25);
+                    if (endFlag == 2573)                         //停止位0A0D (0D0A?)
+                    {
+                        if (bytes[0] == 0x23)
+                            for (int f = 0; f < 4; f++)
+                            {
+                                //enable[f] = bytes[f * 6 + 1];
+                                //direction[f] = bytes[f * 6 + 2];
+                                //speed[f] = bytes[f * 6 + 3] * 256 + bytes[f * 6 + 4];
+                                //if (speed[f] >= 2048) speed[f] = (speed[f] - 2048) / 4096 * 5180;          //实际范围-2590~2590r/min,而对应范围是0~4096，故中间值位2048
+                                //else speed[f] = (2048 - speed[f]) / 4096 * -5180;
+                                //current[f] = bytes[f * 6 + 5] * 256 + bytes[f * 6 + 6];
+                                //if (current[f] >= 2048) current[f] = (current[f] - 2048) / 4096 * 30;
+                                //else current[f] = (2048 - current[f]) / 4096 * -30;
+                            }
+                    }
+                }
             }
-            //presVolt = bytes[4].ToString("X2");
-            presVoltDec = Int16.Parse(presVolt, System.Globalization.NumberStyles.HexNumber);
-            //presKg = presVoltDec * 5.0 / 4095;
-            //presKg = 5.0 / 1.65 * (1.65 - 5.0 / 4095 * presVoltDec);
-            //presKg = (presVoltDec - 128) * 5.0 / 127 * 50.0 / 1.65;
-            presKg = (1.40 - presVoltDec * 5.0 / 4095) * 50.0 / 1.40;
-
+            catch { }
         }
 
         #endregion
@@ -89,16 +97,15 @@ namespace ExoGaitMonitor
 
         public void SendControlCMD(byte[] command)//串口写入字节命令
         {
-            //01 03 00 00 00 01 84 0A
             //byte[] command = new byte[19];
-            //command[0] = 0x01;//开始字符
-            //command[1] = 0x03;//电机1 使能端
-            //command[2] = 0x00;//电机1 方向
-            //command[3] = 0x00;//电机1 转速高位
+            //command[0] = 0x23;//开始字符
+            //command[1] = 0x01;//电机1 使能端
+            //command[2] = 0x01;//电机1 方向
+            //command[3] = 0x08;//电机1 转速高位
             //command[4] = 0x88;//电机1 转速低位（范围1800-16200）对应速度范围（0-2590r/min）
             //command[5] = 0x01;//电机2
             //command[6] = 0x01;//电机2
-            //command[7] = 0x0A;//电机2
+            //command[7] = 0x08;//电机2
             //command[8] = 0x88;//电机2
             //command[9] = 0x01;//电机3
             //command[10] = 0x01;//电机3
@@ -110,34 +117,7 @@ namespace ExoGaitMonitor
             //command[16] = 0x88;//电机4
             //command[17] = 0x0D;//结束字符
             //command[18] = 0x0A;
-            sensor1_SerialPort.Write(command, 0, 8);
+            sensor1_SerialPort.Write(command, 0, 19);
         }
-
-        public void WriteCMD(object sender, EventArgs e)//串口写入字节命令
-        {
-            //01 03 00 00 00 01 84 0A 读AI0口的指令
-            byte[] command = new byte[8];
-            command[0] = 0x01;//#设备地址
-            command[1] = 0x03;//#功能代码，读寄存器的值
-            command[2] = 0x00;
-            command[3] = 0x00;
-            command[4] = 0x00;//从第AIn号口开始读数据
-            command[5] = 0x01;//读几个口
-            command[6] = 0x84;//#CRC 校验的低 8 位
-            command[7] = 0x0A;//#CRC 校验的高 8 位
-
-            //用于查看提交的指令
-            //string returnStr = "";
-            //for (int i = 0; i < command.Length; i++)
-            //{
-            //    returnStr += command[i].ToString("X2");
-            //}
-            //WritetextBox.Text = returnStr;
-
-            sensor1_SerialPort.Write(command, 0, 8);
-            functionpage.presstextBox.Text = presKg.ToString("F");
-            //functionpage.presstextBox.Text = presVoltDec.ToString();
-        }
-
     }
 }
