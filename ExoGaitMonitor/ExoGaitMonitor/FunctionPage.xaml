@@ -81,7 +81,7 @@
                                 <RowDefinition Height="10*"/>
                             </Grid.RowDefinitions>
                             <Button x:Name="endButton" Grid.Column="1" Margin="3" VerticalAlignment="Bottom" Padding="5" Click="endButton_Click" Content="停止"/>
-                            <Button x:Name="startButton" Content="开始" HorizontalAlignment="Left" Margin="3,3,0,3" Grid.Column="0" Padding="5" Click="startButton_Click" Width="94"/>
+                            <Button x:Name="startButton" Content="开始" HorizontalAlignment="Left" Margin="3,0,0,3" Grid.Column="0" VerticalAlignment="Bottom" Padding="5" Click="startButton_Click" Width="94"/>
                         </Grid>
                         <!--串口选择-->
                         <Grid Margin="5" DockPanel.Dock="Bottom" >
@@ -99,8 +99,6 @@
                             <ComboBox x:Name="Sensor1_comboBox" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" Width="102" Margin="3" SelectedIndex="0" DropDownClosed="Sensor1_comboBox_DropDownClosed">
                                 <ComboBoxItem>请选择串口</ComboBoxItem>
                             </ComboBox>
-                            <Label x:Name="presslabel" Content="当前拉压力：" HorizontalAlignment="Left" Margin="0,25,0,0" Grid.Row="1" VerticalAlignment="Top" RenderTransformOrigin="-2.238,0.98"/>
-                            <TextBox x:Name="presstextBox" Grid.Column="1" HorizontalAlignment="Left" Height="23" Margin="10,27,0,0" Grid.Row="1" TextWrapping="Wrap" Text="压正拉负" VerticalAlignment="Top" Width="89"/>
                         </Grid>
 
                     </DockPanel>
