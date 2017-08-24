@@ -124,7 +124,7 @@
                                     <Grid x:Name="Motor2"/>
                                 </GroupBox>
                             </DockPanel>
-                            <DockPanel Grid.Row="2">
+                            <DockPanel Grid.Row="2" HorizontalAlignment="Left" Width="801">
                                 <GroupBox Header="电机3右髋" Height="220" Grid.Row="0" DockPanel.Dock="Left" Margin="5,0,0,5" BorderThickness="1" BorderBrush="#FF7199E0">
                                     <Grid x:Name="Motor3"/>
                                 </GroupBox>
@@ -240,6 +240,30 @@
                                     <StackPanel Orientation="Horizontal">
                                         <Label Content="{Binding Content, ElementName=Motor1_label5}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                                         <TextBox x:Name="Motor4_decel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </GroupBox>
+                            <!--拉压力传感器-->
+                            <GroupBox Header="拉压力传感器" DockPanel.Dock="Top" Margin="5,0,0,5" BorderThickness="1" BorderBrush="#FF7199E0">
+                                <StackPanel Orientation="Vertical">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label x:Name="Motor1_el1"  Content="传感器1：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                        <TextBox x:Name="Sensor1_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label x:Name="Motor1bel2" Content="传感器2：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                        <TextBox x:Name="Motor1_pAngle_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label x:Name="Motor1bel3" Content="传感器3：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                        <TextBox x:Name="Motor1_locity_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label x:Name="Motor1_bel4" Content="传感器4：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                        <TextBox x:Name="Motor1_cel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <Button x:Name="watchButton" Margin="5" Height="20" Click="watchButton_Click">启动监视</Button>
                                     </StackPanel>
                                 </StackPanel>
                             </GroupBox>

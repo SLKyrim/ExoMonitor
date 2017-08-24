@@ -43,6 +43,7 @@ namespace ExoGaitMonitor
         private DispatcherTimer AngleSetTimer; //电机按设置转角转动的计时器
         private DispatcherTimer GetZeroPointTimer; //回归原点的计时器
         private DispatcherTimer TempTimer; //写电机实际位置数据的计时器
+        private DispatcherTimer SensorTimer; //传感器读写计时器
 
         private double[] trajectory = new double[1100]; //步态采集数据轨迹
         private double[,] trajectories = new double[1001, 4]; //输入四个关节的步态数据
@@ -339,6 +340,14 @@ namespace ExoGaitMonitor
 
 
         #region 按钮
+
+        private void watchButton_Click(object sender, RoutedEventArgs e)//点击【启动监视】按钮时执行
+        {
+            SensorTimer = new DispatcherTimer();
+            SensorTimer.Tick += new EventHandler(WriteCMD);
+            SensorTimer.Interval = TimeSpan.FromMilliseconds(20);
+            SensorTimer.Start();
+        }
 
         private void angleSetButton_Click(object sender, RoutedEventArgs e)//点击【执行】按钮时执行
         {
@@ -810,6 +819,30 @@ namespace ExoGaitMonitor
             }
         }
 
+        public void WriteCMD(object sender, EventArgs e)//向传感器写命令以及向传感器接收数据的委托
+        {
+            //01 03 00 00 00 01 84 0A
+            byte[] command = new byte[8];
+            command[0] = 0x01;//#设备地址
+            command[1] = 0x03;//#功能代码，读寄存器的值
+            command[2] = 0x00;//
+            command[3] = 0x00;//
+            command[4] = 0x00;//从第AIn号口开始读数据
+            command[5] = 0x01;//读几个口
+            command[6] = 0x84;//CRC 校验的低 8 位
+            command[7] = 0x0A;//CRC 校验的高 8 位
+
+            //string returnStr = "";
+            //for (int i = 0; i < command.Length; i++)
+            //{
+            //    returnStr += command[i].ToString("X2");
+            //}
+            //WritetextBox.Text = returnStr;//输出写入命令
+
+            methods.sensor1_SerialPort.Write(command, 0, 8);
+            Sensor1_textBox.Text = methods.presN.ToString("F");
+        }
+
         #endregion
 
         #region 方法
@@ -1191,8 +1224,8 @@ namespace ExoGaitMonitor
             MessageBox.Show(dp.YValue.ToString());
         }
 
-        #endregion
 
+        #endregion
 
     }
 }

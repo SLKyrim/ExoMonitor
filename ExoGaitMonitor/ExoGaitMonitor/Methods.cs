@@ -12,10 +12,15 @@ namespace ExoGaitMonitor
         #region 参数定义
 
         //串口
-        private SerialPort sensor1_SerialPort = new SerialPort(); //传感器1串口
+        public SerialPort sensor1_SerialPort = new SerialPort(); //传感器1串口
 
         //获取可用串口名
         private string[] IsOpenSerialPortCount = null;
+
+        //传感器参数
+        public double presN = new double(); //传感器接收数据，单位N
+        public string presVolt = ""; //传感器电压
+        public int presVoltDec; //传感器电压十进制
 
         #endregion
 
@@ -42,34 +47,16 @@ namespace ExoGaitMonitor
 
         private void sensor1_DataReceived(object sender, SerialDataReceivedEventArgs e)//传感器1串口接收数据
         {
-            try
-            {
-                int bufferlen = sensor1_SerialPort.BytesToRead;    //先记录下来，避免某种原因，人为的原因，操作几次之间时间长，缓存不一致
-                if (bufferlen >= 27)                             //一个电机有使能，方向，转速，电流4个参数，前两个各占1个位，后两个各占2个位，故一个电机数据占6各位，加上一个开始位，两个停止位，故总有1+6*4+2=27位
-                {
-                    byte[] bytes = new byte[bufferlen];          //声明一个临时数组存储当前来的串口数据
-                    sensor1_SerialPort.Read(bytes, 0, bufferlen);  //读取串口内部缓冲区数据到buf数组
-                    sensor1_SerialPort.DiscardInBuffer();          //清空串口内部缓存
-                    //处理和存储数据
-                    Int16 endFlag = BitConverter.ToInt16(bytes, 25);
-                    if (endFlag == 2573)                         //停止位0A0D (0D0A?)
-                    {
-                        if (bytes[0] == 0x23)
-                            for (int f = 0; f < 4; f++)
-                            {
-                                //enable[f] = bytes[f * 6 + 1];
-                                //direction[f] = bytes[f * 6 + 2];
-                                //speed[f] = bytes[f * 6 + 3] * 256 + bytes[f * 6 + 4];
-                                //if (speed[f] >= 2048) speed[f] = (speed[f] - 2048) / 4096 * 5180;          //实际范围-2590~2590r/min,而对应范围是0~4096，故中间值位2048
-                                //else speed[f] = (2048 - speed[f]) / 4096 * -5180;
-                                //current[f] = bytes[f * 6 + 5] * 256 + bytes[f * 6 + 6];
-                                //if (current[f] >= 2048) current[f] = (current[f] - 2048) / 4096 * 30;
-                                //else current[f] = (2048 - current[f]) / 4096 * -30;
-                            }
-                    }
-                }
-            }
-            catch { }
+            byte[] bytes = new byte[7];          //声明一个临时数组存储当前来的串口数据
+            sensor1_SerialPort.Read(bytes, 0, 7);  //读取串口内部缓冲区数据到buf数组
+            sensor1_SerialPort.DiscardInBuffer();          //清空串口内部缓存
+            //string presVolt = bytes[4].ToString();
+
+            presVolt = bytes[4].ToString("X2");
+            presVoltDec = Int32.Parse(presVolt, System.Globalization.NumberStyles.HexNumber);
+
+            //presN = 5.0 / 1.65 * (1.65 - 5.0 / 4095 * presVoltDec);
+            presN = (presVoltDec - 128) * 5.0 / 127 * 50.0 / 1.65;
         }
 
         #endregion
