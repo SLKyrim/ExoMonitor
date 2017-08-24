@@ -393,7 +393,7 @@ namespace ExoGaitMonitor
         {
             GetZeroPointTimer = new DispatcherTimer();
             GetZeroPointTimer.Tick += new EventHandler(getZeroPointTimer);
-            GetZeroPointTimer.Interval = TimeSpan.FromMilliseconds(20);// 该时钟频率决定电机运行速度
+            GetZeroPointTimer.Interval = TimeSpan.FromMilliseconds(100);// 该时钟频率决定电机运行速度
             GetZeroPointTimer.Start();
         }
 

@@ -38,7 +38,7 @@ namespace ExoGaitMonitor
 
             sensor1_SerialPort = new SerialPort();
             sensor1_SerialPort.PortName = comstring;
-            sensor1_SerialPort.BaudRate = 115200;
+            sensor1_SerialPort.BaudRate = 9600;
             sensor1_SerialPort.Parity = Parity.None;
             sensor1_SerialPort.StopBits = StopBits.One;
             sensor1_SerialPort.Open();
@@ -51,12 +51,17 @@ namespace ExoGaitMonitor
             sensor1_SerialPort.Read(bytes, 0, 7);  //读取串口内部缓冲区数据到buf数组
             sensor1_SerialPort.DiscardInBuffer();          //清空串口内部缓存
             //string presVolt = bytes[4].ToString();
-
-            presVolt = bytes[4].ToString("X2");
-            presVoltDec = Int32.Parse(presVolt, System.Globalization.NumberStyles.HexNumber);
-
+            presVolt = "";
+            for (int i = 3; i < 5; i++)
+            {
+                presVolt += bytes[i].ToString("X2");
+            }
+            //presVolt = bytes[4].ToString("X2");
+            presVoltDec = Int16.Parse(presVolt, System.Globalization.NumberStyles.HexNumber);
+            //presN = presVoltDec * 5.0 / 4095;
             //presN = 5.0 / 1.65 * (1.65 - 5.0 / 4095 * presVoltDec);
-            presN = (presVoltDec - 128) * 5.0 / 127 * 50.0 / 1.65;
+            //presN = (presVoltDec - 128) * 5.0 / 127 * 50.0 / 1.65;
+            presN = (1.40 - presVoltDec * 5.0 / 4095) * 50.0 / 1.40;
         }
 
         #endregion
@@ -69,7 +74,7 @@ namespace ExoGaitMonitor
 
         public bool SerialPortClose()//关闭窗口时执行
         {
-            byte[] clearBytes = new byte[19] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+            byte[] clearBytes = new byte[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
             SendControlCMD(clearBytes);//避免不规范操作造成再开机时电机自启动
 
             if (sensor1_SerialPort != null)
@@ -104,7 +109,7 @@ namespace ExoGaitMonitor
             //command[16] = 0x88;//电机4
             //command[17] = 0x0D;//结束字符
             //command[18] = 0x0A;
-            sensor1_SerialPort.Write(command, 0, 19);
+            sensor1_SerialPort.Write(command, 0, 8);
         }
     }
 }
