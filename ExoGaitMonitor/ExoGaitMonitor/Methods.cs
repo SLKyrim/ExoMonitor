@@ -38,30 +38,34 @@ namespace ExoGaitMonitor
 
             sensor1_SerialPort = new SerialPort();
             sensor1_SerialPort.PortName = comstring;
-            sensor1_SerialPort.BaudRate = 9600;
+            sensor1_SerialPort.BaudRate = 115200;
             sensor1_SerialPort.Parity = Parity.None;
-            sensor1_SerialPort.StopBits = StopBits.Two;
+            sensor1_SerialPort.StopBits = StopBits.One;
             sensor1_SerialPort.Open();
             sensor1_SerialPort.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(sensor1_DataReceived);
         }
 
         private void sensor1_DataReceived(object sender, SerialDataReceivedEventArgs e)//传感器1串口接收数据
         {
-            byte[] bytes = new byte[13];          //声明一个临时数组存储当前来的串口数据
-            sensor1_SerialPort.Read(bytes, 0, 13);  //读取串口内部缓冲区数据到buf数组
-            sensor1_SerialPort.DiscardInBuffer();          //清空串口内部缓存
-            //string presVolt = bytes[4].ToString();
-            presVolt = "";
-            for (int i = 3; i < 5; i++)
+            int bufferlen = sensor1_SerialPort.BytesToRead;
+            if (bufferlen >= 13)
             {
-                presVolt += bytes[i].ToString("X2");
-            }
-            //presVolt = bytes[4].ToString("X2");
-            presVoltDec = Int16.Parse(presVolt, System.Globalization.NumberStyles.HexNumber);
-            //presN = presVoltDec * 5.0 / 4095;
-            //presN = 5.0 / 1.65 * (1.65 - 5.0 / 4095 * presVoltDec);
-            //presN = (presVoltDec - 128) * 5.0 / 127 * 50.0 / 1.65;
-            presN = (1.40 - presVoltDec * 5.0 / 4095) * 50.0 / 1.40; //拉压力传感器输出，单位N
+                byte[] bytes = new byte[bufferlen];          //声明一个临时数组存储当前来的串口数据
+                sensor1_SerialPort.Read(bytes, 0, bufferlen);  //读取串口内部缓冲区数据到buf数组
+                sensor1_SerialPort.DiscardInBuffer();          //清空串口内部缓存
+                                                               //string presVolt = bytes[4].ToString();
+                presVolt = "";
+                for (int i = 3; i < 5; i++)
+                {
+                    presVolt += bytes[i].ToString("X2");
+                }
+                //presVolt = bytes[4].ToString("X2");
+                presVoltDec = Int16.Parse(presVolt, System.Globalization.NumberStyles.HexNumber);
+                //presN = presVoltDec * 5.0 / 4095;
+                //presN = 5.0 / 1.65 * (1.65 - 5.0 / 4095 * presVoltDec);
+                //presN = (presVoltDec - 128) * 5.0 / 127 * 50.0 / 1.65;
+                presN = (1.40 - presVoltDec * 5.0 / 4095) * 50.0 / 1.40; //拉压力传感器输出，单位N
+            }    
         }
 
         #endregion
