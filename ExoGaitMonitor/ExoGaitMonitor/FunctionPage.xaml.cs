@@ -317,7 +317,7 @@ namespace ExoGaitMonitor
 
         #region 力学模式
 
-        private void watchButton_Click(object sender, RoutedEventArgs e)//点击【启动监视】按钮时执行
+        private void watchButton_Click(object sender, RoutedEventArgs e)//点击【启动监视 + 滤波】按钮时执行
         {
             isWatching = true;
 
@@ -334,45 +334,60 @@ namespace ExoGaitMonitor
             ForceTimer.Interval = TimeSpan.FromMilliseconds(20);
             ForceTimer.Start();
 
+            timeCountor = 0;
+            File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\force.txt", string.Empty);
         }
 
         public void forceTimer(object sender, EventArgs e)//力学模式控制的委托
         {
             if(isWatching)
             {
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                statusInfoTextBlock.Text = "进入力学控制模式!";
+
                 profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY;
 
-                if (Math.Abs(methods.presN) < 1)
+                if (Math.Abs(methods.presN) < 0.8)
                 {
-                    ampObj[0].HaltMove();
+                    ampObj[1].HaltMove();
                 }
 
-                if(methods.presN < -1)
+                if(methods.presN < -0.8)
                 {
-                    profileSettingsObj.ProfileVel = 50000;
-                    profileSettingsObj.ProfileAccel = 50000;
+                    profileSettingsObj.ProfileVel = 300000;
+                    profileSettingsObj.ProfileAccel = 300000;
                     profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
-                    ampObj[0].ProfileSettings = profileSettingsObj;
+                    ampObj[1].ProfileSettings = profileSettingsObj;
 
-                    ampObj[0].MoveRel(1);
+                    ampObj[1].MoveRel(1);
                 }
 
-                if (methods.presN > 1)
+                if (methods.presN > 0.8)
                 {
-                    profileSettingsObj.ProfileVel = 50000;
-                    profileSettingsObj.ProfileAccel = 50000;
+                    profileSettingsObj.ProfileVel = 300000;
+                    profileSettingsObj.ProfileAccel = 300000;
                     profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
-                    ampObj[0].ProfileSettings = profileSettingsObj;
+                    ampObj[1].ProfileSettings = profileSettingsObj;
 
-                    ampObj[0].MoveRel(-1);
+                    ampObj[1].MoveRel(-1);
                 }
+
+                StreamWriter toText = new StreamWriter("force.txt", true);//打开记录数据文本,可于
+                toText.WriteLine(timeCountor.ToString() + '\t' +
+                methods.presVolt.ToString());
+                timeCountor++;
+                toText.Close();
             }
         }
 
         private void forceEndButton_Click(object sender, RoutedEventArgs e)//点击【停止】按钮时执行
         {
+            ampObj[1].HaltMove();
             ForceTimer.Stop();
             profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
+
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+            statusInfoTextBlock.Text = "力学控制模式已停止";
         }
 
         #endregion
@@ -878,16 +893,17 @@ namespace ExoGaitMonitor
 
         public void WriteCMD(object sender, EventArgs e)//向传感器写命令以及向传感器接收数据的委托
         {
-            //01 03 00 00 00 01 84 0A
+
             byte[] command = new byte[8];
             command[0] = 0x01;//#设备地址
             command[1] = 0x03;//#功能代码，读寄存器的值
             command[2] = 0x00;//
             command[3] = 0x00;//
-            command[4] = 0x00;//从第AIn号口开始读数据
-            command[5] = 0x01;//读几个口
-            command[6] = 0x84;//CRC 校验的低 8 位
-            command[7] = 0x0A;//CRC 校验的高 8 位
+            command[4] = 0x00;//从第AI0号口开始读数据
+            command[5] = 0x04;//读四个口
+            command[6] = 0x44;//读四个口时的 CRC 校验的低 8 位
+            command[7] = 0x09;//读四个口时的 CRC 校验的高 8 位 
+            //一路的CRC校验位84 0A; 二路的是C4 0B; 三路的是 05 CB; 四路的是 44 09.
 
             //string returnStr = "";
             //for (int i = 0; i < command.Length; i++)

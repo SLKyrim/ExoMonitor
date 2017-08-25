@@ -266,7 +266,7 @@
                                         <TextBox x:Name="Motor1_cel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
                                     </StackPanel>
                                     <StackPanel>
-                                        <Button x:Name="watchButton" Margin="5" Height="20" Click="watchButton_Click">启动监视</Button>
+                                        <Button x:Name="watchButton" Margin="5" Height="20" Click="watchButton_Click">启动监视 + 滤波</Button>
                                     </StackPanel>
                                 </StackPanel>
                             </GroupBox>

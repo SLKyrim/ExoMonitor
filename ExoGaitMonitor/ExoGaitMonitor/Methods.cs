@@ -40,15 +40,15 @@ namespace ExoGaitMonitor
             sensor1_SerialPort.PortName = comstring;
             sensor1_SerialPort.BaudRate = 9600;
             sensor1_SerialPort.Parity = Parity.None;
-            sensor1_SerialPort.StopBits = StopBits.One;
+            sensor1_SerialPort.StopBits = StopBits.Two;
             sensor1_SerialPort.Open();
             sensor1_SerialPort.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(sensor1_DataReceived);
         }
 
         private void sensor1_DataReceived(object sender, SerialDataReceivedEventArgs e)//传感器1串口接收数据
         {
-            byte[] bytes = new byte[7];          //声明一个临时数组存储当前来的串口数据
-            sensor1_SerialPort.Read(bytes, 0, 7);  //读取串口内部缓冲区数据到buf数组
+            byte[] bytes = new byte[13];          //声明一个临时数组存储当前来的串口数据
+            sensor1_SerialPort.Read(bytes, 0, 13);  //读取串口内部缓冲区数据到buf数组
             sensor1_SerialPort.DiscardInBuffer();          //清空串口内部缓存
             //string presVolt = bytes[4].ToString();
             presVolt = "";
