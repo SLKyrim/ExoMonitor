@@ -61,7 +61,7 @@ namespace ExoGaitMonitor
             //presN = presVoltDec * 5.0 / 4095;
             //presN = 5.0 / 1.65 * (1.65 - 5.0 / 4095 * presVoltDec);
             //presN = (presVoltDec - 128) * 5.0 / 127 * 50.0 / 1.65;
-            presN = (1.40 - presVoltDec * 5.0 / 4095) * 50.0 / 1.40;
+            presN = (1.40 - presVoltDec * 5.0 / 4095) * 50.0 / 1.40; //拉压力传感器输出，单位N
         }
 
         #endregion

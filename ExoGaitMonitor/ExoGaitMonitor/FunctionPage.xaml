@@ -79,9 +79,12 @@
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="10*"/>
+                                <RowDefinition Height="10*"/>
                             </Grid.RowDefinitions>
-                            <Button x:Name="endButton" Grid.Column="1" Margin="3" VerticalAlignment="Bottom" Padding="5" Click="endButton_Click" Content="停止"/>
-                            <Button x:Name="startButton" Content="开始" HorizontalAlignment="Left" Margin="3,0,0,3" Grid.Column="0" VerticalAlignment="Bottom" Padding="5" Click="startButton_Click" Width="94"/>
+                            <Button x:Name="endButton" Grid.Column="1" Margin="3" Grid.Row="0" VerticalAlignment="Bottom" Padding="5" Click="endButton_Click" Content="PVT停止"/>
+                            <Button x:Name="startButton" Content="PVT模式" HorizontalAlignment="Left" Margin="3,0,0,3" Grid.Row="0" Grid.Column="0" VerticalAlignment="Bottom" Padding="5" Click="startButton_Click" Width="94"/>
+                            <Button x:Name="forceEndButton" Grid.Column="1" Margin="3" Grid.Row="1" VerticalAlignment="Bottom" Padding="5" Click="forceEndButton_Click" Content="停止"/>
+                            <Button x:Name="forceStartButton" Content="力学模式" HorizontalAlignment="Left" Margin="3,0,0,3" Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom" Padding="5" Click="forceStartButton_Click" Width="94"/>
                         </Grid>
                         <!--串口选择-->
                         <Grid Margin="5" DockPanel.Dock="Bottom" >

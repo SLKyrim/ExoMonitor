@@ -44,6 +44,7 @@ namespace ExoGaitMonitor
         private DispatcherTimer GetZeroPointTimer; //回归原点的计时器
         private DispatcherTimer TempTimer; //写电机实际位置数据的计时器
         private DispatcherTimer SensorTimer; //传感器读写计时器
+        private DispatcherTimer ForceTimer; //力学控制模式的计时器
 
         private double[] trajectory = new double[1100]; //步态采集数据轨迹
         private double[,] trajectories = new double[1001, 4]; //输入四个关节的步态数据
@@ -87,11 +88,13 @@ namespace ExoGaitMonitor
 
         Methods methods = new Methods();
 
-        //串口
+        //力学模式
         public string[] SPCount = null;           //用来存储计算机串口名称数组
         public int comcount = 0;                  //用来存储计算机可用串口数目，初始化为0
         public bool flag = false;
         public string sensor1_com = null;         //传感器1所用串口
+
+        private bool isWatching = false; //【启动监视】按钮是否被按下
         #endregion
 
         private void FunctionPage_Loaded(object sender, RoutedEventArgs e)//打开窗口后进行的初始化操作
@@ -139,8 +142,8 @@ namespace ExoGaitMonitor
 
         }
 
-        #region PVT
-        private void startButton_Click(object sender, RoutedEventArgs e)//点击【开始】按钮时执行
+        #region PVT模式
+        private void startButton_Click(object sender, RoutedEventArgs e)//点击【PVT模式】按钮时执行
         {
             statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
             statusInfoTextBlock.Text = "正在执行";
@@ -166,44 +169,46 @@ namespace ExoGaitMonitor
             
             Linkage.TrajectoryInitialize(pvtRich3Pos, pvtRich3Vel, Rich3times, 100); //开始步态
 
-            timeCountor = 0;
-            TempTimer = new DispatcherTimer();
-            TempTimer.Tick += new EventHandler(tempTimer);
-            TempTimer.Interval = TimeSpan.FromMilliseconds(Rich3times[0]);
-            TempTimer.Start();
+            //写电机在运动过程的一些实际参数
+            //timeCountor = 0;
+            //TempTimer = new DispatcherTimer();
+            //TempTimer.Tick += new EventHandler(tempTimer);
+            //TempTimer.Interval = TimeSpan.FromMilliseconds(Rich3times[0]);
+            //TempTimer.Start();
         }
 
-        public void tempTimer(object sender, EventArgs e)//写电机实际位置的委托
-        {
-            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-            statusInfoTextBlock.Text = "正在执行";
+        //public void tempTimer(object sender, EventArgs e)//写电机实际位置的委托
+        //{
+        //    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+        //    statusInfoTextBlock.Text = "正在执行";
 
-            if (timeCountor == ThirdRich)
-            {
-                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
-                statusInfoTextBlock.Text = "执行完毕";
-                TempTimer.Stop();
-            }
+        //    if (timeCountor == ThirdRich)
+        //    {
+        //        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+        //        statusInfoTextBlock.Text = "执行完毕";
+        //        TempTimer.Stop();
+        //    }
 
-            StreamWriter toText = new StreamWriter("posAcutal.txt", true);//打开记录数据文本,可于
-            toText.WriteLine(timeCountor.ToString() + '\t' +
-            ampObj[0].PositionActual.ToString() + '\t' +
-            ampObj[1].PositionActual.ToString() + '\t' +
-            ampObj[2].PositionActual.ToString() + '\t' +
-            ampObj[3].PositionActual.ToString() + '\t' +
-            ampObj[0].VelocityActual.ToString() + '\t' +
-            ampObj[1].VelocityActual.ToString() + '\t' +
-            ampObj[2].VelocityActual.ToString() + '\t' +
-            ampObj[3].VelocityActual.ToString() + '\t' +
-            ampObj[0].TrajectoryAcc.ToString() + '\t' +
-            ampObj[1].TrajectoryAcc.ToString() + '\t' +
-            ampObj[2].TrajectoryAcc.ToString() + '\t' +
-            ampObj[3].TrajectoryAcc.ToString());
-            timeCountor++;
-            toText.Close();
+        //    StreamWriter toText = new StreamWriter("posAcutal.txt", true);//打开记录数据文本,可于
+        //    toText.WriteLine(timeCountor.ToString() + '\t' +
+        //    ampObj[0].PositionActual.ToString() + '\t' +
+        //    ampObj[1].PositionActual.ToString() + '\t' +
+        //    ampObj[2].PositionActual.ToString() + '\t' +
+        //    ampObj[3].PositionActual.ToString() + '\t' +
+        //    ampObj[0].VelocityActual.ToString() + '\t' +
+        //    ampObj[1].VelocityActual.ToString() + '\t' +
+        //    ampObj[2].VelocityActual.ToString() + '\t' +
+        //    ampObj[3].VelocityActual.ToString() + '\t' +
+        //    ampObj[0].TrajectoryAcc.ToString() + '\t' +
+        //    ampObj[1].TrajectoryAcc.ToString() + '\t' +
+        //    ampObj[2].TrajectoryAcc.ToString() + '\t' +
+        //    ampObj[3].TrajectoryAcc.ToString());
+        //    timeCountor++;
+        //    toText.Close();
 
-        }
-        private void endButton_Click(object sender, RoutedEventArgs e)//点击【停止】按钮时执行
+        //}
+
+        private void endButton_Click(object sender, RoutedEventArgs e)//点击【PVT停止】按钮时执行
         {
             endButton.IsEnabled = false;
             startButton.IsEnabled = true;
@@ -308,6 +313,67 @@ namespace ExoGaitMonitor
 
         }
 
+        #endregion
+
+        #region 力学模式
+
+        private void watchButton_Click(object sender, RoutedEventArgs e)//点击【启动监视】按钮时执行
+        {
+            isWatching = true;
+
+            SensorTimer = new DispatcherTimer();
+            SensorTimer.Tick += new EventHandler(WriteCMD);
+            SensorTimer.Interval = TimeSpan.FromMilliseconds(20);
+            SensorTimer.Start();
+        }
+
+        private void forceStartButton_Click(object sender, RoutedEventArgs e)//点击【力学模式】按钮时执行
+        {
+            ForceTimer = new DispatcherTimer();
+            ForceTimer.Tick += new EventHandler(forceTimer);
+            ForceTimer.Interval = TimeSpan.FromMilliseconds(20);
+            ForceTimer.Start();
+
+        }
+
+        public void forceTimer(object sender, EventArgs e)//力学模式控制的委托
+        {
+            if(isWatching)
+            {
+                profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY;
+
+                if (Math.Abs(methods.presN) < 1)
+                {
+                    ampObj[0].HaltMove();
+                }
+
+                if(methods.presN < -1)
+                {
+                    profileSettingsObj.ProfileVel = 50000;
+                    profileSettingsObj.ProfileAccel = 50000;
+                    profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                    ampObj[0].ProfileSettings = profileSettingsObj;
+
+                    ampObj[0].MoveRel(1);
+                }
+
+                if (methods.presN > 1)
+                {
+                    profileSettingsObj.ProfileVel = 50000;
+                    profileSettingsObj.ProfileAccel = 50000;
+                    profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                    ampObj[0].ProfileSettings = profileSettingsObj;
+
+                    ampObj[0].MoveRel(-1);
+                }
+            }
+        }
+
+        private void forceEndButton_Click(object sender, RoutedEventArgs e)//点击【停止】按钮时执行
+        {
+            ForceTimer.Stop();
+            profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
+        }
 
         #endregion
 
@@ -338,16 +404,7 @@ namespace ExoGaitMonitor
 
         #endregion
 
-
         #region 按钮
-
-        private void watchButton_Click(object sender, RoutedEventArgs e)//点击【启动监视】按钮时执行
-        {
-            SensorTimer = new DispatcherTimer();
-            SensorTimer.Tick += new EventHandler(WriteCMD);
-            SensorTimer.Interval = TimeSpan.FromMilliseconds(20);
-            SensorTimer.Start();
-        }
 
         private void angleSetButton_Click(object sender, RoutedEventArgs e)//点击【执行】按钮时执行
         {
@@ -1226,6 +1283,7 @@ namespace ExoGaitMonitor
 
 
         #endregion
+
 
     }
 }
