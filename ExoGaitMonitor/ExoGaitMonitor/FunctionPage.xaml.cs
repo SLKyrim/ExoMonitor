@@ -42,7 +42,7 @@ namespace ExoGaitMonitor
         private DispatcherTimer ShowTextTimer; //输出电机参数的计时器
         private DispatcherTimer AngleSetTimer; //电机按设置转角转动的计时器
         private DispatcherTimer GetZeroPointTimer; //回归原点的计时器
-        private DispatcherTimer TempTimer; //写电机实际位置数据的计时器
+        //private DispatcherTimer TempTimer; //写电机实际位置数据的计时器
         private DispatcherTimer SensorTimer; //传感器读写计时器
         private DispatcherTimer ForceTimer; //力学控制模式的计时器
 
@@ -290,18 +290,18 @@ namespace ExoGaitMonitor
                     pvtRich3Vel[i, j] = (pvtRich3Pos[i + 1, j] - pvtRich3Pos[i, j]) * 1000.0 / ((double)(Rich3times[i]));
                 }
 
-                StreamWriter toText = new StreamWriter("rawdata.txt", true);//打开记录数据文本,可于
-                toText.WriteLine(i.ToString() + '\t' +
-                        pvtRich3Pos[i, 0].ToString() + '\t' +
-                        pvtRich3Pos[i, 1].ToString() + '\t' +
-                        pvtRich3Pos[i, 2].ToString() + '\t' +
-                        pvtRich3Pos[i, 3].ToString() + '\t' +
-                        pvtRich3Vel[i, 0].ToString() + '\t' +
-                        pvtRich3Vel[i, 1].ToString() + '\t' +
-                        pvtRich3Vel[i, 2].ToString() + '\t' +
-                        pvtRich3Vel[i, 3].ToString() + '\t' +
-                        Rich3times[i].ToString());
-                toText.Close();
+                //StreamWriter toText = new StreamWriter("rawdata.txt", true);//打开记录数据文本,可于
+                //toText.WriteLine(i.ToString() + '\t' +
+                //        pvtRich3Pos[i, 0].ToString() + '\t' +
+                //        pvtRich3Pos[i, 1].ToString() + '\t' +
+                //        pvtRich3Pos[i, 2].ToString() + '\t' +
+                //        pvtRich3Pos[i, 3].ToString() + '\t' +
+                //        pvtRich3Vel[i, 0].ToString() + '\t' +
+                //        pvtRich3Vel[i, 1].ToString() + '\t' +
+                //        pvtRich3Vel[i, 2].ToString() + '\t' +
+                //        pvtRich3Vel[i, 3].ToString() + '\t' +
+                //        Rich3times[i].ToString());
+                //toText.Close();
             }
 
             pvtRich3Vel[ThirdRich - 1, 0] = 0;
@@ -328,6 +328,34 @@ namespace ExoGaitMonitor
 
             initButton.IsEnabled = true;
             watchButton.IsEnabled = false;
+        }
+
+        public void WriteCMD(object sender, EventArgs e)//向传感器写命令以及向传感器接收数据的委托
+        {
+
+            byte[] command = new byte[8];
+            command[0] = 0x01;//#设备地址
+            command[1] = 0x03;//#功能代码，读寄存器的值
+            command[2] = 0x00;//
+            command[3] = 0x00;//
+            command[4] = 0x00;//从第AI0号口开始读数据
+            command[5] = 0x04;//读四个口
+            command[6] = 0x44;//读四个口时的 CRC 校验的低 8 位
+            command[7] = 0x09;//读四个口时的 CRC 校验的高 8 位 
+            //一路的CRC校验位84 0A; 二路的是C4 0B; 三路的是 05 CB; 四路的是 44 09.
+
+            //string returnStr = "";
+            //for (int i = 0; i < command.Length; i++)
+            //{
+            //    returnStr += command[i].ToString("X2");
+            //}
+            //WritetextBox.Text = returnStr;//输出写入命令
+
+            methods.sensor1_SerialPort.Write(command, 0, 8);
+            Sensor1_textBox.Text = methods.presN[0].ToString("F");
+            Sensor2_textBox.Text = methods.presN[1].ToString("F");
+            Sensor3_textBox.Text = methods.presN[2].ToString("F");
+            Sensor4_textBox.Text = methods.presN[3].ToString("F");
         }
 
         private void initButton_Click(object sender, RoutedEventArgs e)
@@ -360,12 +388,12 @@ namespace ExoGaitMonitor
 
                 profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY;
 
-                if (Math.Abs(methods.presN) < 0.4)
+                if (Math.Abs(methods.presN[0]) < 0.4)
                 {
                     ampObj[1].HaltMove();
                 }
 
-                if(methods.presN < -0.4)
+                if(methods.presN[0] < -0.4)
                 {
                     profileSettingsObj.ProfileVel = 300000;
                     profileSettingsObj.ProfileAccel = 300000;
@@ -375,7 +403,7 @@ namespace ExoGaitMonitor
                     ampObj[1].MoveRel(1);
                 }
 
-                if (methods.presN > 0.4)
+                if (methods.presN[0] > 0.4)
                 {
                     profileSettingsObj.ProfileVel = 300000;
                     profileSettingsObj.ProfileAccel = 300000;
@@ -387,7 +415,7 @@ namespace ExoGaitMonitor
 
                 StreamWriter toText = new StreamWriter("force.txt", true);//打开记录数据文本,可于
                 toText.WriteLine(timeCountor.ToString() + '\t' +
-                methods.presN.ToString());
+                methods.presN[0].ToString());
                 timeCountor++;
                 toText.Close();
             }
@@ -911,31 +939,6 @@ namespace ExoGaitMonitor
                 angleSetButton.IsEnabled = true;
                 GetZeroPointTimer.Stop();
             }
-        }
-
-        public void WriteCMD(object sender, EventArgs e)//向传感器写命令以及向传感器接收数据的委托
-        {
-
-            byte[] command = new byte[8];
-            command[0] = 0x01;//#设备地址
-            command[1] = 0x03;//#功能代码，读寄存器的值
-            command[2] = 0x00;//
-            command[3] = 0x00;//
-            command[4] = 0x00;//从第AI0号口开始读数据
-            command[5] = 0x04;//读四个口
-            command[6] = 0x44;//读四个口时的 CRC 校验的低 8 位
-            command[7] = 0x09;//读四个口时的 CRC 校验的高 8 位 
-            //一路的CRC校验位84 0A; 二路的是C4 0B; 三路的是 05 CB; 四路的是 44 09.
-
-            //string returnStr = "";
-            //for (int i = 0; i < command.Length; i++)
-            //{
-            //    returnStr += command[i].ToString("X2");
-            //}
-            //WritetextBox.Text = returnStr;//输出写入命令
-
-            methods.sensor1_SerialPort.Write(command, 0, 8);
-            Sensor1_textBox.Text = methods.presN.ToString("F");
         }
 
         #endregion

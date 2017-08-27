@@ -86,24 +86,10 @@
                             <Button x:Name="forceEndButton" IsEnabled="False" Grid.Column="1" Margin="3" Grid.Row="1" VerticalAlignment="Bottom" Padding="5" Click="forceEndButton_Click" Content="停止"/>
                             <Button x:Name="forceStartButton" IsEnabled="False" Content="力学模式" HorizontalAlignment="Left" Margin="3,0,0,3" Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom" Padding="5" Click="forceStartButton_Click" Width="94"/>
                         </Grid>
-                        <!--串口选择-->
+                        <!--空白占位-->
                         <Grid Margin="5" DockPanel.Dock="Bottom" >
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="9*"/>
-                                <ColumnDefinition Width="12*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="10*"/>
-                                <RowDefinition Height="10*"/>
-                                <RowDefinition Height="10*"/>
-                                <RowDefinition Height="10*"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Text="传感器1串口:"  VerticalAlignment="Center" HorizontalAlignment="Left" Grid.Column="0" Margin="3" Grid.Row="0"/>
-                            <ComboBox x:Name="Sensor1_comboBox" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" Width="102" Margin="3" SelectedIndex="0" DropDownClosed="Sensor1_comboBox_DropDownClosed">
-                                <ComboBoxItem>请选择串口</ComboBoxItem>
-                            </ComboBox>
-                        </Grid>
 
+                        </Grid>
                     </DockPanel>
                 </GroupBox>
             </DockPanel>
@@ -127,7 +113,7 @@
                                     <Grid x:Name="Motor2"/>
                                 </GroupBox>
                             </DockPanel>
-                            <DockPanel Grid.Row="2" HorizontalAlignment="Left" Width="801">
+                            <DockPanel Grid.Row="2">
                                 <GroupBox Header="电机3右髋" Height="220" Grid.Row="0" DockPanel.Dock="Left" Margin="5,0,0,5" BorderThickness="1" BorderBrush="#FF7199E0">
                                     <Grid x:Name="Motor3"/>
                                 </GroupBox>
@@ -250,20 +236,26 @@
                             <GroupBox Header="拉压力传感器" DockPanel.Dock="Top" Margin="5,0,0,5" BorderThickness="1" BorderBrush="#FF7199E0">
                                 <StackPanel Orientation="Vertical">
                                     <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="串口:"  VerticalAlignment="Center" HorizontalAlignment="Left" Margin="3"/>
+                                        <ComboBox x:Name="Sensor1_comboBox" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="3" SelectedIndex="0" DropDownClosed="Sensor1_comboBox_DropDownClosed">
+                                            <ComboBoxItem>请选择串口</ComboBoxItem>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
                                         <Label x:Name="Motor1_el1"  Content="传感器1：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                                         <TextBox x:Name="Sensor1_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal">
                                         <Label x:Name="Motor1bel2" Content="传感器2：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                                        <TextBox x:Name="Motor1_pAngle_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                        <TextBox x:Name="Sensor2_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal">
                                         <Label x:Name="Motor1bel3" Content="传感器3：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                                        <TextBox x:Name="Motor1_locity_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                        <TextBox x:Name="Sensor3_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal">
                                         <Label x:Name="Motor1_bel4" Content="传感器4：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                                        <TextBox x:Name="Motor1_cel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
+                                        <TextBox x:Name="Sensor4_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
                                     </StackPanel>
                                     <StackPanel>
                                         <Button x:Name="watchButton" IsEnabled="False" Margin="5" Height="20" Click="watchButton_Click">启动监视</Button>

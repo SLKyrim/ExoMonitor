@@ -18,13 +18,17 @@ namespace ExoGaitMonitor
         private string[] IsOpenSerialPortCount = null;
 
         //传感器参数
-        public double presN = new double(); //传感器接收数据，单位N
-        public string presVolt = ""; //传感器电压
-        public int presVoltDec; //传感器电压十进制
-        const int FILTERCOUNT = 5; //滤波器计数设置常数
+        const int FILTER_COUNT = 5; //滤波器计数设置常数
+        const int SENSOR_NUM = 4;//使用传感器的个数
+
+        public double[] presN = new double[SENSOR_NUM]; //传感器接收数据，单位N
+        public string[] presVolt = new string[SENSOR_NUM]; //传感器电压
+        public double[] presVoltDec = new double[SENSOR_NUM]; //传感器电压十进制
+        public double[] tempPresN = new double[SENSOR_NUM]; //临时存储tempPresNs的和值
+
         private int countor = 0; //滤波需要的计数器,到 FILTERCOUNT时归零
-        private double[] tempPressN = new double[FILTERCOUNT];//滤波取 FILTERCOUNT个接收数据的平均值
-        private double _pressInitialization = 0;// 初始化所用压力值
+        private double[,] tempPresNs = new double[FILTER_COUNT, SENSOR_NUM];//滤波取 FILTERCOUNT个接收数据的平均值
+        private double[] _pressInitialization = new double[SENSOR_NUM];// 初始化所用压力值
         #endregion
 
         #region 传感器1串口
@@ -58,45 +62,54 @@ namespace ExoGaitMonitor
                 sensor1_SerialPort.Read(bytes, 0, bufferlen);  //读取串口内部缓冲区数据到buf数组
                 sensor1_SerialPort.DiscardInBuffer();          //清空串口内部缓存
                                                                //string presVolt = bytes[4].ToString();
-                presVolt = "";
-                for (int i = 3; i < 5; i++)
-                {
-                    presVolt += bytes[i].ToString("X2");
-                }
-                //presVolt = bytes[4].ToString("X2");
-                presVoltDec = Int16.Parse(presVolt, System.Globalization.NumberStyles.HexNumber);
-                //presN = presVoltDec * 5.0 / 4095;
-                //presN = 5.0 / 1.65 * (1.65 - 5.0 / 4095 * presVoltDec);
-                //presN = (presVoltDec - 128) * 5.0 / 127 * 50.0 / 1.65;
-                tempPressN[countor] = ((1.40 - presVoltDec * 5.0 / 4095) * 50.0 / 1.40) - _pressInitialization; //拉压力传感器输出，单位N
 
+                //presVolt[0] = bytes[3].ToString("X2") + bytes[4].ToString("X2");//接收AI0的信号
+                //presVolt[1] = bytes[5].ToString("X2") + bytes[6].ToString("X2");//接收AI1的信号
+                //presVolt[2] = bytes[7].ToString("X2") + bytes[8].ToString("X2");//接收AI2的信号
+                //presVolt[3] = bytes[9].ToString("X2") + bytes[10].ToString("X2");//接收AI3的信号
+
+                for (int i = 0; i < SENSOR_NUM; i++)
+                {
+                    tempPresN[i] = 0;
+                    presVolt[i] = bytes[3 + 2 * i].ToString("X2") + bytes[4 + 2 * i].ToString("X2");
+                    presVoltDec[i] = Int16.Parse(presVolt[i], System.Globalization.NumberStyles.HexNumber);
+                    tempPresNs[countor, i] = ((1.40 - presVoltDec[i] * 5.0 / 4095) * 50.0 / 1.40) - _pressInitialization[i]; //拉压力传感器输出，单位N
+                }
+               
                 countor++;
 
                 //滤波
-                if(countor == FILTERCOUNT)
+                if(countor == FILTER_COUNT)
                 {
                     countor = 0;//计数器归零
-                    for (int i = 0; i < FILTERCOUNT; i++)
+
+                    for (int i = 0; i < SENSOR_NUM; i++)
                     {
-                        presN += tempPressN[i];
-                    }
-                    presN /= FILTERCOUNT; //取平均值作为最终输出
+                        for (int j = 0; j < FILTER_COUNT; j++)
+                        {
+                            tempPresN[i] += tempPresNs[j, i];
+                        }
+                        presN[i] = tempPresN[i] / FILTER_COUNT;//取平均值作为最终输出
+                    }                 
                 }
             }    
         }
 
         public void pressInit()//压力初始化
         {
-            _pressInitialization = 0;
-
             int numberOfGather = 5;
 
-            for (int i = 0; i < numberOfGather; i++)
+            for (int i = 0; i< SENSOR_NUM; i++)
             {
-                _pressInitialization += presN;
-            }
+                _pressInitialization[i] = 0;
 
-            _pressInitialization /= numberOfGather;
+                for (int j = 0; j < numberOfGather; j++)
+                {
+                    _pressInitialization[i] += presN[i];
+                }
+
+                _pressInitialization[i] /= numberOfGather;
+            }
         }
 
         #endregion
@@ -109,8 +122,8 @@ namespace ExoGaitMonitor
 
         public bool SerialPortClose()//关闭窗口时执行
         {
-            byte[] clearBytes = new byte[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
-            SendControlCMD(clearBytes);//避免不规范操作造成再开机时电机自启动
+            //byte[] clearBytes = new byte[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
+            //SendControlCMD(clearBytes);//避免不规范操作造成再开机时电机自启动
 
             if (sensor1_SerialPort != null)
             {
@@ -122,29 +135,29 @@ namespace ExoGaitMonitor
             return true;
         }
 
-        public void SendControlCMD(byte[] command)//串口写入字节命令
-        {
-            //byte[] command = new byte[19];
-            //command[0] = 0x23;//开始字符
-            //command[1] = 0x01;//电机1 使能端
-            //command[2] = 0x01;//电机1 方向
-            //command[3] = 0x08;//电机1 转速高位
-            //command[4] = 0x88;//电机1 转速低位（范围1800-16200）对应速度范围（0-2590r/min）
-            //command[5] = 0x01;//电机2
-            //command[6] = 0x01;//电机2
-            //command[7] = 0x08;//电机2
-            //command[8] = 0x88;//电机2
-            //command[9] = 0x01;//电机3
-            //command[10] = 0x01;//电机3
-            //command[11] = 0x08;//电机3
-            //command[12] = 0x88;//电机3
-            //command[13] = 0x01;//电机4
-            //command[14] = 0x01;//电机4
-            //command[15] = 0x08;//电机4
-            //command[16] = 0x88;//电机4
-            //command[17] = 0x0D;//结束字符
-            //command[18] = 0x0A;
-            sensor1_SerialPort.Write(command, 0, 8);
-        }
+        //public void SendControlCMD(byte[] command)//串口写入字节命令
+        //{
+        //    //byte[] command = new byte[19];
+        //    //command[0] = 0x23;//开始字符
+        //    //command[1] = 0x01;//电机1 使能端
+        //    //command[2] = 0x01;//电机1 方向
+        //    //command[3] = 0x08;//电机1 转速高位
+        //    //command[4] = 0x88;//电机1 转速低位（范围1800-16200）对应速度范围（0-2590r/min）
+        //    //command[5] = 0x01;//电机2
+        //    //command[6] = 0x01;//电机2
+        //    //command[7] = 0x08;//电机2
+        //    //command[8] = 0x88;//电机2
+        //    //command[9] = 0x01;//电机3
+        //    //command[10] = 0x01;//电机3
+        //    //command[11] = 0x08;//电机3
+        //    //command[12] = 0x88;//电机3
+        //    //command[13] = 0x01;//电机4
+        //    //command[14] = 0x01;//电机4
+        //    //command[15] = 0x08;//电机4
+        //    //command[16] = 0x88;//电机4
+        //    //command[17] = 0x0D;//结束字符
+        //    //command[18] = 0x0A;
+        //    sensor1_SerialPort.Write(command, 0, 8);
+        //}
     }
 }
