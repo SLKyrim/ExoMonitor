@@ -24,6 +24,7 @@ namespace ExoGaitMonitor
         const int FILTERCOUNT = 5; //滤波器计数设置常数
         private int countor = 0; //滤波需要的计数器,到 FILTERCOUNT时归零
         private double[] tempPressN = new double[FILTERCOUNT];//滤波取 FILTERCOUNT个接收数据的平均值
+        private double _pressInitialization = 0;// 初始化所用压力值
         #endregion
 
         #region 传感器1串口
@@ -67,7 +68,7 @@ namespace ExoGaitMonitor
                 //presN = presVoltDec * 5.0 / 4095;
                 //presN = 5.0 / 1.65 * (1.65 - 5.0 / 4095 * presVoltDec);
                 //presN = (presVoltDec - 128) * 5.0 / 127 * 50.0 / 1.65;
-                tempPressN[countor] = (1.40 - presVoltDec * 5.0 / 4095) * 50.0 / 1.40; //拉压力传感器输出，单位N
+                tempPressN[countor] = ((1.40 - presVoltDec * 5.0 / 4095) * 50.0 / 1.40) - _pressInitialization; //拉压力传感器输出，单位N
 
                 countor++;
 
@@ -82,6 +83,20 @@ namespace ExoGaitMonitor
                     presN /= FILTERCOUNT; //取平均值作为最终输出
                 }
             }    
+        }
+
+        public void pressInit()//压力初始化
+        {
+            _pressInitialization = 0;
+
+            int numberOfGather = 5;
+
+            for (int i = 0; i < numberOfGather; i++)
+            {
+                _pressInitialization += presN;
+            }
+
+            _pressInitialization /= numberOfGather;
         }
 
         #endregion

@@ -220,7 +220,7 @@ namespace ExoGaitMonitor
         {
 
             #region 获取原始数据
-            string[] ral = File.ReadAllLines("C:\\Users\\Administrator\\Desktop\\ExoGaitMonitor\\GaitData.txt", Encoding.Default);
+            string[] ral = File.ReadAllLines(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\GaitData.txt", Encoding.Default);
 
             for (int i = 0; i < ARRAY_LEN; i++)
             {
@@ -317,7 +317,7 @@ namespace ExoGaitMonitor
 
         #region 力学模式
 
-        private void watchButton_Click(object sender, RoutedEventArgs e)//点击【启动监视 + 滤波】按钮时执行
+        private void watchButton_Click(object sender, RoutedEventArgs e)//点击【启动监视】按钮时执行
         {
             isWatching = true;
 
@@ -325,6 +325,16 @@ namespace ExoGaitMonitor
             SensorTimer.Tick += new EventHandler(WriteCMD);
             SensorTimer.Interval = TimeSpan.FromMilliseconds(10);
             SensorTimer.Start();
+
+            initButton.IsEnabled = true;
+            watchButton.IsEnabled = false;
+        }
+
+        private void initButton_Click(object sender, RoutedEventArgs e)
+        {
+            methods.pressInit();
+            forceStartButton.IsEnabled = true;
+            initButton.IsEnabled = false;
         }
 
         private void forceStartButton_Click(object sender, RoutedEventArgs e)//点击【力学模式】按钮时执行
@@ -336,6 +346,9 @@ namespace ExoGaitMonitor
 
             timeCountor = 0;
             File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\force.txt", string.Empty);
+
+            forceStartButton.IsEnabled = false;
+            forceEndButton.IsEnabled = true;
         }
 
         public void forceTimer(object sender, EventArgs e)//力学模式控制的委托
@@ -347,12 +360,12 @@ namespace ExoGaitMonitor
 
                 profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY;
 
-                if (Math.Abs(methods.presN) < 0.8)
+                if (Math.Abs(methods.presN) < 0.4)
                 {
                     ampObj[1].HaltMove();
                 }
 
-                if(methods.presN < -0.8)
+                if(methods.presN < -0.4)
                 {
                     profileSettingsObj.ProfileVel = 300000;
                     profileSettingsObj.ProfileAccel = 300000;
@@ -362,7 +375,7 @@ namespace ExoGaitMonitor
                     ampObj[1].MoveRel(1);
                 }
 
-                if (methods.presN > 0.8)
+                if (methods.presN > 0.4)
                 {
                     profileSettingsObj.ProfileVel = 300000;
                     profileSettingsObj.ProfileAccel = 300000;
@@ -374,7 +387,7 @@ namespace ExoGaitMonitor
 
                 StreamWriter toText = new StreamWriter("force.txt", true);//打开记录数据文本,可于
                 toText.WriteLine(timeCountor.ToString() + '\t' +
-                methods.presVolt.ToString());
+                methods.presN.ToString());
                 timeCountor++;
                 toText.Close();
             }
@@ -383,12 +396,19 @@ namespace ExoGaitMonitor
         private void forceEndButton_Click(object sender, RoutedEventArgs e)//点击【停止】按钮时执行
         {
             ampObj[1].HaltMove();
+            isWatching = false;
             ForceTimer.Stop();
+            SensorTimer.Stop();
             profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
 
             statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
             statusInfoTextBlock.Text = "力学控制模式已停止";
+
+            forceEndButton.IsEnabled = false;
+            watchButton.IsEnabled = true;
         }
+
+
 
         #endregion
 
@@ -415,6 +435,8 @@ namespace ExoGaitMonitor
                     
                 }
             }
+
+            watchButton.IsEnabled = true;
         }
 
         #endregion
@@ -1296,6 +1318,7 @@ namespace ExoGaitMonitor
             DataPoint dp = sender as DataPoint;
             MessageBox.Show(dp.YValue.ToString());
         }
+
 
 
         #endregion

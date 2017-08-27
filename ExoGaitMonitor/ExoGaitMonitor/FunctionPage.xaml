@@ -67,9 +67,9 @@
                                 <TextBlock Padding="5"><Run Text="电机2左髋，向后弯曲角为负"/></TextBlock>
                                 <TextBlock Padding="5"><Run Text="电机3右髋，向后弯曲角为正"/></TextBlock>
                                 <TextBlock Padding="5"><Run Text="电机4右膝，向后弯曲角为正"/></TextBlock>
-                                <TextBlock Foreground="#FF0078D7" FontSize="16" Padding="5"><Run Text="绘图说明："/></TextBlock>
-                                <TextBlock Padding="5"><Run Text="1.蓝线为输入步态"/></TextBlock>
-                                <TextBlock Padding="5"><Run Text="2.橙线为实际步态"/></TextBlock>
+                                <TextBlock Foreground="#FF0078D7" FontSize="16" Padding="5"><Run Text="说明："/></TextBlock>
+                                <TextBlock Padding="5"><Run Text="1."/></TextBlock>
+                                <TextBlock Padding="5"><Run Text="2."/></TextBlock>
                             </StackPanel>
                         </Grid>
                         <Grid DockPanel.Dock="Bottom" >
@@ -83,8 +83,8 @@
                             </Grid.RowDefinitions>
                             <Button x:Name="endButton" Grid.Column="1" Margin="3" Grid.Row="0" VerticalAlignment="Bottom" Padding="5" Click="endButton_Click" Content="PVT停止"/>
                             <Button x:Name="startButton" Content="PVT模式" HorizontalAlignment="Left" Margin="3,0,0,3" Grid.Row="0" Grid.Column="0" VerticalAlignment="Bottom" Padding="5" Click="startButton_Click" Width="94"/>
-                            <Button x:Name="forceEndButton" Grid.Column="1" Margin="3" Grid.Row="1" VerticalAlignment="Bottom" Padding="5" Click="forceEndButton_Click" Content="停止"/>
-                            <Button x:Name="forceStartButton" Content="力学模式" HorizontalAlignment="Left" Margin="3,0,0,3" Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom" Padding="5" Click="forceStartButton_Click" Width="94"/>
+                            <Button x:Name="forceEndButton" IsEnabled="False" Grid.Column="1" Margin="3" Grid.Row="1" VerticalAlignment="Bottom" Padding="5" Click="forceEndButton_Click" Content="停止"/>
+                            <Button x:Name="forceStartButton" IsEnabled="False" Content="力学模式" HorizontalAlignment="Left" Margin="3,0,0,3" Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom" Padding="5" Click="forceStartButton_Click" Width="94"/>
                         </Grid>
                         <!--串口选择-->
                         <Grid Margin="5" DockPanel.Dock="Bottom" >
@@ -266,7 +266,10 @@
                                         <TextBox x:Name="Motor1_cel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
                                     </StackPanel>
                                     <StackPanel>
-                                        <Button x:Name="watchButton" Margin="5" Height="20" Click="watchButton_Click">启动监视 + 滤波</Button>
+                                        <Button x:Name="watchButton" IsEnabled="False" Margin="5" Height="20" Click="watchButton_Click">启动监视</Button>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <Button x:Name="initButton" IsEnabled="False" Margin="5" Height="20" Click="initButton_Click">初始归零</Button>
                                     </StackPanel>
                                 </StackPanel>
                             </GroupBox>
