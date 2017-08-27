@@ -323,7 +323,7 @@ namespace ExoGaitMonitor
 
             SensorTimer = new DispatcherTimer();
             SensorTimer.Tick += new EventHandler(WriteCMD);
-            SensorTimer.Interval = TimeSpan.FromMilliseconds(20);
+            SensorTimer.Interval = TimeSpan.FromMilliseconds(10);
             SensorTimer.Start();
         }
 
@@ -331,7 +331,7 @@ namespace ExoGaitMonitor
         {
             ForceTimer = new DispatcherTimer();
             ForceTimer.Tick += new EventHandler(forceTimer);
-            ForceTimer.Interval = TimeSpan.FromMilliseconds(20);
+            ForceTimer.Interval = TimeSpan.FromMilliseconds(10);
             ForceTimer.Start();
 
             timeCountor = 0;

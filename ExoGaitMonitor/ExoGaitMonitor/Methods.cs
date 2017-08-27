@@ -21,7 +21,9 @@ namespace ExoGaitMonitor
         public double presN = new double(); //传感器接收数据，单位N
         public string presVolt = ""; //传感器电压
         public int presVoltDec; //传感器电压十进制
-
+        const int FILTERCOUNT = 5; //滤波器计数设置常数
+        private int countor = 0; //滤波需要的计数器,到 FILTERCOUNT时归零
+        private double[] tempPressN = new double[FILTERCOUNT];//滤波取 FILTERCOUNT个接收数据的平均值
         #endregion
 
         #region 传感器1串口
@@ -42,6 +44,7 @@ namespace ExoGaitMonitor
             sensor1_SerialPort.Parity = Parity.None;
             sensor1_SerialPort.StopBits = StopBits.One;
             sensor1_SerialPort.Open();
+            countor = 0;
             sensor1_SerialPort.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(sensor1_DataReceived);
         }
 
@@ -64,7 +67,20 @@ namespace ExoGaitMonitor
                 //presN = presVoltDec * 5.0 / 4095;
                 //presN = 5.0 / 1.65 * (1.65 - 5.0 / 4095 * presVoltDec);
                 //presN = (presVoltDec - 128) * 5.0 / 127 * 50.0 / 1.65;
-                presN = (1.40 - presVoltDec * 5.0 / 4095) * 50.0 / 1.40; //拉压力传感器输出，单位N
+                tempPressN[countor] = (1.40 - presVoltDec * 5.0 / 4095) * 50.0 / 1.40; //拉压力传感器输出，单位N
+
+                countor++;
+
+                //滤波
+                if(countor == FILTERCOUNT)
+                {
+                    countor = 0;//计数器归零
+                    for (int i = 0; i < FILTERCOUNT; i++)
+                    {
+                        presN += tempPressN[i];
+                    }
+                    presN /= FILTERCOUNT; //取平均值作为最终输出
+                }
             }    
         }
 
