@@ -17,7 +17,7 @@ namespace ExoGaitMonitor
         //获取可用串口名
         private string[] IsOpenSerialPortCount = null;
 
-        //传感器参数
+        //拉压力传感器参数
         const int FILTER_COUNT = 5; //滤波器计数设置常数
         const int SENSOR_NUM = 4;//使用传感器的个数
 
@@ -33,7 +33,7 @@ namespace ExoGaitMonitor
 
         #region 传感器1串口
 
-        public void sensor1_SerialPort_Init(string comstring)//传感器1串口初始化
+        public void sensor1_SerialPort_Init(string comstring)//拉压力传感器串口初始化
         {
             if (sensor1_SerialPort != null)
             {
@@ -53,7 +53,7 @@ namespace ExoGaitMonitor
             sensor1_SerialPort.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(sensor1_DataReceived);
         }
 
-        private void sensor1_DataReceived(object sender, SerialDataReceivedEventArgs e)//传感器1串口接收数据
+        private void sensor1_DataReceived(object sender, SerialDataReceivedEventArgs e)//拉压力传感器串口接收数据
         {
             int bufferlen = sensor1_SerialPort.BytesToRead;
             if (bufferlen >= 13)
@@ -89,7 +89,7 @@ namespace ExoGaitMonitor
                         {
                             tempPresN[i] += tempPresNs[j, i];
                         }
-                        presN[i] = tempPresN[i] / FILTER_COUNT;//取平均值作为最终输出
+                        presN[i] = tempPresN[i] / FILTER_COUNT;//取平均值作为最终输出，单位N
                     }                 
                 }
             }    

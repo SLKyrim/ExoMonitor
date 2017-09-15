@@ -45,6 +45,7 @@ namespace ExoGaitMonitor
         //private DispatcherTimer TempTimer; //写电机实际位置数据的计时器
         private DispatcherTimer SensorTimer; //传感器读写计时器
         private DispatcherTimer ForceTimer; //力学控制模式的计时器
+        private DispatcherTimer SACTimer; //SAC模式的计时器
 
         private double[] trajectory = new double[1100]; //步态采集数据轨迹
         private double[,] trajectories = new double[1001, 4]; //输入四个关节的步态数据
@@ -53,7 +54,9 @@ namespace ExoGaitMonitor
         private double[,] originalTrajectories = new double[1001, 4]; //保存初始输入数据
 
         //输出文本委托的参数
-        private double[] ampObjAngleActual = new double[ARRAY_COL];//电机的转角
+        private double[] ampObjAngleActual = new double[NUM_MOTOR];//电机的转角，单位：°
+        private double[] ampObjAngleVelActual = new double[NUM_MOTOR];//电机的角速度，单位：rad/s
+        private double[] ampObjAngleAccActual = new double[NUM_MOTOR];//电机的角加速度，单位：rad/s^2
 
         //PVT
         const int ARRAY_LEN = 468; //轨迹数据数组行数的大小
@@ -94,7 +97,14 @@ namespace ExoGaitMonitor
         public bool flag = false;
         public string sensor1_com = null;         //传感器1所用串口
 
-        private bool isWatching = false; //【启动监视】按钮是否被按下
+        //SAC
+        const double LEFT_THIGH_LENGTH = 0.384; //外骨骼左大腿长，单位：m
+        const double LEFT_THIGH_WEIGHT = 0.381; //外骨骼左大腿重，单位：kg
+        const double LEFT_SHANK_LENGTH = 0.450; //外骨骼左小腿长，单位：m
+        const double LEFT_SHANK_WEIGHT = 1.323; //外骨骼左小腿重，单位：kg
+        const double ALPHA = 10; //灵敏度放大因子
+        const int NUM_MOTOR = 4; //电机个数
+        const double G = 9.8; //重力加速度
         #endregion
 
         private void FunctionPage_Loaded(object sender, RoutedEventArgs e)//打开窗口后进行的初始化操作
@@ -319,8 +329,6 @@ namespace ExoGaitMonitor
 
         private void watchButton_Click(object sender, RoutedEventArgs e)//点击【启动监视】按钮时执行
         {
-            isWatching = true;
-
             SensorTimer = new DispatcherTimer();
             SensorTimer.Tick += new EventHandler(WriteCMD);
             SensorTimer.Interval = TimeSpan.FromMilliseconds(10);
@@ -358,10 +366,11 @@ namespace ExoGaitMonitor
             Sensor4_textBox.Text = methods.presN[3].ToString("F");
         }
 
-        private void initButton_Click(object sender, RoutedEventArgs e)
+        private void initButton_Click(object sender, RoutedEventArgs e)//点击【初始归零】按钮时执行
         {
             methods.pressInit();
             forceStartButton.IsEnabled = true;
+            SACStartButton.IsEnabled = true;
             initButton.IsEnabled = false;
         }
 
@@ -373,58 +382,58 @@ namespace ExoGaitMonitor
             ForceTimer.Start();
 
             timeCountor = 0;
-            File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\force.txt", string.Empty);
+            File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\force.txt", string.Empty);//写拉压力传感器读数
 
             forceStartButton.IsEnabled = false;
+            SACStartButton.IsEnabled = false;
             forceEndButton.IsEnabled = true;
         }
 
         public void forceTimer(object sender, EventArgs e)//力学模式控制的委托
         {
-            if(isWatching)
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+            statusInfoTextBlock.Text = "进入力学控制模式!";
+
+            profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY;
+
+            if (Math.Abs(methods.presN[0]) < 0.4)
             {
-                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-                statusInfoTextBlock.Text = "进入力学控制模式!";
-
-                profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY;
-
-                if (Math.Abs(methods.presN[0]) < 0.4)
-                {
-                    ampObj[1].HaltMove();
-                }
-
-                if(methods.presN[0] < -0.4)
-                {
-                    profileSettingsObj.ProfileVel = 300000;
-                    profileSettingsObj.ProfileAccel = 300000;
-                    profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
-                    ampObj[1].ProfileSettings = profileSettingsObj;
-
-                    ampObj[1].MoveRel(1);
-                }
-
-                if (methods.presN[0] > 0.4)
-                {
-                    profileSettingsObj.ProfileVel = 300000;
-                    profileSettingsObj.ProfileAccel = 300000;
-                    profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
-                    ampObj[1].ProfileSettings = profileSettingsObj;
-
-                    ampObj[1].MoveRel(-1);
-                }
-
-                StreamWriter toText = new StreamWriter("force.txt", true);//打开记录数据文本,可于
-                toText.WriteLine(timeCountor.ToString() + '\t' +
-                methods.presN[0].ToString());
-                timeCountor++;
-                toText.Close();
+                ampObj[1].HaltMove();
             }
+
+            if (methods.presN[0] < -0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[1].ProfileSettings = profileSettingsObj;
+
+                ampObj[1].MoveRel(1);
+            }
+
+            if (methods.presN[0] > 0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[1].ProfileSettings = profileSettingsObj;
+
+                ampObj[1].MoveRel(-1);
+            }
+
+            StreamWriter toText = new StreamWriter("force.txt", true);//打开记录数据文本,可于
+            toText.WriteLine(timeCountor.ToString() + '\t' +
+            methods.presN[0].ToString());
+            timeCountor++;
+            toText.Close();
         }
 
         private void forceEndButton_Click(object sender, RoutedEventArgs e)//点击【停止】按钮时执行
         {
-            ampObj[1].HaltMove();
-            isWatching = false;
+            for (int i = 0; i < 4; i++)
+            {
+                ampObj[i].HaltMove();
+            }
             ForceTimer.Stop();
             SensorTimer.Stop();
             profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
@@ -436,7 +445,80 @@ namespace ExoGaitMonitor
             watchButton.IsEnabled = true;
         }
 
+        #endregion
 
+        #region SAC模式
+
+        private void SACStartButton_Click(object sender, RoutedEventArgs e)//点击【SAC模式】按钮时执行
+        {
+            SACEndButton.IsEnabled = true;
+            SACStartButton.IsEnabled = false;
+            forceStartButton.IsEnabled = false;
+
+            SACTimer = new DispatcherTimer();
+            SACTimer.Tick += new EventHandler(sacTimer);
+            SACTimer.Interval = TimeSpan.FromMilliseconds(10);
+            SACTimer.Start();
+        }
+
+        public void sacTimer(object sender, EventArgs e)//SAC模式控制的委托
+        {
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+            statusInfoTextBlock.Text = "进入SAC控制模式!";
+
+            profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY;
+
+            double[] radian = new double[NUM_MOTOR]; //角度矩阵，单位：rad
+            double[] ang_vel = new double[NUM_MOTOR]; //角速度矩阵，单位：rad/s
+            double[] ang_acc = new double[NUM_MOTOR]; //角加速度矩阵，单位：rad/s^2
+            double[] inertia = new double[NUM_MOTOR]; //惯性矩阵
+            double[] coriolis = new double[NUM_MOTOR]; //科里奥利矩阵
+            double[] gravity = new double[NUM_MOTOR]; //重力矩阵
+
+            for (int i = 0; i < NUM_MOTOR; i++)
+            {
+                ampObjAngleActual[i] = (ampObj[i].PositionActual / userUnits[i]) * (360.0 / RATIO);
+                radian[i] = Math.PI / 180.0 * ampObjAngleActual[i];//角度转换为弧度
+                ampObjAngleVelActual[i] = (ampObj[i].VelocityActual / userUnits[i]) * 2.0 * Math.PI;//角速度单位从counts/s转化为rad/s
+                ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI;//角加速度单位从counts/s^2转化为rad/s^2
+            }
+
+            //左膝
+            inertia[0] = (1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH +
+                          1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Cos(radian[0])) * ampObjAngleAccActual[1] +
+                          1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH * ampObjAngleAccActual[0];
+            coriolis[0] = 1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_THIGH_LENGTH * LEFT_SHANK_LENGTH * Math.Sin(radian[0]) * ampObjAngleVelActual[1] * ampObjAngleVelActual[1];
+            gravity[0] = 1.0 / 2.0 * LEFT_SHANK_WEIGHT * G * LEFT_SHANK_LENGTH * Math.Cos(radian[0] + radian[1]);
+            //左髋
+            inertia[1] = (1.0 / 3.0 * LEFT_THIGH_WEIGHT * LEFT_THIGH_LENGTH * LEFT_THIGH_LENGTH +
+                         LEFT_SHANK_WEIGHT * LEFT_THIGH_LENGTH * LEFT_THIGH_LENGTH +
+                         1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH +
+                         LEFT_THIGH_WEIGHT * LEFT_THIGH_LENGTH * LEFT_SHANK_LENGTH * Math.Cos(radian[0])) * ampObjAngleAccActual[1] +
+                         (1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH +
+                         1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Cos(radian[0])) * ampObjAngleAccActual[0];
+            coriolis[1] = LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Sin(radian[0]) * ampObjAngleVelActual[0] * ampObjAngleVelActual[1] +
+                          1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Sin(radian[0]) * ampObjAngleVelActual[0] * ampObjAngleVelActual[0];
+            gravity[1] = (1.0 / 2.0 * LEFT_THIGH_WEIGHT + LEFT_SHANK_WEIGHT) * G * LEFT_THIGH_LENGTH * Math.Cos(radian[1]) +
+                          1.0 / 2.0 * LEFT_SHANK_WEIGHT * G * LEFT_SHANK_LENGTH * Math.Cos(radian[0] + radian[1]);
+
+            double[] torque = new double[NUM_MOTOR]; //减速器扭矩
+
+            for (int i = 0; i < NUM_MOTOR; i++)//基于SAC计算减速器扭矩
+            {
+                torque[i] = gravity[i] + (1 - 1.0 / ALPHA) * (inertia[i] + coriolis[i]);
+            } 
+
+            StreamWriter toText = new StreamWriter("force.txt", true);//打开记录数据文本,可于
+            toText.WriteLine(timeCountor.ToString() + '\t' +
+            methods.presN[0].ToString());
+            timeCountor++;
+            toText.Close();
+        }
+
+        private void SACEndButton_Click(object sender, RoutedEventArgs e)//点击【SAC停止】按钮时执行
+        {
+
+        }
 
         #endregion
 
@@ -609,38 +691,47 @@ namespace ExoGaitMonitor
         {
             //2017-8-11-用ampObj[2].MotorInfo.ctsPerRev测得EC90盘式电机编码器一圈有25600个计数
             //2017-8-11-验证减速器减速比为160-即电机转160圈，关节转1圈
+            try
+            {
+                for(int i = 0; i < NUM_MOTOR; i++)
+                {
+                    ampObjAngleActual[i] = (ampObj[i].PositionActual / userUnits[i]) * (360.0 / RATIO);//角度单位从counts转化为°
+                    ampObjAngleVelActual[i] = (ampObj[i].VelocityActual / userUnits[i]) * 2.0 * Math.PI;//角速度单位从counts/s转化为rad/s
+                    ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI;//角加速度单位从counts/s^2转化为rad/s^2
+                }
+                //电机1(左膝)的文本框输出
+                Motor1_position_textBox.Text = ampObjAngleActual[0].ToString("F"); //电机实际位置，单位：°
+                Motor1_phaseAngle_textBox.Text = (ampObj[0].CurrentActual * 0.01).ToString("F"); //电机电流，单位：A
+                Motor1_velocity_textBox.Text = ampObjAngleVelActual[0].ToString("F"); //电机实际速度，单位：rad/s
+                Motor1_accel_textBox.Text = ampObjAngleAccActual[0].ToString("F"); //由轨迹计算而得的加速度，单位：rad/s^2
+                //Motor1_decel_textBox.Text = userUnits[0].ToString(); //编码器用户自定义单位，单位：counts/圈
 
-            ampObjAngleActual[0] = (ampObj[0].PositionActual / userUnits[0]) * (360.0 / RATIO);
-            ampObjAngleActual[1] = (ampObj[1].PositionActual / userUnits[1]) * (360.0 / RATIO);
-            ampObjAngleActual[2] = (ampObj[2].PositionActual / userUnits[2]) * (360.0 / RATIO);
-            ampObjAngleActual[3] = (ampObj[3].PositionActual / userUnits[3]) * (360.0 / RATIO);
-            //电机1(左膝)的文本框输出
-            Motor1_position_textBox.Text = ampObjAngleActual[0].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
-            Motor1_phaseAngle_textBox.Text = (ampObj[0].CurrentActual * 0.01).ToString("F"); //电机电流
-            Motor1_velocity_textBox.Text = ampObj[0].VelocityActual.ToString("F"); //电机实际速度
-            Motor1_accel_textBox.Text = ampObj[0].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
-            Motor1_decel_textBox.Text = userUnits[0].ToString(); //编码器用户自定义单位：counts/圈
+                //电机2(左髋)的文本框输出
+                Motor2_position_textBox.Text = ampObjAngleActual[1].ToString("F");
+                Motor2_phaseAngle_textBox.Text = (ampObj[1].CurrentActual * 0.01).ToString("F");
+                Motor2_velocity_textBox.Text = ampObjAngleVelActual[1].ToString("F");
+                Motor2_accel_textBox.Text = ampObjAngleAccActual[1].ToString("F");
+                //Motor2_decel_textBox.Text = userUnits[1].ToString();
 
-            //电机2(左髋)的文本框输出
-            Motor2_position_textBox.Text = ampObjAngleActual[1].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
-            Motor2_phaseAngle_textBox.Text = (ampObj[1].CurrentActual * 0.01).ToString("F");
-            Motor2_velocity_textBox.Text = ampObj[1].VelocityActual.ToString("F"); //电机实际速度
-            Motor2_accel_textBox.Text = ampObj[1].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
-            Motor2_decel_textBox.Text = userUnits[1].ToString(); 
+                //电机3(右髋)的文本框输出
+                Motor3_position_textBox.Text = ampObjAngleActual[2].ToString("F");
+                Motor3_phaseAngle_textBox.Text = (ampObj[2].CurrentActual * 0.01).ToString("F");
+                Motor3_velocity_textBox.Text = ampObjAngleVelActual[2].ToString("F");
+                Motor3_accel_textBox.Text = ampObjAngleAccActual[2].ToString("F");
+                //Motor3_decel_textBox.Text = userUnits[2].ToString();
 
-            //电机3(右髋)的文本框输出
-            Motor3_position_textBox.Text = ampObjAngleActual[2].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
-            Motor3_phaseAngle_textBox.Text = (ampObj[2].CurrentActual * 0.01).ToString("F");
-            Motor3_velocity_textBox.Text = ampObj[2].VelocityActual.ToString("F"); //电机实际速度
-            Motor3_accel_textBox.Text = ampObj[2].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
-            Motor3_decel_textBox.Text = userUnits[2].ToString(); 
-
-            //电机4(右膝)的文本框输出
-            Motor4_position_textBox.Text = ampObjAngleActual[3].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
-            Motor4_phaseAngle_textBox.Text = (ampObj[3].CurrentActual * 0.01).ToString("F");
-            Motor4_velocity_textBox.Text = ampObj[3].VelocityActual.ToString("F"); //电机实际速度
-            Motor4_accel_textBox.Text = ampObj[3].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
-            Motor4_decel_textBox.Text = userUnits[3].ToString(); 
+                //电机4(右膝)的文本框输出
+                Motor4_position_textBox.Text = ampObjAngleActual[3].ToString("F");
+                Motor4_phaseAngle_textBox.Text = (ampObj[3].CurrentActual * 0.01).ToString("F");
+                Motor4_velocity_textBox.Text = ampObjAngleVelActual[3].ToString("F");
+                Motor4_accel_textBox.Text = ampObjAngleAccActual[3].ToString("F");
+                //Motor4_decel_textBox.Text = userUnits[3].ToString();
+            }
+            catch
+            {
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                statusInfoTextBlock.Text = "未连接外骨骼！";
+            }
         }
 
         public void angleSetTimer(object sender, EventArgs e)//电机按设置角度转动的委托
@@ -1325,7 +1416,6 @@ namespace ExoGaitMonitor
 
 
         #endregion
-
 
     }
 }

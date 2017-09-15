@@ -80,11 +80,14 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="10*"/>
                                 <RowDefinition Height="10*"/>
+                                <RowDefinition Height="10*"/>
                             </Grid.RowDefinitions>
                             <Button x:Name="endButton" Grid.Column="1" Margin="3" Grid.Row="0" VerticalAlignment="Bottom" Padding="5" Click="endButton_Click" Content="PVT停止"/>
                             <Button x:Name="startButton" Content="PVT模式" HorizontalAlignment="Left" Margin="3,0,0,3" Grid.Row="0" Grid.Column="0" VerticalAlignment="Bottom" Padding="5" Click="startButton_Click" Width="94"/>
                             <Button x:Name="forceEndButton" IsEnabled="False" Grid.Column="1" Margin="3" Grid.Row="1" VerticalAlignment="Bottom" Padding="5" Click="forceEndButton_Click" Content="停止"/>
                             <Button x:Name="forceStartButton" IsEnabled="False" Content="力学模式" HorizontalAlignment="Left" Margin="3,0,0,3" Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom" Padding="5" Click="forceStartButton_Click" Width="94"/>
+                            <Button x:Name="SACEndButton" IsEnabled="False" Grid.Column="1" Margin="3" Grid.Row="2" VerticalAlignment="Bottom" Padding="5" Click="SACEndButton_Click" Content="SAC停止"/>
+                            <Button x:Name="SACStartButton" IsEnabled="False" Content="SAC模式" HorizontalAlignment="Left" Margin="3,0,0,3" Grid.Row="2" Grid.Column="0" VerticalAlignment="Bottom" Padding="5" Click="SACStartButton_Click" Width="94"/>
                         </Grid>
                         <!--空白占位-->
                         <Grid Margin="5" DockPanel.Dock="Bottom" >
@@ -151,10 +154,7 @@
                                         <Label x:Name="Motor1_label4" Content="加速度：" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                                         <TextBox x:Name="Motor1_accel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
                                     </StackPanel>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Label x:Name="Motor1_label5" Content="计数/圈: " HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                                        <TextBox x:Name="Motor1_decel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
-                                    </StackPanel>
+           
                                 </StackPanel>
                             </GroupBox>
                             <!--电机2左髋-->
@@ -176,10 +176,7 @@
                                         <Label Content="{Binding Content, ElementName=Motor1_label4}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                                         <TextBox x:Name="Motor2_accel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
                                     </StackPanel>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Label Content="{Binding Content, ElementName=Motor1_label5}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                                        <TextBox x:Name="Motor2_decel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
-                                    </StackPanel>
+             
                                 </StackPanel>
                             </GroupBox>
                             <!--电机3右髋-->
@@ -201,10 +198,7 @@
                                         <Label Content="{Binding Content, ElementName=Motor1_label4}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                                         <TextBox x:Name="Motor3_accel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
                                     </StackPanel>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Label Content="{Binding Content, ElementName=Motor1_label5}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                                        <TextBox x:Name="Motor3_decel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
-                                    </StackPanel>
+              
                                 </StackPanel>
                             </GroupBox>
                             <!--电机4右膝-->
@@ -226,10 +220,7 @@
                                         <Label Content="{Binding Content, ElementName=Motor1_label4}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                                         <TextBox x:Name="Motor4_accel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
                                     </StackPanel>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Label Content="{Binding Content, ElementName=Motor1_label5}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                                        <TextBox x:Name="Motor4_decel_textBox" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="0,2,0,0" VerticalAlignment="Top" Width="60"/>
-                                    </StackPanel>
+              
                                 </StackPanel>
                             </GroupBox>
                             <!--拉压力传感器-->
