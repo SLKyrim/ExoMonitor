@@ -408,10 +408,33 @@ namespace ExoGaitMonitor
 
             if (Math.Abs(methods.presN[0]) < 0.4)
             {
-                ampObj[1].HaltMove();
+                ampObj[0].HaltMove();
             }
 
             if (methods.presN[0] < -0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[0].ProfileSettings = profileSettingsObj;
+
+                ampObj[0].MoveRel(1);
+            }
+
+            if (methods.presN[0] > 0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[0].ProfileSettings = profileSettingsObj;
+                ampObj[0].MoveRel(-1);
+            }
+            if (Math.Abs(methods.presN[1]) < 0.4)
+            {
+                ampObj[1].HaltMove();
+            }
+
+            if (methods.presN[1] < -0.4)
             {
                 profileSettingsObj.ProfileVel = 300000;
                 profileSettingsObj.ProfileAccel = 300000;
@@ -421,7 +444,7 @@ namespace ExoGaitMonitor
                 ampObj[1].MoveRel(1);
             }
 
-            if (methods.presN[0] > 0.4)
+            if (methods.presN[1] > 0.4)
             {
                 profileSettingsObj.ProfileVel = 300000;
                 profileSettingsObj.ProfileAccel = 300000;
@@ -429,6 +452,50 @@ namespace ExoGaitMonitor
                 ampObj[1].ProfileSettings = profileSettingsObj;
 
                 ampObj[1].MoveRel(-1);
+            }
+            if (Math.Abs(methods.presN[2]) < 0.4)
+            {
+                ampObj[2].HaltMove();
+            }
+            if (methods.presN[2] < -0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[2].ProfileSettings = profileSettingsObj;
+
+                ampObj[2].MoveRel(1);
+            }
+            if (methods.presN[2] > 0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[2].ProfileSettings = profileSettingsObj;
+
+                ampObj[2].MoveRel(-1);
+            }
+            if (Math.Abs(methods.presN[3]) < 0.4)
+            {
+                ampObj[3].HaltMove();
+            }
+            if (methods.presN[3] < -0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[3].ProfileSettings = profileSettingsObj;
+
+                ampObj[3].MoveRel(1);
+            }
+            if (methods.presN[3] > 0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[3].ProfileSettings = profileSettingsObj;
+
+                ampObj[3].MoveRel(-1);
             }
 
             StreamWriter toText = new StreamWriter("force.txt", true);//打开记录数据文本,可于
@@ -453,6 +520,9 @@ namespace ExoGaitMonitor
 
             forceEndButton.IsEnabled = false;
             watchButton.IsEnabled = true;
+
+            startButton.IsEnabled = true;
+            endButton.IsEnabled = true;
         }
 
         #endregion
@@ -551,6 +621,9 @@ namespace ExoGaitMonitor
 
             SACEndButton.IsEnabled = false;
             watchButton.IsEnabled = true;
+
+            startButton.IsEnabled = true;
+            endButton.IsEnabled = true;
         }
 
         #endregion
@@ -558,6 +631,9 @@ namespace ExoGaitMonitor
         #region ComboBox
         private void Sensor1_comboBox_DropDownClosed(object sender, EventArgs e)//传感器1串口下拉菜单收回时发生
         {
+            startButton.IsEnabled = false;
+            endButton.IsEnabled = false;
+
             ComboBoxItem item = Sensor1_comboBox.SelectedItem as ComboBoxItem; //下拉窗口当前选中的项赋给item
             string tempstr = item.Content.ToString();                        //将选中的项目转为字串存储在tempstr中
 
