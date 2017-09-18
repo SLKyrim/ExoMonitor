@@ -105,6 +105,16 @@ namespace ExoGaitMonitor
         const double ALPHA = 10; //灵敏度放大因子
         const int NUM_MOTOR = 4; //电机个数
         const double G = 9.8; //重力加速度
+        const double BATVOL = 24.0; //电池电压
+        const double ETA = 0.8; //减速器使用系数
+
+        double[] radian = new double[NUM_MOTOR]; //角度矩阵，单位：rad
+        double[] ang_vel = new double[NUM_MOTOR]; //角速度矩阵，单位：rad/s
+        double[] ang_acc = new double[NUM_MOTOR]; //角加速度矩阵，单位：rad/s^2
+        double[] inertia = new double[NUM_MOTOR]; //惯性矩阵
+        double[] coriolis = new double[NUM_MOTOR]; //科里奥利矩阵
+        double[] gravity = new double[NUM_MOTOR]; //重力矩阵
+        double[] torque = new double[NUM_MOTOR]; //减速器扭矩
         #endregion
 
         private void FunctionPage_Loaded(object sender, RoutedEventArgs e)//打开窗口后进行的初始化操作
@@ -468,19 +478,12 @@ namespace ExoGaitMonitor
 
             profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY;
 
-            double[] radian = new double[NUM_MOTOR]; //角度矩阵，单位：rad
-            double[] ang_vel = new double[NUM_MOTOR]; //角速度矩阵，单位：rad/s
-            double[] ang_acc = new double[NUM_MOTOR]; //角加速度矩阵，单位：rad/s^2
-            double[] inertia = new double[NUM_MOTOR]; //惯性矩阵
-            double[] coriolis = new double[NUM_MOTOR]; //科里奥利矩阵
-            double[] gravity = new double[NUM_MOTOR]; //重力矩阵
-
             for (int i = 0; i < NUM_MOTOR; i++)
             {
                 ampObjAngleActual[i] = (ampObj[i].PositionActual / userUnits[i]) * (360.0 / RATIO);
                 radian[i] = Math.PI / 180.0 * ampObjAngleActual[i];//角度转换为弧度
-                ampObjAngleVelActual[i] = (ampObj[i].VelocityActual / userUnits[i]) * 2.0 * Math.PI;//角速度单位从counts/s转化为rad/s
-                ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI;//角加速度单位从counts/s^2转化为rad/s^2
+                ampObjAngleVelActual[i] = (ampObj[i].VelocityActual / userUnits[i]) * 2.0 * Math.PI * 60 / RATIO;//角速度单位从counts/s转化为rad/min
+                ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI * 60 / RATIO;//角加速度单位从counts/s^2转化为rad/min^2
             }
 
             //左膝
@@ -501,23 +504,53 @@ namespace ExoGaitMonitor
             gravity[1] = (1.0 / 2.0 * LEFT_THIGH_WEIGHT + LEFT_SHANK_WEIGHT) * G * LEFT_THIGH_LENGTH * Math.Cos(radian[1]) +
                           1.0 / 2.0 * LEFT_SHANK_WEIGHT * G * LEFT_SHANK_LENGTH * Math.Cos(radian[0] + radian[1]);
 
-            double[] torque = new double[NUM_MOTOR]; //减速器扭矩
-
-            for (int i = 0; i < NUM_MOTOR; i++)//基于SAC计算减速器扭矩
+            for (int i = 0; i < NUM_MOTOR; i++)
             {
-                torque[i] = gravity[i] + (1 - 1.0 / ALPHA) * (inertia[i] + coriolis[i]);
-            } 
+                torque[i] = gravity[i] + (1 - 1.0 / ALPHA) * (inertia[i] + coriolis[i]); //基于SAC计算减速器扭矩
+                ang_vel[i] = ((9550.0 * ampObj[i].CurrentActual * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[i] + torque[i]))) * (userUnits[i] / 60.0); //电机转速，单位：counts/s
+                ang_acc[i] = 50000;
+            }
 
-            StreamWriter toText = new StreamWriter("force.txt", true);//打开记录数据文本,可于
-            toText.WriteLine(timeCountor.ToString() + '\t' +
-            methods.presN[0].ToString());
-            timeCountor++;
-            toText.Close();
+            //左膝
+            if (Math.Abs(methods.presN[0]) < 0.4)
+            {
+                ampObj[0].HaltMove();
+            }
+            if (methods.presN[0] < -0.4)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[0];
+                profileSettingsObj.ProfileAccel = ang_acc[0];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[0].ProfileSettings = profileSettingsObj;
+
+                ampObj[0].MoveRel(1);
+            }
+            if (methods.presN[0] > 0.4)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[0];
+                profileSettingsObj.ProfileAccel = ang_acc[0];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[0].ProfileSettings = profileSettingsObj;
+
+                ampObj[0].MoveRel(-1);
+            }
         }
 
         private void SACEndButton_Click(object sender, RoutedEventArgs e)//点击【SAC停止】按钮时执行
         {
+            for (int i = 0; i < 4; i++)
+            {
+                ampObj[i].HaltMove();
+            }
+            SACTimer.Stop();
+            SensorTimer.Stop();
+            profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
 
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+            statusInfoTextBlock.Text = "SAC控制模式已停止";
+
+            SACEndButton.IsEnabled = false;
+            watchButton.IsEnabled = true;
         }
 
         #endregion
