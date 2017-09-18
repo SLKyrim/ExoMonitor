@@ -105,7 +105,7 @@ namespace ExoGaitMonitor
         const double ALPHA = 10; //灵敏度放大因子
         const int NUM_MOTOR = 4; //电机个数
         const double G = 9.8; //重力加速度
-        const double BATVOL = 24.0; //电池电压
+        const double BATVOL = 26.9; //电池电压
         const double ETA = 0.8; //减速器使用系数
 
         double[] radian = new double[NUM_MOTOR]; //角度矩阵，单位：rad
@@ -406,11 +406,11 @@ namespace ExoGaitMonitor
 
             profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY;
 
+            #region 左膝
             if (Math.Abs(methods.presN[0]) < 0.4)
             {
                 ampObj[0].HaltMove();
             }
-
             if (methods.presN[0] < -0.4)
             {
                 profileSettingsObj.ProfileVel = 300000;
@@ -420,7 +420,6 @@ namespace ExoGaitMonitor
 
                 ampObj[0].MoveRel(1);
             }
-
             if (methods.presN[0] > 0.4)
             {
                 profileSettingsObj.ProfileVel = 300000;
@@ -429,6 +428,9 @@ namespace ExoGaitMonitor
                 ampObj[0].ProfileSettings = profileSettingsObj;
                 ampObj[0].MoveRel(-1);
             }
+            #endregion
+
+            #region 左髋
             if (Math.Abs(methods.presN[1]) < 0.4)
             {
                 ampObj[1].HaltMove();
@@ -453,6 +455,9 @@ namespace ExoGaitMonitor
 
                 ampObj[1].MoveRel(-1);
             }
+            #endregion
+
+            #region 右髋
             if (Math.Abs(methods.presN[2]) < 0.4)
             {
                 ampObj[2].HaltMove();
@@ -464,7 +469,7 @@ namespace ExoGaitMonitor
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[2].ProfileSettings = profileSettingsObj;
 
-                ampObj[2].MoveRel(1);
+                ampObj[2].MoveRel(-1);
             }
             if (methods.presN[2] > 0.4)
             {
@@ -473,8 +478,11 @@ namespace ExoGaitMonitor
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[2].ProfileSettings = profileSettingsObj;
 
-                ampObj[2].MoveRel(-1);
+                ampObj[2].MoveRel(1);
             }
+            #endregion
+
+            #region 右膝
             if (Math.Abs(methods.presN[3]) < 0.4)
             {
                 ampObj[3].HaltMove();
@@ -486,7 +494,7 @@ namespace ExoGaitMonitor
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[3].ProfileSettings = profileSettingsObj;
 
-                ampObj[3].MoveRel(1);
+                ampObj[3].MoveRel(-1);
             }
             if (methods.presN[3] > 0.4)
             {
@@ -495,8 +503,9 @@ namespace ExoGaitMonitor
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[3].ProfileSettings = profileSettingsObj;
 
-                ampObj[3].MoveRel(-1);
+                ampObj[3].MoveRel(1);
             }
+            #endregion
 
             StreamWriter toText = new StreamWriter("force.txt", true);//打开记录数据文本,可于
             toText.WriteLine(timeCountor.ToString() + '\t' +
@@ -581,12 +590,12 @@ namespace ExoGaitMonitor
                 ang_acc[i] = 50000;
             }
 
-            //左膝
-            if (Math.Abs(methods.presN[0]) < 0.4)
+            #region 左膝
+            if (Math.Abs(methods.presN[0]) < 1)
             {
                 ampObj[0].HaltMove();
             }
-            if (methods.presN[0] < -0.4)
+            if (methods.presN[0] < -1)
             {
                 profileSettingsObj.ProfileVel = ang_vel[0];
                 profileSettingsObj.ProfileAccel = ang_acc[0];
@@ -595,15 +604,92 @@ namespace ExoGaitMonitor
 
                 ampObj[0].MoveRel(1);
             }
-            if (methods.presN[0] > 0.4)
+            if (methods.presN[0] > 1)
             {
                 profileSettingsObj.ProfileVel = ang_vel[0];
                 profileSettingsObj.ProfileAccel = ang_acc[0];
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[0].ProfileSettings = profileSettingsObj;
-
                 ampObj[0].MoveRel(-1);
             }
+            #endregion
+
+            #region 左髋
+            if (Math.Abs(methods.presN[1]) < 1)
+            {
+                ampObj[1].HaltMove();
+            }
+
+            if (methods.presN[1] < -1)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[1];
+                profileSettingsObj.ProfileAccel = ang_acc[1];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[1].ProfileSettings = profileSettingsObj;
+
+                ampObj[1].MoveRel(1);
+            }
+
+            if (methods.presN[1] > 1)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[1];
+                profileSettingsObj.ProfileAccel = ang_acc[1];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[1].ProfileSettings = profileSettingsObj;
+
+                ampObj[1].MoveRel(-1);
+            }
+            #endregion
+
+            #region 右髋
+            if (Math.Abs(methods.presN[2]) < 1)
+            {
+                ampObj[2].HaltMove();
+            }
+            if (methods.presN[2] < -1)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[2];
+                profileSettingsObj.ProfileAccel = ang_acc[2];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[2].ProfileSettings = profileSettingsObj;
+
+                ampObj[2].MoveRel(-1);
+            }
+            if (methods.presN[2] > 1)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[2];
+                profileSettingsObj.ProfileAccel = ang_acc[2];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[2].ProfileSettings = profileSettingsObj;
+
+                ampObj[2].MoveRel(1);
+            }
+            #endregion
+
+            #region 右膝
+            if (Math.Abs(methods.presN[3]) < 1)
+            {
+                ampObj[3].HaltMove();
+            }
+            if (methods.presN[3] < -1)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[3];
+                profileSettingsObj.ProfileAccel = ang_acc[3];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[3].ProfileSettings = profileSettingsObj;
+
+                ampObj[3].MoveRel(-1);
+            }
+            if (methods.presN[3] > 1)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[3];
+                profileSettingsObj.ProfileAccel = ang_acc[3];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[3].ProfileSettings = profileSettingsObj;
+
+                ampObj[3].MoveRel(1);
+            }
+            #endregion
         }
 
         private void SACEndButton_Click(object sender, RoutedEventArgs e)//点击【SAC停止】按钮时执行
