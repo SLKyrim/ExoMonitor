@@ -82,7 +82,7 @@
                                 <RowDefinition Height="10*"/>
                                 <RowDefinition Height="10*"/>
                             </Grid.RowDefinitions>
-                            <Button x:Name="endButton" Grid.Column="1" Margin="3" Grid.Row="0" VerticalAlignment="Bottom" Padding="5" Click="endButton_Click" Content="PVT停止"/>
+                            <Button x:Name="endButton" IsEnabled="False" Grid.Column="1" Margin="3" Grid.Row="0" VerticalAlignment="Bottom" Padding="5" Click="endButton_Click" Content="PVT停止"/>
                             <Button x:Name="startButton" Content="PVT模式" HorizontalAlignment="Left" Margin="3,0,0,3" Grid.Row="0" Grid.Column="0" VerticalAlignment="Bottom" Padding="5" Click="startButton_Click" Width="94"/>
                             <Button x:Name="forceEndButton" IsEnabled="False" Grid.Column="1" Margin="3" Grid.Row="1" VerticalAlignment="Bottom" Padding="5" Click="forceEndButton_Click" Content="停止"/>
                             <Button x:Name="forceStartButton" IsEnabled="False" Content="力学模式" HorizontalAlignment="Left" Margin="3,0,0,3" Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom" Padding="5" Click="forceStartButton_Click" Width="94"/>

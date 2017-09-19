@@ -102,7 +102,7 @@ namespace ExoGaitMonitor
         const double LEFT_THIGH_WEIGHT = 0.381; //外骨骼左大腿重，单位：kg
         const double LEFT_SHANK_LENGTH = 0.450; //外骨骼左小腿长，单位：m
         const double LEFT_SHANK_WEIGHT = 1.323; //外骨骼左小腿重，单位：kg
-        const double ALPHA = 10; //灵敏度放大因子
+        const double ALPHA = 100; //灵敏度放大因子
         const int NUM_MOTOR = 4; //电机个数
         const double G = 9.8; //重力加速度
         const double BATVOL = 26.9; //电池电压
@@ -233,6 +233,9 @@ namespace ExoGaitMonitor
             endButton.IsEnabled = false;
             startButton.IsEnabled = true;
 
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+            statusInfoTextBlock.Text = "PVT控制模式已停止";
+
             Linkage.HaltMove();
         }
 
@@ -289,7 +292,7 @@ namespace ExoGaitMonitor
             #region 三次扩充
             for (int i = 0; i < ThirdRich; i++)
             {
-                Rich3times[i] = 10; //时间间隔
+                Rich3times[i] = 20; //时间间隔
                 for (int j = 0; j < ARRAY_COL; j++)
                 {
                     if (i % 2 == 0)//偶数位存放原始数据
@@ -418,7 +421,16 @@ namespace ExoGaitMonitor
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[0].ProfileSettings = profileSettingsObj;
 
-                ampObj[0].MoveRel(1);
+                try
+                {
+                    ampObj[0].MoveRel(1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "左膝限位！";
+                }
+
             }
             if (methods.presN[0] > 0.4)
             {
@@ -426,7 +438,16 @@ namespace ExoGaitMonitor
                 profileSettingsObj.ProfileAccel = 300000;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[0].ProfileSettings = profileSettingsObj;
-                ampObj[0].MoveRel(-1);
+                try
+                {
+                    ampObj[0].MoveRel(-1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "左膝限位！";
+                }
+             
             }
             #endregion
 
@@ -443,7 +464,16 @@ namespace ExoGaitMonitor
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[1].ProfileSettings = profileSettingsObj;
 
-                ampObj[1].MoveRel(1);
+                try
+                {
+                    ampObj[1].MoveRel(1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "左髋限位！";
+                }
+
             }
 
             if (methods.presN[1] > 0.4)
@@ -453,7 +483,16 @@ namespace ExoGaitMonitor
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[1].ProfileSettings = profileSettingsObj;
 
-                ampObj[1].MoveRel(-1);
+                try
+                {
+                    ampObj[1].MoveRel(-1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "左髋限位！";
+                }
+
             }
             #endregion
 
@@ -469,7 +508,16 @@ namespace ExoGaitMonitor
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[2].ProfileSettings = profileSettingsObj;
 
-                ampObj[2].MoveRel(-1);
+                try
+                {
+                    ampObj[2].MoveRel(-1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "右髋限位！";
+                }
+
             }
             if (methods.presN[2] > 0.4)
             {
@@ -478,7 +526,16 @@ namespace ExoGaitMonitor
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[2].ProfileSettings = profileSettingsObj;
 
-                ampObj[2].MoveRel(1);
+                try
+                {
+                    ampObj[2].MoveRel(1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "右髋限位！";
+                }
+
             }
             #endregion
 
@@ -494,7 +551,16 @@ namespace ExoGaitMonitor
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[3].ProfileSettings = profileSettingsObj;
 
-                ampObj[3].MoveRel(-1);
+                try
+                {
+                    ampObj[3].MoveRel(-1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "右膝限位！";
+                }
+          
             }
             if (methods.presN[3] > 0.4)
             {
@@ -503,7 +569,16 @@ namespace ExoGaitMonitor
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[3].ProfileSettings = profileSettingsObj;
 
-                ampObj[3].MoveRel(1);
+                try
+                {
+                    ampObj[3].MoveRel(1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "右膝限位！";
+                }
+            
             }
             #endregion
 
@@ -611,103 +686,175 @@ namespace ExoGaitMonitor
             toText.Close();
 
             #region 左膝
-            if (Math.Abs(methods.presN[0]) < 1)
+            if (Math.Abs(methods.presN[0]) < 0.4)
             {
                 ampObj[0].HaltMove();
             }
-            if (methods.presN[0] < -1)
+            if (methods.presN[0] < -0.4)
             {
-                profileSettingsObj.ProfileVel = ang_vel[0];
-                profileSettingsObj.ProfileAccel = ang_acc[0];
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[0].ProfileSettings = profileSettingsObj;
 
-                ampObj[0].MoveRel(1);
+                try
+                {
+                    ampObj[0].MoveRel(1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "左膝限位！";
+                }
+
             }
-            if (methods.presN[0] > 1)
+            if (methods.presN[0] > 0.4)
             {
-                profileSettingsObj.ProfileVel = ang_vel[0];
-                profileSettingsObj.ProfileAccel = ang_acc[0];
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[0].ProfileSettings = profileSettingsObj;
-                ampObj[0].MoveRel(-1);
+                try
+                {
+                    ampObj[0].MoveRel(-1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "左膝限位！";
+                }
+
             }
             #endregion
 
             #region 左髋
-            if (Math.Abs(methods.presN[1]) < 1)
+            if (Math.Abs(methods.presN[1]) < 0.4)
             {
                 ampObj[1].HaltMove();
             }
 
-            if (methods.presN[1] < -1)
+            if (methods.presN[1] < -0.4)
             {
-                profileSettingsObj.ProfileVel = ang_vel[1];
-                profileSettingsObj.ProfileAccel = ang_acc[1];
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[1].ProfileSettings = profileSettingsObj;
 
-                ampObj[1].MoveRel(1);
+                try
+                {
+                    ampObj[1].MoveRel(1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "左髋限位！";
+                }
+
             }
 
-            if (methods.presN[1] > 1)
+            if (methods.presN[1] > 0.4)
             {
-                profileSettingsObj.ProfileVel = ang_vel[1];
-                profileSettingsObj.ProfileAccel = ang_acc[1];
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[1].ProfileSettings = profileSettingsObj;
 
-                ampObj[1].MoveRel(-1);
+                try
+                {
+                    ampObj[1].MoveRel(-1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "左髋限位！";
+                }
+
             }
             #endregion
 
             #region 右髋
-            if (Math.Abs(methods.presN[2]) < 1)
+            if (Math.Abs(methods.presN[2]) < 0.4)
             {
                 ampObj[2].HaltMove();
             }
-            if (methods.presN[2] < -1)
+            if (methods.presN[2] < -0.4)
             {
-                profileSettingsObj.ProfileVel = ang_vel[2];
-                profileSettingsObj.ProfileAccel = ang_acc[2];
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[2].ProfileSettings = profileSettingsObj;
 
-                ampObj[2].MoveRel(-1);
+                try
+                {
+                    ampObj[2].MoveRel(-1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "右髋限位！";
+                }
+
             }
-            if (methods.presN[2] > 1)
+            if (methods.presN[2] > 0.4)
             {
-                profileSettingsObj.ProfileVel = ang_vel[2];
-                profileSettingsObj.ProfileAccel = ang_acc[2];
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[2].ProfileSettings = profileSettingsObj;
 
-                ampObj[2].MoveRel(1);
+                try
+                {
+                    ampObj[2].MoveRel(1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "右髋限位！";
+                }
+
             }
             #endregion
 
             #region 右膝
-            if (Math.Abs(methods.presN[3]) < 1)
+            if (Math.Abs(methods.presN[3]) < 0.4)
             {
                 ampObj[3].HaltMove();
             }
-            if (methods.presN[3] < -1)
+            if (methods.presN[3] < -0.4)
             {
-                profileSettingsObj.ProfileVel = ang_vel[3];
-                profileSettingsObj.ProfileAccel = ang_acc[3];
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[3].ProfileSettings = profileSettingsObj;
 
-                ampObj[3].MoveRel(-1);
+                try
+                {
+                    ampObj[3].MoveRel(-1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "右膝限位！";
+                }
+
             }
-            if (methods.presN[3] > 1)
+            if (methods.presN[3] > 0.4)
             {
-                profileSettingsObj.ProfileVel = ang_vel[3];
-                profileSettingsObj.ProfileAccel = ang_acc[3];
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[3].ProfileSettings = profileSettingsObj;
 
-                ampObj[3].MoveRel(1);
+                try
+                {
+                    ampObj[3].MoveRel(1);
+                }
+                catch
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
+                    statusInfoTextBlock.Text = "右膝限位！";
+                }
+
             }
             #endregion
         }
@@ -978,7 +1125,16 @@ namespace ExoGaitMonitor
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[i].ProfileSettings = profileSettingsObj;
                     }
-                    ampObj[i].MoveRel(1);
+                    try
+                    {
+                        ampObj[i].MoveRel(1);
+                    }
+                    catch
+                    {
+                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                        statusInfoTextBlock.Text = "该电机已限位！";
+                    }
+    
                 }
                 else
                 {
@@ -1015,7 +1171,16 @@ namespace ExoGaitMonitor
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[i].ProfileSettings = profileSettingsObj;
                     }
-                    ampObj[i].MoveRel(-1);
+                    try
+                    {
+                        ampObj[i].MoveRel(-1);
+                    }
+                    catch
+                    {
+                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                        statusInfoTextBlock.Text = "该电机已限位！";
+                    }
+            
                 }
                 else
                 {
@@ -1072,7 +1237,17 @@ namespace ExoGaitMonitor
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[0].ProfileSettings = profileSettingsObj;
                     }
-                    ampObj[0].MoveRel(-1);     
+
+                    try
+                    {
+                        ampObj[0].MoveRel(-1);
+                    }
+                    catch
+                    {
+                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                        statusInfoTextBlock.Text = "左膝已限位！";
+                    }
+                       
                 }
                 else//此时电机1应往前转
                 {
@@ -1090,7 +1265,17 @@ namespace ExoGaitMonitor
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[0].ProfileSettings = profileSettingsObj;
                     }
-                    ampObj[0].MoveRel(1);
+
+                    try
+                    {
+                        ampObj[0].MoveRel(1);
+                    }
+                    catch
+                    {
+                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                        statusInfoTextBlock.Text = "左膝已限位！";
+                    }
+                    
                 }
             }
             else
@@ -1116,7 +1301,17 @@ namespace ExoGaitMonitor
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[1].ProfileSettings = profileSettingsObj;
                     }
-                    ampObj[1].MoveRel(-1);
+
+                    try
+                    {
+                        ampObj[1].MoveRel(-1);
+                    }
+                    catch
+                    {
+                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                        statusInfoTextBlock.Text = "左髋已限位！";
+                    }
+                   
                 }
                 else//此时电机2应往前转
                 {
@@ -1134,7 +1329,17 @@ namespace ExoGaitMonitor
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[1].ProfileSettings = profileSettingsObj;
                     }
-                    ampObj[1].MoveRel(1);
+
+                    try
+                    {
+                        ampObj[1].MoveRel(1);
+                    }
+                    catch
+                    {
+                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                        statusInfoTextBlock.Text = "左髋已限位！";
+                    }
+              
                 }
             }
             else
@@ -1160,7 +1365,17 @@ namespace ExoGaitMonitor
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[2].ProfileSettings = profileSettingsObj;
                     }
-                    ampObj[2].MoveRel(-1);
+
+                    try
+                    {
+                        ampObj[2].MoveRel(-1);
+                    }
+                    catch
+                    {
+                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                        statusInfoTextBlock.Text = "右髋已限位！";
+                    }
+        
                 }
                 else//此时电机3应往后转
                 {
@@ -1178,7 +1393,17 @@ namespace ExoGaitMonitor
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[2].ProfileSettings = profileSettingsObj;
                     }
-                    ampObj[2].MoveRel(1);
+
+                    try
+                    {
+                        ampObj[2].MoveRel(1);
+                    }
+                    catch
+                    {
+                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                        statusInfoTextBlock.Text = "右髋已限位！";
+                    }
+
                 }
             }
             else
@@ -1204,7 +1429,17 @@ namespace ExoGaitMonitor
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[3].ProfileSettings = profileSettingsObj;
                     }
-                    ampObj[3].MoveRel(-1);
+
+                    try
+                    {
+                        ampObj[3].MoveRel(-1);
+                    }
+                    catch
+                    {
+                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                        statusInfoTextBlock.Text = "右膝已限位！";
+                    }
+                 
                 }
                 else//此时电机4应往后转
                 {
@@ -1222,7 +1457,17 @@ namespace ExoGaitMonitor
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[3].ProfileSettings = profileSettingsObj;
                     }
-                    ampObj[3].MoveRel(1);
+
+                    try
+                    {
+                        ampObj[3].MoveRel(1);
+                    }
+                    catch
+                    {
+                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                        statusInfoTextBlock.Text = "右膝已限位！";
+                    }
+
                 }
             }
             else
