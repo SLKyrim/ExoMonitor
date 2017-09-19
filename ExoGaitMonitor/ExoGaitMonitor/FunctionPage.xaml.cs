@@ -42,7 +42,10 @@ namespace ExoGaitMonitor
         private DispatcherTimer ShowTextTimer; //输出电机参数的计时器
         private DispatcherTimer AngleSetTimer; //电机按设置转角转动的计时器
         private DispatcherTimer GetZeroPointTimer; //回归原点的计时器
-        private DispatcherTimer TempTimer; //写电机实际位置数据的计时器
+        //private DispatcherTimer TempTimer; //写电机实际位置数据的计时器
+        private DispatcherTimer SensorTimer; //传感器读写计时器
+        private DispatcherTimer ForceTimer; //力学控制模式的计时器
+        private DispatcherTimer SACTimer; //SAC模式的计时器
 
         private double[] trajectory = new double[1100]; //步态采集数据轨迹
         private double[,] trajectories = new double[1001, 4]; //输入四个关节的步态数据
@@ -51,7 +54,9 @@ namespace ExoGaitMonitor
         private double[,] originalTrajectories = new double[1001, 4]; //保存初始输入数据
 
         //输出文本委托的参数
-        private double[] ampObjAngleActual = new double[ARRAY_COL];//电机的转角
+        private double[] ampObjAngleActual = new double[NUM_MOTOR];//电机的转角，单位：°
+        private double[] ampObjAngleVelActual = new double[NUM_MOTOR];//电机的角速度，单位：rad/s
+        private double[] ampObjAngleAccActual = new double[NUM_MOTOR];//电机的角加速度，单位：rad/s^2
 
         //PVT
         const int ARRAY_LEN = 468; //轨迹数据数组行数的大小
@@ -86,11 +91,30 @@ namespace ExoGaitMonitor
 
         Methods methods = new Methods();
 
-        //串口
+        //力学模式
         public string[] SPCount = null;           //用来存储计算机串口名称数组
         public int comcount = 0;                  //用来存储计算机可用串口数目，初始化为0
         public bool flag = false;
         public string sensor1_com = null;         //传感器1所用串口
+
+        //SAC
+        const double LEFT_THIGH_LENGTH = 0.384; //外骨骼左大腿长，单位：m
+        const double LEFT_THIGH_WEIGHT = 0.381; //外骨骼左大腿重，单位：kg
+        const double LEFT_SHANK_LENGTH = 0.450; //外骨骼左小腿长，单位：m
+        const double LEFT_SHANK_WEIGHT = 1.323; //外骨骼左小腿重，单位：kg
+        const double ALPHA = 10; //灵敏度放大因子
+        const int NUM_MOTOR = 4; //电机个数
+        const double G = 9.8; //重力加速度
+        const double BATVOL = 26.9; //电池电压
+        const double ETA = 0.8; //减速器使用系数
+
+        double[] radian = new double[NUM_MOTOR]; //角度矩阵，单位：rad
+        double[] ang_vel = new double[NUM_MOTOR]; //角速度矩阵，单位：rad/s
+        double[] ang_acc = new double[NUM_MOTOR]; //角加速度矩阵，单位：rad/s^2
+        double[] inertia = new double[NUM_MOTOR]; //惯性矩阵
+        double[] coriolis = new double[NUM_MOTOR]; //科里奥利矩阵
+        double[] gravity = new double[NUM_MOTOR]; //重力矩阵
+        double[] torque = new double[NUM_MOTOR]; //减速器扭矩
         #endregion
 
         private void FunctionPage_Loaded(object sender, RoutedEventArgs e)//打开窗口后进行的初始化操作
@@ -138,8 +162,8 @@ namespace ExoGaitMonitor
 
         }
 
-        #region PVT
-        private void startButton_Click(object sender, RoutedEventArgs e)//点击【开始】按钮时执行
+        #region PVT模式
+        private void startButton_Click(object sender, RoutedEventArgs e)//点击【PVT模式】按钮时执行
         {
             statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
             statusInfoTextBlock.Text = "正在执行";
@@ -165,44 +189,46 @@ namespace ExoGaitMonitor
             
             Linkage.TrajectoryInitialize(pvtRich3Pos, pvtRich3Vel, Rich3times, 100); //开始步态
 
-            timeCountor = 0;
-            TempTimer = new DispatcherTimer();
-            TempTimer.Tick += new EventHandler(tempTimer);
-            TempTimer.Interval = TimeSpan.FromMilliseconds(Rich3times[0]);
-            TempTimer.Start();
+            //写电机在运动过程的一些实际参数
+            //timeCountor = 0;
+            //TempTimer = new DispatcherTimer();
+            //TempTimer.Tick += new EventHandler(tempTimer);
+            //TempTimer.Interval = TimeSpan.FromMilliseconds(Rich3times[0]);
+            //TempTimer.Start();
         }
 
-        public void tempTimer(object sender, EventArgs e)//写电机实际位置的委托
-        {
-            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-            statusInfoTextBlock.Text = "正在执行";
+        //public void tempTimer(object sender, EventArgs e)//写电机实际位置的委托
+        //{
+        //    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+        //    statusInfoTextBlock.Text = "正在执行";
 
-            if (timeCountor == ThirdRich)
-            {
-                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
-                statusInfoTextBlock.Text = "执行完毕";
-                TempTimer.Stop();
-            }
+        //    if (timeCountor == ThirdRich)
+        //    {
+        //        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+        //        statusInfoTextBlock.Text = "执行完毕";
+        //        TempTimer.Stop();
+        //    }
 
-            StreamWriter toText = new StreamWriter("posAcutal.txt", true);//打开记录数据文本,可于
-            toText.WriteLine(timeCountor.ToString() + '\t' +
-            ampObj[0].PositionActual.ToString() + '\t' +
-            ampObj[1].PositionActual.ToString() + '\t' +
-            ampObj[2].PositionActual.ToString() + '\t' +
-            ampObj[3].PositionActual.ToString() + '\t' +
-            ampObj[0].VelocityActual.ToString() + '\t' +
-            ampObj[1].VelocityActual.ToString() + '\t' +
-            ampObj[2].VelocityActual.ToString() + '\t' +
-            ampObj[3].VelocityActual.ToString() + '\t' +
-            ampObj[0].TrajectoryAcc.ToString() + '\t' +
-            ampObj[1].TrajectoryAcc.ToString() + '\t' +
-            ampObj[2].TrajectoryAcc.ToString() + '\t' +
-            ampObj[3].TrajectoryAcc.ToString());
-            timeCountor++;
-            toText.Close();
+        //    StreamWriter toText = new StreamWriter("posAcutal.txt", true);//打开记录数据文本,可于
+        //    toText.WriteLine(timeCountor.ToString() + '\t' +
+        //    ampObj[0].PositionActual.ToString() + '\t' +
+        //    ampObj[1].PositionActual.ToString() + '\t' +
+        //    ampObj[2].PositionActual.ToString() + '\t' +
+        //    ampObj[3].PositionActual.ToString() + '\t' +
+        //    ampObj[0].VelocityActual.ToString() + '\t' +
+        //    ampObj[1].VelocityActual.ToString() + '\t' +
+        //    ampObj[2].VelocityActual.ToString() + '\t' +
+        //    ampObj[3].VelocityActual.ToString() + '\t' +
+        //    ampObj[0].TrajectoryAcc.ToString() + '\t' +
+        //    ampObj[1].TrajectoryAcc.ToString() + '\t' +
+        //    ampObj[2].TrajectoryAcc.ToString() + '\t' +
+        //    ampObj[3].TrajectoryAcc.ToString());
+        //    timeCountor++;
+        //    toText.Close();
 
-        }
-        private void endButton_Click(object sender, RoutedEventArgs e)//点击【停止】按钮时执行
+        //}
+
+        private void endButton_Click(object sender, RoutedEventArgs e)//点击【PVT停止】按钮时执行
         {
             endButton.IsEnabled = false;
             startButton.IsEnabled = true;
@@ -214,7 +240,7 @@ namespace ExoGaitMonitor
         {
 
             #region 获取原始数据
-            string[] ral = File.ReadAllLines("C:\\Users\\Administrator\\Desktop\\ExoGaitMonitor\\GaitData.txt", Encoding.Default);
+            string[] ral = File.ReadAllLines(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\GaitData.txt", Encoding.Default);
 
             for (int i = 0; i < ARRAY_LEN; i++)
             {
@@ -284,18 +310,18 @@ namespace ExoGaitMonitor
                     pvtRich3Vel[i, j] = (pvtRich3Pos[i + 1, j] - pvtRich3Pos[i, j]) * 1000.0 / ((double)(Rich3times[i]));
                 }
 
-                StreamWriter toText = new StreamWriter("rawdata.txt", true);//打开记录数据文本,可于
-                toText.WriteLine(i.ToString() + '\t' +
-                        pvtRich3Pos[i, 0].ToString() + '\t' +
-                        pvtRich3Pos[i, 1].ToString() + '\t' +
-                        pvtRich3Pos[i, 2].ToString() + '\t' +
-                        pvtRich3Pos[i, 3].ToString() + '\t' +
-                        pvtRich3Vel[i, 0].ToString() + '\t' +
-                        pvtRich3Vel[i, 1].ToString() + '\t' +
-                        pvtRich3Vel[i, 2].ToString() + '\t' +
-                        pvtRich3Vel[i, 3].ToString() + '\t' +
-                        Rich3times[i].ToString());
-                toText.Close();
+                //StreamWriter toText = new StreamWriter("rawdata.txt", true);//打开记录数据文本,可于
+                //toText.WriteLine(i.ToString() + '\t' +
+                //        pvtRich3Pos[i, 0].ToString() + '\t' +
+                //        pvtRich3Pos[i, 1].ToString() + '\t' +
+                //        pvtRich3Pos[i, 2].ToString() + '\t' +
+                //        pvtRich3Pos[i, 3].ToString() + '\t' +
+                //        pvtRich3Vel[i, 0].ToString() + '\t' +
+                //        pvtRich3Vel[i, 1].ToString() + '\t' +
+                //        pvtRich3Vel[i, 2].ToString() + '\t' +
+                //        pvtRich3Vel[i, 3].ToString() + '\t' +
+                //        Rich3times[i].ToString());
+                //toText.Close();
             }
 
             pvtRich3Vel[ThirdRich - 1, 0] = 0;
@@ -307,12 +333,413 @@ namespace ExoGaitMonitor
 
         }
 
+        #endregion
+
+        #region 力学模式
+
+        private void watchButton_Click(object sender, RoutedEventArgs e)//点击【启动监视】按钮时执行
+        {
+            SensorTimer = new DispatcherTimer();
+            SensorTimer.Tick += new EventHandler(WriteCMD);
+            SensorTimer.Interval = TimeSpan.FromMilliseconds(10);
+            SensorTimer.Start();
+
+            initButton.IsEnabled = true;
+            watchButton.IsEnabled = false;
+        }
+
+        public void WriteCMD(object sender, EventArgs e)//向传感器写命令以及向传感器接收数据的委托
+        {
+
+            byte[] command = new byte[8];
+            command[0] = 0x01;//#设备地址
+            command[1] = 0x03;//#功能代码，读寄存器的值
+            command[2] = 0x00;//
+            command[3] = 0x00;//
+            command[4] = 0x00;//从第AI0号口开始读数据
+            command[5] = 0x04;//读四个口
+            command[6] = 0x44;//读四个口时的 CRC 校验的低 8 位
+            command[7] = 0x09;//读四个口时的 CRC 校验的高 8 位 
+            //一路的CRC校验位84 0A; 二路的是C4 0B; 三路的是 05 CB; 四路的是 44 09.
+
+            //string returnStr = "";
+            //for (int i = 0; i < command.Length; i++)
+            //{
+            //    returnStr += command[i].ToString("X2");
+            //}
+            //WritetextBox.Text = returnStr;//输出写入命令
+
+            methods.sensor1_SerialPort.Write(command, 0, 8);
+            Sensor1_textBox.Text = methods.presN[0].ToString("F");
+            Sensor2_textBox.Text = methods.presN[1].ToString("F");
+            Sensor3_textBox.Text = methods.presN[2].ToString("F");
+            Sensor4_textBox.Text = methods.presN[3].ToString("F");
+        }
+
+        private void initButton_Click(object sender, RoutedEventArgs e)//点击【初始归零】按钮时执行
+        {
+            methods.pressInit();
+            forceStartButton.IsEnabled = true;
+            SACStartButton.IsEnabled = true;
+            initButton.IsEnabled = false;
+        }
+
+        private void forceStartButton_Click(object sender, RoutedEventArgs e)//点击【力学模式】按钮时执行
+        {
+            ForceTimer = new DispatcherTimer();
+            ForceTimer.Tick += new EventHandler(forceTimer);
+            ForceTimer.Interval = TimeSpan.FromMilliseconds(10);
+            ForceTimer.Start();
+
+            timeCountor = 0;
+            File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\force.txt", string.Empty);//写拉压力传感器读数
+
+            forceStartButton.IsEnabled = false;
+            SACStartButton.IsEnabled = false;
+            forceEndButton.IsEnabled = true;
+        }
+
+        public void forceTimer(object sender, EventArgs e)//力学模式控制的委托
+        {
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+            statusInfoTextBlock.Text = "进入力学控制模式!";
+
+            profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY;
+
+            #region 左膝
+            if (Math.Abs(methods.presN[0]) < 0.4)
+            {
+                ampObj[0].HaltMove();
+            }
+            if (methods.presN[0] < -0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[0].ProfileSettings = profileSettingsObj;
+
+                ampObj[0].MoveRel(1);
+            }
+            if (methods.presN[0] > 0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[0].ProfileSettings = profileSettingsObj;
+                ampObj[0].MoveRel(-1);
+            }
+            #endregion
+
+            #region 左髋
+            if (Math.Abs(methods.presN[1]) < 0.4)
+            {
+                ampObj[1].HaltMove();
+            }
+
+            if (methods.presN[1] < -0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[1].ProfileSettings = profileSettingsObj;
+
+                ampObj[1].MoveRel(1);
+            }
+
+            if (methods.presN[1] > 0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[1].ProfileSettings = profileSettingsObj;
+
+                ampObj[1].MoveRel(-1);
+            }
+            #endregion
+
+            #region 右髋
+            if (Math.Abs(methods.presN[2]) < 0.4)
+            {
+                ampObj[2].HaltMove();
+            }
+            if (methods.presN[2] < -0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[2].ProfileSettings = profileSettingsObj;
+
+                ampObj[2].MoveRel(-1);
+            }
+            if (methods.presN[2] > 0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[2].ProfileSettings = profileSettingsObj;
+
+                ampObj[2].MoveRel(1);
+            }
+            #endregion
+
+            #region 右膝
+            if (Math.Abs(methods.presN[3]) < 0.4)
+            {
+                ampObj[3].HaltMove();
+            }
+            if (methods.presN[3] < -0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[3].ProfileSettings = profileSettingsObj;
+
+                ampObj[3].MoveRel(-1);
+            }
+            if (methods.presN[3] > 0.4)
+            {
+                profileSettingsObj.ProfileVel = 300000;
+                profileSettingsObj.ProfileAccel = 300000;
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[3].ProfileSettings = profileSettingsObj;
+
+                ampObj[3].MoveRel(1);
+            }
+            #endregion
+
+            StreamWriter toText = new StreamWriter("force.txt", true);//打开记录数据文本,可于
+            toText.WriteLine(timeCountor.ToString() + '\t' +
+            methods.presN[0].ToString());
+            timeCountor++;
+            toText.Close();
+        }
+
+        private void forceEndButton_Click(object sender, RoutedEventArgs e)//点击【停止】按钮时执行
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                ampObj[i].HaltMove();
+            }
+            ForceTimer.Stop();
+            SensorTimer.Stop();
+            profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
+
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+            statusInfoTextBlock.Text = "力学控制模式已停止";
+
+            forceEndButton.IsEnabled = false;
+            watchButton.IsEnabled = true;
+
+            startButton.IsEnabled = true;
+            endButton.IsEnabled = true;
+        }
+
+        #endregion
+
+        #region SAC模式
+
+        private void SACStartButton_Click(object sender, RoutedEventArgs e)//点击【SAC模式】按钮时执行
+        {
+            SACEndButton.IsEnabled = true;
+            SACStartButton.IsEnabled = false;
+            forceStartButton.IsEnabled = false;
+
+            timeCountor = 0;
+            File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\SAC.txt", string.Empty);
+
+            SACTimer = new DispatcherTimer();
+            SACTimer.Tick += new EventHandler(sacTimer);
+            SACTimer.Interval = TimeSpan.FromMilliseconds(10);
+            SACTimer.Start();
+        }
+
+        public void sacTimer(object sender, EventArgs e)//SAC模式控制的委托
+        {
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+            statusInfoTextBlock.Text = "进入SAC控制模式!";
+
+            profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY;
+
+            for (int i = 0; i < NUM_MOTOR; i++)
+            {
+                ampObjAngleActual[i] = (ampObj[i].PositionActual / userUnits[i]) * (360.0 / RATIO);
+                radian[i] = Math.PI / 180.0 * ampObjAngleActual[i];//角度转换为弧度
+                ampObjAngleVelActual[i] = (ampObj[i].VelocityActual / userUnits[i]) * 2.0 * Math.PI * 60 / RATIO;//角速度单位从counts/s转化为rad/min
+                ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI * 3600 / RATIO;//角加速度单位从counts/s^2转化为rad/min^2
+            }
+
+            //左膝
+            inertia[0] = (1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH +
+                          1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Cos(radian[0])) * ampObjAngleAccActual[1] +
+                          1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH * ampObjAngleAccActual[0];
+            coriolis[0] = 1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_THIGH_LENGTH * LEFT_SHANK_LENGTH * Math.Sin(radian[0]) * ampObjAngleVelActual[1] * ampObjAngleVelActual[1];
+            gravity[0] = 1.0 / 2.0 * LEFT_SHANK_WEIGHT * G * LEFT_SHANK_LENGTH * Math.Cos(radian[0] + radian[1]);
+            //左髋
+            inertia[1] = (1.0 / 3.0 * LEFT_THIGH_WEIGHT * LEFT_THIGH_LENGTH * LEFT_THIGH_LENGTH +
+                         LEFT_SHANK_WEIGHT * LEFT_THIGH_LENGTH * LEFT_THIGH_LENGTH +
+                         1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH +
+                         LEFT_THIGH_WEIGHT * LEFT_THIGH_LENGTH * LEFT_SHANK_LENGTH * Math.Cos(radian[0])) * ampObjAngleAccActual[1] +
+                         (1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH +
+                         1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Cos(radian[0])) * ampObjAngleAccActual[0];
+            coriolis[1] = LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Sin(radian[0]) * ampObjAngleVelActual[0] * ampObjAngleVelActual[1] +
+                          1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Sin(radian[0]) * ampObjAngleVelActual[0] * ampObjAngleVelActual[0];
+            gravity[1] = (1.0 / 2.0 * LEFT_THIGH_WEIGHT + LEFT_SHANK_WEIGHT) * G * LEFT_THIGH_LENGTH * Math.Cos(radian[1]) +
+                          1.0 / 2.0 * LEFT_SHANK_WEIGHT * G * LEFT_SHANK_LENGTH * Math.Cos(radian[0] + radian[1]);
+
+            for (int i = 0; i < NUM_MOTOR; i++)
+            {
+                torque[i] = gravity[i] + (1 - 1.0 / ALPHA) * (inertia[i] + coriolis[i]); //基于SAC计算减速器扭矩
+                ang_vel[i] = ((9550.0 * ampObj[i].CurrentActual * 0.01 * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[i] + torque[i]))) * (userUnits[i] / 60.0); //电机转速，单位：counts/s
+                ang_acc[i] = 50000;
+            }
+
+            StreamWriter toText = new StreamWriter("SAC.txt", true);//打开记录数据文本,可于
+            toText.WriteLine(timeCountor.ToString() + '\t' +
+            methods.presN[0].ToString() + '\t' +
+            ampObjAngleActual[0].ToString() + '\t' +
+            radian[0].ToString() + '\t' +
+            ampObjAngleVelActual[0].ToString() + '\t' +
+            ampObjAngleAccActual[0].ToString() + '\t' +
+            inertia[0].ToString() + '\t' +
+            coriolis[0].ToString() + '\t' +
+            gravity[0].ToString() + '\t' +
+            torque[0].ToString() + '\t' +
+            ang_vel[0].ToString() + '\t' +
+            ang_acc[0].ToString() + '\t' +
+            (ampObj[0].CurrentActual * 0.01).ToString());
+            timeCountor++;
+            toText.Close();
+
+            #region 左膝
+            if (Math.Abs(methods.presN[0]) < 1)
+            {
+                ampObj[0].HaltMove();
+            }
+            if (methods.presN[0] < -1)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[0];
+                profileSettingsObj.ProfileAccel = ang_acc[0];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[0].ProfileSettings = profileSettingsObj;
+
+                ampObj[0].MoveRel(1);
+            }
+            if (methods.presN[0] > 1)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[0];
+                profileSettingsObj.ProfileAccel = ang_acc[0];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[0].ProfileSettings = profileSettingsObj;
+                ampObj[0].MoveRel(-1);
+            }
+            #endregion
+
+            #region 左髋
+            if (Math.Abs(methods.presN[1]) < 1)
+            {
+                ampObj[1].HaltMove();
+            }
+
+            if (methods.presN[1] < -1)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[1];
+                profileSettingsObj.ProfileAccel = ang_acc[1];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[1].ProfileSettings = profileSettingsObj;
+
+                ampObj[1].MoveRel(1);
+            }
+
+            if (methods.presN[1] > 1)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[1];
+                profileSettingsObj.ProfileAccel = ang_acc[1];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[1].ProfileSettings = profileSettingsObj;
+
+                ampObj[1].MoveRel(-1);
+            }
+            #endregion
+
+            #region 右髋
+            if (Math.Abs(methods.presN[2]) < 1)
+            {
+                ampObj[2].HaltMove();
+            }
+            if (methods.presN[2] < -1)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[2];
+                profileSettingsObj.ProfileAccel = ang_acc[2];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[2].ProfileSettings = profileSettingsObj;
+
+                ampObj[2].MoveRel(-1);
+            }
+            if (methods.presN[2] > 1)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[2];
+                profileSettingsObj.ProfileAccel = ang_acc[2];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[2].ProfileSettings = profileSettingsObj;
+
+                ampObj[2].MoveRel(1);
+            }
+            #endregion
+
+            #region 右膝
+            if (Math.Abs(methods.presN[3]) < 1)
+            {
+                ampObj[3].HaltMove();
+            }
+            if (methods.presN[3] < -1)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[3];
+                profileSettingsObj.ProfileAccel = ang_acc[3];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[3].ProfileSettings = profileSettingsObj;
+
+                ampObj[3].MoveRel(-1);
+            }
+            if (methods.presN[3] > 1)
+            {
+                profileSettingsObj.ProfileVel = ang_vel[3];
+                profileSettingsObj.ProfileAccel = ang_acc[3];
+                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                ampObj[3].ProfileSettings = profileSettingsObj;
+
+                ampObj[3].MoveRel(1);
+            }
+            #endregion
+        }
+
+        private void SACEndButton_Click(object sender, RoutedEventArgs e)//点击【SAC停止】按钮时执行
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                ampObj[i].HaltMove();
+            }
+            SACTimer.Stop();
+            SensorTimer.Stop();
+            profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
+
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+            statusInfoTextBlock.Text = "SAC控制模式已停止";
+
+            SACEndButton.IsEnabled = false;
+            watchButton.IsEnabled = true;
+
+            startButton.IsEnabled = true;
+            endButton.IsEnabled = true;
+        }
 
         #endregion
 
         #region ComboBox
         private void Sensor1_comboBox_DropDownClosed(object sender, EventArgs e)//传感器1串口下拉菜单收回时发生
         {
+            startButton.IsEnabled = false;
+            endButton.IsEnabled = false;
+
             ComboBoxItem item = Sensor1_comboBox.SelectedItem as ComboBoxItem; //下拉窗口当前选中的项赋给item
             string tempstr = item.Content.ToString();                        //将选中的项目转为字串存储在tempstr中
 
@@ -333,10 +760,11 @@ namespace ExoGaitMonitor
                     
                 }
             }
+
+            watchButton.IsEnabled = true;
         }
 
         #endregion
-
 
         #region 按钮
 
@@ -384,7 +812,7 @@ namespace ExoGaitMonitor
         {
             GetZeroPointTimer = new DispatcherTimer();
             GetZeroPointTimer.Tick += new EventHandler(getZeroPointTimer);
-            GetZeroPointTimer.Interval = TimeSpan.FromMilliseconds(20);// 该时钟频率决定电机运行速度
+            GetZeroPointTimer.Interval = TimeSpan.FromMilliseconds(100);// 该时钟频率决定电机运行速度
             GetZeroPointTimer.Start();
         }
 
@@ -478,38 +906,47 @@ namespace ExoGaitMonitor
         {
             //2017-8-11-用ampObj[2].MotorInfo.ctsPerRev测得EC90盘式电机编码器一圈有25600个计数
             //2017-8-11-验证减速器减速比为160-即电机转160圈，关节转1圈
+            try
+            {
+                for(int i = 0; i < NUM_MOTOR; i++)
+                {
+                    ampObjAngleActual[i] = (ampObj[i].PositionActual / userUnits[i]) * (360.0 / RATIO);//角度单位从counts转化为°
+                    ampObjAngleVelActual[i] = (ampObj[i].VelocityActual / userUnits[i]) * 2.0 * Math.PI;//角速度单位从counts/s转化为rad/s
+                    ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI;//角加速度单位从counts/s^2转化为rad/s^2
+                }
+                //电机1(左膝)的文本框输出
+                Motor1_position_textBox.Text = ampObjAngleActual[0].ToString("F"); //电机实际位置，单位：°
+                Motor1_phaseAngle_textBox.Text = (ampObj[0].CurrentActual * 0.01).ToString("F"); //电机电流，单位：A
+                Motor1_velocity_textBox.Text = ampObjAngleVelActual[0].ToString("F"); //电机实际速度，单位：rad/s
+                Motor1_accel_textBox.Text = ampObjAngleAccActual[0].ToString("F"); //由轨迹计算而得的加速度，单位：rad/s^2
+                //Motor1_decel_textBox.Text = userUnits[0].ToString(); //编码器用户自定义单位，单位：counts/圈
 
-            ampObjAngleActual[0] = (ampObj[0].PositionActual / userUnits[0]) * (360.0 / RATIO);
-            ampObjAngleActual[1] = (ampObj[1].PositionActual / userUnits[1]) * (360.0 / RATIO);
-            ampObjAngleActual[2] = (ampObj[2].PositionActual / userUnits[2]) * (360.0 / RATIO);
-            ampObjAngleActual[3] = (ampObj[3].PositionActual / userUnits[3]) * (360.0 / RATIO);
-            //电机1(左膝)的文本框输出
-            Motor1_position_textBox.Text = ampObjAngleActual[0].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
-            Motor1_phaseAngle_textBox.Text = (ampObj[0].CurrentActual * 0.01).ToString("F"); //电机电流
-            Motor1_velocity_textBox.Text = ampObj[0].VelocityActual.ToString("F"); //电机实际速度
-            Motor1_accel_textBox.Text = ampObj[0].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
-            Motor1_decel_textBox.Text = userUnits[0].ToString(); //编码器用户自定义单位：counts/圈
+                //电机2(左髋)的文本框输出
+                Motor2_position_textBox.Text = ampObjAngleActual[1].ToString("F");
+                Motor2_phaseAngle_textBox.Text = (ampObj[1].CurrentActual * 0.01).ToString("F");
+                Motor2_velocity_textBox.Text = ampObjAngleVelActual[1].ToString("F");
+                Motor2_accel_textBox.Text = ampObjAngleAccActual[1].ToString("F");
+                //Motor2_decel_textBox.Text = userUnits[1].ToString();
 
-            //电机2(左髋)的文本框输出
-            Motor2_position_textBox.Text = ampObjAngleActual[1].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
-            Motor2_phaseAngle_textBox.Text = (ampObj[1].CurrentActual * 0.01).ToString("F");
-            Motor2_velocity_textBox.Text = ampObj[1].VelocityActual.ToString("F"); //电机实际速度
-            Motor2_accel_textBox.Text = ampObj[1].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
-            Motor2_decel_textBox.Text = userUnits[1].ToString(); 
+                //电机3(右髋)的文本框输出
+                Motor3_position_textBox.Text = ampObjAngleActual[2].ToString("F");
+                Motor3_phaseAngle_textBox.Text = (ampObj[2].CurrentActual * 0.01).ToString("F");
+                Motor3_velocity_textBox.Text = ampObjAngleVelActual[2].ToString("F");
+                Motor3_accel_textBox.Text = ampObjAngleAccActual[2].ToString("F");
+                //Motor3_decel_textBox.Text = userUnits[2].ToString();
 
-            //电机3(右髋)的文本框输出
-            Motor3_position_textBox.Text = ampObjAngleActual[2].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
-            Motor3_phaseAngle_textBox.Text = (ampObj[2].CurrentActual * 0.01).ToString("F");
-            Motor3_velocity_textBox.Text = ampObj[2].VelocityActual.ToString("F"); //电机实际速度
-            Motor3_accel_textBox.Text = ampObj[2].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
-            Motor3_decel_textBox.Text = userUnits[2].ToString(); 
-
-            //电机4(右膝)的文本框输出
-            Motor4_position_textBox.Text = ampObjAngleActual[3].ToString("F"); //电机实际位置; "F"格式，默认保留两位小数
-            Motor4_phaseAngle_textBox.Text = (ampObj[3].CurrentActual * 0.01).ToString("F");
-            Motor4_velocity_textBox.Text = ampObj[3].VelocityActual.ToString("F"); //电机实际速度
-            Motor4_accel_textBox.Text = ampObj[3].TrajectoryAcc.ToString("F"); //由轨迹计算而得的加速度
-            Motor4_decel_textBox.Text = userUnits[3].ToString(); 
+                //电机4(右膝)的文本框输出
+                Motor4_position_textBox.Text = ampObjAngleActual[3].ToString("F");
+                Motor4_phaseAngle_textBox.Text = (ampObj[3].CurrentActual * 0.01).ToString("F");
+                Motor4_velocity_textBox.Text = ampObjAngleVelActual[3].ToString("F");
+                Motor4_accel_textBox.Text = ampObjAngleAccActual[3].ToString("F");
+                //Motor4_decel_textBox.Text = userUnits[3].ToString();
+            }
+            catch
+            {
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                statusInfoTextBlock.Text = "未连接外骨骼！";
+            }
         }
 
         public void angleSetTimer(object sender, EventArgs e)//电机按设置角度转动的委托
@@ -1191,8 +1628,9 @@ namespace ExoGaitMonitor
             MessageBox.Show(dp.YValue.ToString());
         }
 
-        #endregion
 
+
+        #endregion
 
     }
 }
