@@ -544,6 +544,9 @@ namespace ExoGaitMonitor
             SACStartButton.IsEnabled = false;
             forceStartButton.IsEnabled = false;
 
+            timeCountor = 0;
+            File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\SAC.txt", string.Empty);
+
             SACTimer = new DispatcherTimer();
             SACTimer.Tick += new EventHandler(sacTimer);
             SACTimer.Interval = TimeSpan.FromMilliseconds(10);
@@ -562,7 +565,7 @@ namespace ExoGaitMonitor
                 ampObjAngleActual[i] = (ampObj[i].PositionActual / userUnits[i]) * (360.0 / RATIO);
                 radian[i] = Math.PI / 180.0 * ampObjAngleActual[i];//角度转换为弧度
                 ampObjAngleVelActual[i] = (ampObj[i].VelocityActual / userUnits[i]) * 2.0 * Math.PI * 60 / RATIO;//角速度单位从counts/s转化为rad/min
-                ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI * 60 / RATIO;//角加速度单位从counts/s^2转化为rad/min^2
+                ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI * 3600 / RATIO;//角加速度单位从counts/s^2转化为rad/min^2
             }
 
             //左膝
@@ -586,9 +589,26 @@ namespace ExoGaitMonitor
             for (int i = 0; i < NUM_MOTOR; i++)
             {
                 torque[i] = gravity[i] + (1 - 1.0 / ALPHA) * (inertia[i] + coriolis[i]); //基于SAC计算减速器扭矩
-                ang_vel[i] = ((9550.0 * ampObj[i].CurrentActual * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[i] + torque[i]))) * (userUnits[i] / 60.0); //电机转速，单位：counts/s
+                ang_vel[i] = ((9550.0 * ampObj[i].CurrentActual * 0.01 * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[i] + torque[i]))) * (userUnits[i] / 60.0); //电机转速，单位：counts/s
                 ang_acc[i] = 50000;
             }
+
+            StreamWriter toText = new StreamWriter("SAC.txt", true);//打开记录数据文本,可于
+            toText.WriteLine(timeCountor.ToString() + '\t' +
+            methods.presN[0].ToString() + '\t' +
+            ampObjAngleActual[0].ToString() + '\t' +
+            radian[0].ToString() + '\t' +
+            ampObjAngleVelActual[0].ToString() + '\t' +
+            ampObjAngleAccActual[0].ToString() + '\t' +
+            inertia[0].ToString() + '\t' +
+            coriolis[0].ToString() + '\t' +
+            gravity[0].ToString() + '\t' +
+            torque[0].ToString() + '\t' +
+            ang_vel[0].ToString() + '\t' +
+            ang_acc[0].ToString() + '\t' +
+            (ampObj[0].CurrentActual * 0.01).ToString());
+            timeCountor++;
+            toText.Close();
 
             #region 左膝
             if (Math.Abs(methods.presN[0]) < 1)
