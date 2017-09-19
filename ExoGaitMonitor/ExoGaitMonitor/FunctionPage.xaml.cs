@@ -562,7 +562,7 @@ namespace ExoGaitMonitor
 
             for (int i = 0; i < NUM_MOTOR; i++)
             {
-                ampObjAngleActual[i] = (ampObj[i].PositionActual / userUnits[i]) * (360.0 / RATIO);
+                ampObjAngleActual[i] = (ampObj[i].PositionActual / userUnits[i]) * (360.0 / RATIO);//电机转的角度
                 radian[i] = Math.PI / 180.0 * ampObjAngleActual[i];//角度转换为弧度
                 ampObjAngleVelActual[i] = (ampObj[i].VelocityActual / userUnits[i]) * 2.0 * Math.PI * 60 / RATIO;//角速度单位从counts/s转化为rad/min
                 ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI * 3600 / RATIO;//角加速度单位从counts/s^2转化为rad/min^2
