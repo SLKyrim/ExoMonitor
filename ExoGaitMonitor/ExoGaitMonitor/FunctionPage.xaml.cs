@@ -107,6 +107,7 @@ namespace ExoGaitMonitor
         const double G = 9.8; //重力加速度
         const double BATVOL = 26.9; //电池电压
         const double ETA = 0.8; //减速器使用系数
+        const int INTERVAL = 10; //SAC执行频率，单位：ms
 
         double[] radian = new double[NUM_MOTOR]; //角度矩阵，单位：rad
         double[] ang_vel = new double[NUM_MOTOR]; //角速度矩阵，单位：rad/s
@@ -115,6 +116,7 @@ namespace ExoGaitMonitor
         double[] coriolis = new double[NUM_MOTOR]; //科里奥利矩阵
         double[] gravity = new double[NUM_MOTOR]; //重力矩阵
         double[] torque = new double[NUM_MOTOR]; //减速器扭矩
+        double[] tempVel = new double[NUM_MOTOR]; //记录上一次的速度
         #endregion
 
         private void FunctionPage_Loaded(object sender, RoutedEventArgs e)//打开窗口后进行的初始化操作
@@ -624,7 +626,7 @@ namespace ExoGaitMonitor
 
             SACTimer = new DispatcherTimer();
             SACTimer.Tick += new EventHandler(sacTimer);
-            SACTimer.Interval = TimeSpan.FromMilliseconds(10);
+            SACTimer.Interval = TimeSpan.FromMilliseconds(INTERVAL);
             SACTimer.Start();
         }
 
@@ -684,13 +686,14 @@ namespace ExoGaitMonitor
                 if (Math.Abs(methods.presN[i]) < 1)
                 {
                     ang_vel[i] = 0;
-                    ang_acc[i] = 0;
+                    ang_acc[i] = (ang_vel[i] - tempVel[i]) / (Convert.ToDouble(INTERVAL) / 1000.0); //角加速度，单位：counts/s^2;
                 }
                 else
                 {
-                    ang_vel[i] = ((9550.0 * Math.Abs(ampObj[i].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * Math.Abs(methods.presN[i] + torque[i]))) * (userUnits[i] / 60.0); //电机转速，单位：counts/s
-                    ang_acc[i] = 50000;
-                }  
+                    ang_vel[i] = ((9550.0 * Math.Abs(ampObj[i].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[i] + torque[i]))) * (userUnits[i] / 60.0); //电机转速，单位：counts/s
+                    ang_acc[i] = (ang_vel[i] - tempVel[i]) / (Convert.ToDouble(INTERVAL) / 1000.0); //角加速度，单位：counts/s^2
+                }
+                tempVel[i] = ang_vel[i];
             }
 
             StreamWriter toText = new StreamWriter("SAC.txt", true);//打开记录数据文本,可于
