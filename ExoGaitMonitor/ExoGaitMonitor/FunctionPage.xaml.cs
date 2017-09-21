@@ -681,7 +681,7 @@ namespace ExoGaitMonitor
             for (int i = 0; i < NUM_MOTOR; i++)
             {
                 torque[i] = gravity[i] + (1 - 1.0 / ALPHA) * (inertia[i] + coriolis[i]); //基于SAC计算减速器扭矩
-                if (Math.Abs(methods.presN[i]) < 0.4)
+                if (Math.Abs(methods.presN[i]) < 1)
                 {
                     ang_vel[i] = 0;
                     ang_acc[i] = 0;
@@ -694,28 +694,29 @@ namespace ExoGaitMonitor
             }
 
             StreamWriter toText = new StreamWriter("SAC.txt", true);//打开记录数据文本,可于
+            //-------------------------------------------------写电机扭矩参数
             toText.WriteLine(timeCountor.ToString() + '\t' +
-            methods.presN[0].ToString() + '\t' +
-            ampObjAngleActual[0].ToString() + '\t' +
-            radian[0].ToString() + '\t' +
-            ampObjAngleVelActual[0].ToString() + '\t' +
-            ampObjAngleAccActual[0].ToString() + '\t' +
-            inertia[0].ToString() + '\t' +
-            coriolis[0].ToString() + '\t' +
-            gravity[0].ToString() + '\t' +
-            torque[0].ToString() + '\t' +
-            ang_vel[0].ToString() + '\t' +
-            ang_acc[0].ToString() + '\t' +
-            (ampObj[0].CurrentActual * 0.01).ToString());
+            methods.presN[3].ToString() + '\t' +
+            ampObjAngleActual[3].ToString() + '\t' +
+            radian[3].ToString() + '\t' +
+            ampObjAngleVelActual[3].ToString() + '\t' +
+            ampObjAngleAccActual[3].ToString() + '\t' +
+            inertia[3].ToString() + '\t' +
+            coriolis[3].ToString() + '\t' +
+            gravity[3].ToString() + '\t' +
+            torque[3].ToString() + '\t' +
+            ang_vel[3].ToString() + '\t' +
+            ang_acc[3].ToString() + '\t' +
+            (ampObj[3].CurrentActual * 0.01).ToString());
             timeCountor++;
             toText.Close();
 
             #region 左膝
-            if (Math.Abs(methods.presN[0]) < 0.4)
+            if (Math.Abs(methods.presN[0]) < 1)
             {
                 ampObj[0].HaltMove();
             }
-            if (methods.presN[0] < -0.4)
+            if (methods.presN[0] < -1)
             {
                 profileSettingsObj.ProfileVel = ang_vel[0];
                 profileSettingsObj.ProfileAccel = ang_acc[0];
@@ -733,7 +734,7 @@ namespace ExoGaitMonitor
                 }
 
             }
-            if (methods.presN[0] > 0.4)
+            if (methods.presN[0] > 1)
             {
                 profileSettingsObj.ProfileVel = ang_vel[0];
                 profileSettingsObj.ProfileAccel = ang_acc[0];
@@ -753,12 +754,12 @@ namespace ExoGaitMonitor
             #endregion
 
             #region 左髋
-            if (Math.Abs(methods.presN[1]) < 0.4)
+            if (Math.Abs(methods.presN[1]) < 1)
             {
                 ampObj[1].HaltMove();
             }
 
-            if (methods.presN[1] < -0.4)
+            if (methods.presN[1] < -1)
             {
                 profileSettingsObj.ProfileVel = ang_vel[1];
                 profileSettingsObj.ProfileAccel = ang_acc[1];
@@ -777,7 +778,7 @@ namespace ExoGaitMonitor
 
             }
 
-            if (methods.presN[1] > 0.4)
+            if (methods.presN[1] > 1)
             {
                 profileSettingsObj.ProfileVel = ang_vel[1];
                 profileSettingsObj.ProfileAccel = ang_acc[1];
@@ -798,11 +799,11 @@ namespace ExoGaitMonitor
             #endregion
 
             #region 右髋
-            if (Math.Abs(methods.presN[2]) < 0.4)
+            if (Math.Abs(methods.presN[2]) < 1)
             {
                 ampObj[2].HaltMove();
             }
-            if (methods.presN[2] < -0.4)
+            if (methods.presN[2] < -1)
             {
                 profileSettingsObj.ProfileVel = ang_vel[2];
                 profileSettingsObj.ProfileAccel = ang_acc[2];
@@ -820,7 +821,7 @@ namespace ExoGaitMonitor
                 }
 
             }
-            if (methods.presN[2] > 0.4)
+            if (methods.presN[2] > 1)
             {
                 profileSettingsObj.ProfileVel = ang_vel[2];
                 profileSettingsObj.ProfileAccel = ang_acc[2];
@@ -841,11 +842,11 @@ namespace ExoGaitMonitor
             #endregion
 
             #region 右膝
-            if (Math.Abs(methods.presN[3]) < 0.4)
+            if (Math.Abs(methods.presN[3]) < 1)
             {
                 ampObj[3].HaltMove();
             }
-            if (methods.presN[3] < -0.4)
+            if (methods.presN[3] < -1)
             {
                 profileSettingsObj.ProfileVel = ang_vel[3];
                 profileSettingsObj.ProfileAccel = ang_acc[3];
@@ -863,7 +864,7 @@ namespace ExoGaitMonitor
                 }
 
             }
-            if (methods.presN[3] > 0.4)
+            if (methods.presN[3] > 1)
             {
                 profileSettingsObj.ProfileVel = ang_vel[3];
                 profileSettingsObj.ProfileAccel = ang_acc[3];
@@ -1250,8 +1251,8 @@ namespace ExoGaitMonitor
                 {
                     if (ampObjAngleActual[0] > 10)
                     {
-                        profileSettingsObj.ProfileVel = 100000;
-                        profileSettingsObj.ProfileAccel = 100000;
+                        profileSettingsObj.ProfileVel = 80000;
+                        profileSettingsObj.ProfileAccel = 80000;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[0].ProfileSettings = profileSettingsObj;
                     }
@@ -1278,8 +1279,8 @@ namespace ExoGaitMonitor
                 {
                     if (ampObjAngleActual[0] < -10)
                     {
-                        profileSettingsObj.ProfileVel = 100000;
-                        profileSettingsObj.ProfileAccel = 100000;
+                        profileSettingsObj.ProfileVel = 80000;
+                        profileSettingsObj.ProfileAccel = 80000;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[0].ProfileSettings = profileSettingsObj;
                     }
@@ -1314,8 +1315,8 @@ namespace ExoGaitMonitor
                 {
                     if (ampObjAngleActual[1] > 10)
                     {
-                        profileSettingsObj.ProfileVel = 100000;
-                        profileSettingsObj.ProfileAccel = 100000;
+                        profileSettingsObj.ProfileVel = 80000;
+                        profileSettingsObj.ProfileAccel = 80000;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[1].ProfileSettings = profileSettingsObj;
                     }
@@ -1342,8 +1343,8 @@ namespace ExoGaitMonitor
                 {
                     if (ampObjAngleActual[1] < -10)
                     {
-                        profileSettingsObj.ProfileVel = 100000;
-                        profileSettingsObj.ProfileAccel = 100000;
+                        profileSettingsObj.ProfileVel = 80000;
+                        profileSettingsObj.ProfileAccel = 80000;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[1].ProfileSettings = profileSettingsObj;
                     }
@@ -1378,8 +1379,8 @@ namespace ExoGaitMonitor
                 {
                     if (ampObjAngleActual[2] > 10)
                     {
-                        profileSettingsObj.ProfileVel = 100000;
-                        profileSettingsObj.ProfileAccel = 100000;
+                        profileSettingsObj.ProfileVel = 80000;
+                        profileSettingsObj.ProfileAccel = 80000;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[2].ProfileSettings = profileSettingsObj;
                     }
@@ -1406,8 +1407,8 @@ namespace ExoGaitMonitor
                 {
                     if (ampObjAngleActual[2] < -10)
                     {
-                        profileSettingsObj.ProfileVel = 100000;
-                        profileSettingsObj.ProfileAccel = 100000;
+                        profileSettingsObj.ProfileVel = 80000;
+                        profileSettingsObj.ProfileAccel = 80000;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[2].ProfileSettings = profileSettingsObj;
                     }
@@ -1442,8 +1443,8 @@ namespace ExoGaitMonitor
                 {
                     if (ampObjAngleActual[3] > 10)
                     {
-                        profileSettingsObj.ProfileVel = 100000;
-                        profileSettingsObj.ProfileAccel = 100000;
+                        profileSettingsObj.ProfileVel = 80000;
+                        profileSettingsObj.ProfileAccel = 80000;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[3].ProfileSettings = profileSettingsObj;
                     }
@@ -1470,8 +1471,8 @@ namespace ExoGaitMonitor
                 {
                     if (ampObjAngleActual[3] < -10)
                     {
-                        profileSettingsObj.ProfileVel = 100000;
-                        profileSettingsObj.ProfileAccel = 100000;
+                        profileSettingsObj.ProfileVel = 80000;
+                        profileSettingsObj.ProfileAccel = 80000;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[3].ProfileSettings = profileSettingsObj;
                     }
