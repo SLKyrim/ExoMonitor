@@ -97,6 +97,7 @@ namespace ExoGaitMonitor
         public bool flag = false;
         public string sensor1_com = null;         //传感器1所用串口
         bool forceflag = false;
+        const double FORCE_THRES = 0.4; //力學模式拉壓力傳感器閾值 
 
         //SAC
         const double THIGH_LENGTH = 0.384; //外骨骼大腿长，单位：m
@@ -110,8 +111,12 @@ namespace ExoGaitMonitor
         const double G = 9.8; //重力加速度
         const double BATVOL = 26.9; //电池电压
         const double ETA = 0.8; //减速器使用系数
-        const int INTERVAL = 20; //SAC执行频率，单位：ms
-
+        const int INTERVAL = 10; //SAC执行频率，单位：ms
+        const double SHANK_VEL_FAC = 0.2; //小腿速度可執行係數
+        const double SHANK_ACC_FAC = 0.02; //小腿加速度可執行係數
+        const double THIGH_VEL_FAC = 0.5; //大腿速度可執行係數
+        const double THIGH_ACC_FAC = 0.05; //大腿加速度可執行係數
+        const double SAC_THRES = 0.5; //SAC模式拉壓力傳感器閾值
 
         double[] radian = new double[NUM_MOTOR]; //角度矩阵，单位：rad
         double[] ang_vel = new double[NUM_MOTOR]; //角速度矩阵，单位：rad/s
@@ -120,7 +125,7 @@ namespace ExoGaitMonitor
         double[] coriolis = new double[NUM_MOTOR]; //科里奥利矩阵
         double[] gravity = new double[NUM_MOTOR]; //重力矩阵
         double[] torque = new double[NUM_MOTOR]; //减速器扭矩
-        StreamWriter sacText; //写SAC参数文本
+        double[] tempAcc = new double[NUM_MOTOR]; //記錄上次的減速器角加速度
         #endregion
 
         private void FunctionPage_Loaded(object sender, RoutedEventArgs e)//打开窗口后进行的初始化操作
@@ -433,11 +438,11 @@ namespace ExoGaitMonitor
             profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY;
 
             #region 左膝
-            if (Math.Abs(methods.presN[0]) < 0.4)
+            if (Math.Abs(methods.presN[0]) < FORCE_THRES)
             {
                 ampObj[0].HaltMove();
             }
-            if (methods.presN[0] < -0.4)
+            if (methods.presN[0] < -FORCE_THRES)
             {
                 profileSettingsObj.ProfileVel = 100000;
                 profileSettingsObj.ProfileAccel = 100000;
@@ -455,7 +460,7 @@ namespace ExoGaitMonitor
                 }
 
             }
-            if (methods.presN[0] > 0.4)
+            if (methods.presN[0] > FORCE_THRES)
             {
                 profileSettingsObj.ProfileVel = 100000;
                 profileSettingsObj.ProfileAccel = 100000;
@@ -475,12 +480,12 @@ namespace ExoGaitMonitor
             #endregion
 
             #region 左髋
-            if (Math.Abs(methods.presN[1]) < 0.4)
+            if (Math.Abs(methods.presN[1]) < FORCE_THRES)
             {
                 ampObj[1].HaltMove();
             }
 
-            if (methods.presN[1] < -0.4)
+            if (methods.presN[1] < -FORCE_THRES)
             {
                 profileSettingsObj.ProfileVel = 100000;
                 profileSettingsObj.ProfileAccel = 100000;
@@ -499,7 +504,7 @@ namespace ExoGaitMonitor
 
             }
 
-            if (methods.presN[1] > 0.4)
+            if (methods.presN[1] > FORCE_THRES)
             {
                 profileSettingsObj.ProfileVel = 100000;
                 profileSettingsObj.ProfileAccel = 100000;
@@ -520,11 +525,11 @@ namespace ExoGaitMonitor
             #endregion
 
             #region 右髋
-            if (Math.Abs(methods.presN[2]) < 0.4)
+            if (Math.Abs(methods.presN[2]) < FORCE_THRES)
             {
                 ampObj[2].HaltMove();
             }
-            if (methods.presN[2] < -0.4)
+            if (methods.presN[2] < -FORCE_THRES)
             {
                 profileSettingsObj.ProfileVel = 100000;
                 profileSettingsObj.ProfileAccel = 100000;
@@ -542,7 +547,7 @@ namespace ExoGaitMonitor
                 }
 
             }
-            if (methods.presN[2] > 0.4)
+            if (methods.presN[2] > FORCE_THRES)
             {
                 profileSettingsObj.ProfileVel = 100000;
                 profileSettingsObj.ProfileAccel = 100000;
@@ -563,11 +568,11 @@ namespace ExoGaitMonitor
             #endregion
 
             #region 右膝
-            if (Math.Abs(methods.presN[3]) < 0.4)
+            if (Math.Abs(methods.presN[3]) < FORCE_THRES)
             {
                 ampObj[3].HaltMove();
             }
-            if (methods.presN[3] < -0.4)
+            if (methods.presN[3] < -FORCE_THRES)
             {
                 profileSettingsObj.ProfileVel = 100000;
                 profileSettingsObj.ProfileAccel = 100000;
@@ -585,7 +590,7 @@ namespace ExoGaitMonitor
                 }
           
             }
-            if (methods.presN[3] > 0.4)
+            if (methods.presN[3] > FORCE_THRES)
             {
                 profileSettingsObj.ProfileVel = 100000;
                 profileSettingsObj.ProfileAccel = 100000;
@@ -665,7 +670,7 @@ namespace ExoGaitMonitor
                 ampObjAngleActual[i] = (ampObj[i].PositionActual / userUnits[i]) * (360.0 / RATIO);//减速器转的角度
                 radian[i] = Math.Abs(Math.PI / 180.0 * ampObjAngleActual[i]);//减速器角度转换为弧度，取绝对值
                 ampObjAngleVelActual[i] = (ampObj[i].TrajectoryVel / userUnits[i]) * 2.0 * Math.PI * 60.0 / RATIO;//减速器角速度单位从counts/s转化为rad/min
-                ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI * 60.0 / RATIO;//减速器角加速度单位从counts/s^2转化为rad/min^2
+                ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI * 60.0 * 60.0 / RATIO;//减速器角加速度单位从counts/s^2转化为rad/min^2
             }
 
             //左膝
@@ -714,11 +719,11 @@ namespace ExoGaitMonitor
             //拉压力传感器受压力presN为正，受拉力presN为负
             //即左边受压力时，应配合向后弯曲，
             #region 左膝
-            if (Math.Abs(methods.presN[0]) <= 1)
+            if (Math.Abs(methods.presN[0]) <= SAC_THRES)
             {
                 ampObj[0].HaltMove();
             }
-            if (methods.presN[0] < -1)
+            if (methods.presN[0] < -SAC_THRES)
             {
                 if (torque[0] > 0)
                 {
@@ -726,8 +731,8 @@ namespace ExoGaitMonitor
                     torque[0] *= -1.0;
                 }
 
-                ang_vel[0] = Math.Abs(((9550.0 * Math.Abs(ampObj[0].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[0] * SHANK_MOMENT + torque[0]))) * (userUnits[0] / 60.0)) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[0] = Math.Abs(((torque[0] + methods.presN[0] * SHANK_MOMENT) / (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[0]) * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[0] = Math.Abs(((9550.0 * Math.Abs(ampObj[0].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[0] * SHANK_MOMENT + torque[0]))) * (userUnits[0] / 60.0)) * SHANK_VEL_FAC; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[0] = Math.Abs(((torque[0] + methods.presN[0] * SHANK_MOMENT) / (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[0]) * SHANK_ACC_FAC; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[0];
                 profileSettingsObj.ProfileAccel = ang_acc[0];
@@ -744,7 +749,7 @@ namespace ExoGaitMonitor
                     statusInfoTextBlock.Text = "左膝限位！";
                 }
             }
-            if (methods.presN[0] > 1)
+            if (methods.presN[0] > SAC_THRES)
             {
                 if (torque[0] < 0)
                 {
@@ -752,8 +757,8 @@ namespace ExoGaitMonitor
                     torque[0] *= -1.0;
                 }
 
-                ang_vel[0] = ((9550.0 * Math.Abs(ampObj[0].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[0] * SHANK_MOMENT + torque[0]))) * (userUnits[0] / 60.0) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[0] = ((torque[0] + methods.presN[0] * SHANK_MOMENT) / (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[0] * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[0] = ((9550.0 * Math.Abs(ampObj[0].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[0] * SHANK_MOMENT + torque[0]))) * (userUnits[0] / 60.0) * SHANK_VEL_FAC; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[0] = ((torque[0] + methods.presN[0] * SHANK_MOMENT) / (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[0] * SHANK_ACC_FAC; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[0];
                 profileSettingsObj.ProfileAccel = ang_acc[0];
@@ -774,12 +779,12 @@ namespace ExoGaitMonitor
             #endregion
 
             #region 左髋
-            if (Math.Abs(methods.presN[1]) <= 1)
+            if (Math.Abs(methods.presN[1]) <= SAC_THRES)
             {
                 ampObj[1].HaltMove();
             }
 
-            if (methods.presN[1] < -1)
+            if (methods.presN[1] < -SAC_THRES)
             {
                 if (torque[1] > 0)
                 {
@@ -787,8 +792,8 @@ namespace ExoGaitMonitor
                     torque[1] *= -1.0;
                 }
 
-                ang_vel[1] = Math.Abs(((9550.0 * Math.Abs(ampObj[1].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[1] * THIGH_MOMENT + torque[1]))) * (userUnits[1] / 60.0)) * 0.01; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[1] = Math.Abs(((torque[1] + methods.presN[1] * THIGH_MOMENT) / (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[1]) * 0.001; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[1] = Math.Abs(((9550.0 * Math.Abs(ampObj[1].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[1] * THIGH_MOMENT + torque[1]))) * (userUnits[1] / 60.0)) * THIGH_VEL_FAC; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[1] = Math.Abs(((torque[1] + methods.presN[1] * THIGH_MOMENT) / (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[1]) * THIGH_ACC_FAC; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[1];
                 profileSettingsObj.ProfileAccel = ang_acc[1];
@@ -807,7 +812,7 @@ namespace ExoGaitMonitor
 
             }
 
-            if (methods.presN[1] > 1)
+            if (methods.presN[1] > SAC_THRES)
             {
                 if (torque[1] < 0)
                 {
@@ -815,8 +820,8 @@ namespace ExoGaitMonitor
                     torque[1] *= -1.0;
                 }
 
-                ang_vel[1] = ((9550.0 * Math.Abs(ampObj[1].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[1] * THIGH_MOMENT + torque[1]))) * (userUnits[1] / 60.0) * 0.01; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[1] = ((torque[1] + methods.presN[1] * THIGH_MOMENT) / (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[1] * 0.001; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[1] = ((9550.0 * Math.Abs(ampObj[1].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[1] * THIGH_MOMENT + torque[1]))) * (userUnits[1] / 60.0) * THIGH_VEL_FAC; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[1] = ((torque[1] + methods.presN[1] * THIGH_MOMENT) / (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[1] * THIGH_ACC_FAC; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[1];
                 profileSettingsObj.ProfileAccel = ang_acc[1];
@@ -837,11 +842,11 @@ namespace ExoGaitMonitor
             #endregion
 
             #region 右髋
-            if (Math.Abs(methods.presN[2]) <= 1)
+            if (Math.Abs(methods.presN[2]) <= SAC_THRES)
             {
                 ampObj[2].HaltMove();
             }
-            if (methods.presN[2] < -1)
+            if (methods.presN[2] < -SAC_THRES)
             {
                 if (torque[2] > 0)
                 {
@@ -849,8 +854,8 @@ namespace ExoGaitMonitor
                     torque[2] *= -1.0;
                 }
 
-                ang_vel[2] = Math.Abs(((9550.0 * Math.Abs(ampObj[2].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[2] * THIGH_MOMENT + torque[2]))) * (userUnits[2] / 60.0)) * 0.01; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[2] = Math.Abs(((torque[2] + methods.presN[2] * THIGH_MOMENT) / (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[2]) * 0.001; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[2] = Math.Abs(((9550.0 * Math.Abs(ampObj[2].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[2] * THIGH_MOMENT + torque[2]))) * (userUnits[2] / 60.0)) * THIGH_VEL_FAC; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[2] = Math.Abs(((torque[2] + methods.presN[2] * THIGH_MOMENT) / (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[2]) * THIGH_ACC_FAC; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[2];
                 profileSettingsObj.ProfileAccel = ang_acc[2];
@@ -868,7 +873,7 @@ namespace ExoGaitMonitor
                 }
 
             }
-            if (methods.presN[2] > 1)
+            if (methods.presN[2] > SAC_THRES)
             {
                 if (torque[2] < 0)
                 {
@@ -876,9 +881,8 @@ namespace ExoGaitMonitor
                     torque[2] *= -1.0;
                 }
 
-                ang_vel[2] = ((9550.0 * Math.Abs(ampObj[2].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[2] * THIGH_MOMENT + torque[2]))) * (userUnits[2] / 60.0) * 0.01; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[2] = ((torque[2] + methods.presN[2] * THIGH_MOMENT) / (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[2] * 0.001; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
-
+                ang_vel[2] = ((9550.0 * Math.Abs(ampObj[2].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[2] * THIGH_MOMENT + torque[2]))) * (userUnits[2] / 60.0) * THIGH_VEL_FAC; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[2] = ((torque[2] + methods.presN[2] * THIGH_MOMENT) / (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[2] * THIGH_ACC_FAC; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[2];
                 profileSettingsObj.ProfileAccel = ang_acc[2];
@@ -899,11 +903,11 @@ namespace ExoGaitMonitor
             #endregion
 
             #region 右膝
-            if (Math.Abs(methods.presN[3]) <= 1)
+            if (Math.Abs(methods.presN[3]) <= SAC_THRES)
             {
                 ampObj[3].HaltMove();
             }
-            if (methods.presN[3] < -1)
+            if (methods.presN[3] < -SAC_THRES)
             {
                 if (torque[3] > 0)
                 {
@@ -911,8 +915,8 @@ namespace ExoGaitMonitor
                     torque[3] *= -1.0;
                 }
 
-                ang_vel[3] = Math.Abs(((9550.0 * Math.Abs(ampObj[3].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[3] * SHANK_MOMENT + torque[3]))) * (userUnits[3] / 60.0)) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[3] = Math.Abs(((torque[3] + methods.presN[3] * SHANK_MOMENT) / (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[3]) * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[3] = Math.Abs(((9550.0 * Math.Abs(ampObj[3].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[3] * SHANK_MOMENT + torque[3]))) * (userUnits[3] / 60.0)) * SHANK_VEL_FAC; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[3] = Math.Abs(((torque[3] + methods.presN[3] * SHANK_MOMENT) / (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[3]) * SHANK_ACC_FAC; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[3];
                 profileSettingsObj.ProfileAccel = ang_acc[3];
@@ -930,7 +934,7 @@ namespace ExoGaitMonitor
                 }
 
             }
-            if (methods.presN[3] > 1)
+            if (methods.presN[3] > SAC_THRES)
             {
                 if (torque[3] < 0)
                 {
@@ -938,8 +942,8 @@ namespace ExoGaitMonitor
                     torque[3] *= -1.0;
                 }
 
-                ang_vel[3] = ((9550.0 * Math.Abs(ampObj[3].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[3] * SHANK_MOMENT + torque[3]))) * (userUnits[3] / 60.0) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[3] = ((torque[3] + methods.presN[3] * SHANK_MOMENT) / (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[3] * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[3] = ((9550.0 * Math.Abs(ampObj[3].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[3] * SHANK_MOMENT + torque[3]))) * (userUnits[3] / 60.0) * SHANK_VEL_FAC; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[3] = ((torque[3] + methods.presN[3] * SHANK_MOMENT) / (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[3] * SHANK_ACC_FAC; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[3];
                 profileSettingsObj.ProfileAccel = ang_acc[3];
@@ -965,6 +969,7 @@ namespace ExoGaitMonitor
                 ampObjAngleActual[0].ToString() + '\t' +
                 radian[0].ToString() + '\t' +
                 ampObjAngleVelActual[0].ToString() + '\t' +
+                ampObj[0].TrajectoryAcc.ToString() + '\t' +
                 ampObjAngleAccActual[0].ToString() + '\t' +
                 inertia[0].ToString() + '\t' +
                 coriolis[0].ToString() + '\t' +
@@ -978,6 +983,7 @@ namespace ExoGaitMonitor
                 ampObjAngleActual[1].ToString() + '\t' +
                 radian[1].ToString() + '\t' +
                 ampObjAngleVelActual[1].ToString() + '\t' +
+                ampObj[1].TrajectoryAcc.ToString() + '\t' +
                 ampObjAngleAccActual[1].ToString() + '\t' +
                 inertia[1].ToString() + '\t' +
                 coriolis[1].ToString() + '\t' +
@@ -991,6 +997,7 @@ namespace ExoGaitMonitor
                 ampObjAngleActual[2].ToString() + '\t' +
                 radian[2].ToString() + '\t' +
                 ampObjAngleVelActual[2].ToString() + '\t' +
+                ampObj[2].TrajectoryAcc.ToString() + '\t' +
                 ampObjAngleAccActual[2].ToString() + '\t' +
                 inertia[2].ToString() + '\t' +
                 coriolis[2].ToString() + '\t' +
@@ -1004,6 +1011,7 @@ namespace ExoGaitMonitor
                 ampObjAngleActual[3].ToString() + '\t' +
                 radian[3].ToString() + '\t' +
                 ampObjAngleVelActual[3].ToString() + '\t' +
+                ampObj[3].TrajectoryAcc.ToString() + '\t' +
                 ampObjAngleAccActual[3].ToString() + '\t' +
                 inertia[3].ToString() + '\t' +
                 coriolis[3].ToString() + '\t' +
