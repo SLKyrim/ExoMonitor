@@ -99,16 +99,19 @@ namespace ExoGaitMonitor
         bool forceflag = false;
 
         //SAC
-        const double LEFT_THIGH_LENGTH = 0.384; //外骨骼左大腿长，单位：m
-        const double LEFT_THIGH_WEIGHT = 0.381; //外骨骼左大腿重，单位：kg
-        const double LEFT_SHANK_LENGTH = 0.450; //外骨骼左小腿长，单位：m
-        const double LEFT_SHANK_WEIGHT = 1.323; //外骨骼左小腿重，单位：kg
+        const double THIGH_LENGTH = 0.384; //外骨骼大腿长，单位：m
+        const double THIGH_WEIGHT = 0.381; //外骨骼大腿重，单位：kg
+        const double SHANK_LENGTH = 0.450; //外骨骼小腿长，单位：m
+        const double SHANK_WEIGHT = 1.323; //外骨骼小腿重，单位：kg
+        const double THIGH_MOMENT = 0.26; //外骨骼大腿力矩長，單位：m
+        const double SHANK_MOMENT = 0.24; //外骨骼小腿力矩長，單位：m
         const double ALPHA = 10; //灵敏度放大因子
         const int NUM_MOTOR = 4; //电机个数
         const double G = 9.8; //重力加速度
         const double BATVOL = 26.9; //电池电压
         const double ETA = 0.8; //减速器使用系数
         const int INTERVAL = 20; //SAC执行频率，单位：ms
+
 
         double[] radian = new double[NUM_MOTOR]; //角度矩阵，单位：rad
         double[] ang_vel = new double[NUM_MOTOR]; //角速度矩阵，单位：rad/s
@@ -117,6 +120,7 @@ namespace ExoGaitMonitor
         double[] coriolis = new double[NUM_MOTOR]; //科里奥利矩阵
         double[] gravity = new double[NUM_MOTOR]; //重力矩阵
         double[] torque = new double[NUM_MOTOR]; //减速器扭矩
+        StreamWriter sacText; //写SAC参数文本
         #endregion
 
         private void FunctionPage_Loaded(object sender, RoutedEventArgs e)//打开窗口后进行的初始化操作
@@ -665,39 +669,39 @@ namespace ExoGaitMonitor
             }
 
             //左膝
-            inertia[0] = (1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH +
-                          1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Cos(radian[0])) * ampObjAngleAccActual[1] +
-                          1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH * ampObjAngleAccActual[0];
-            coriolis[0] = 1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_THIGH_LENGTH * LEFT_SHANK_LENGTH * Math.Sin(radian[0]) * ampObjAngleVelActual[1] * ampObjAngleVelActual[1];
-            gravity[0] = 1.0 / 2.0 * LEFT_SHANK_WEIGHT * G * LEFT_SHANK_LENGTH * Math.Sin(radian[0] + radian[1]);
+            inertia[0] = (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH +
+                          1.0 / 2.0 * SHANK_WEIGHT * SHANK_LENGTH * THIGH_LENGTH * Math.Cos(radian[0])) * ampObjAngleAccActual[1] +
+                          1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH * ampObjAngleAccActual[0];
+            coriolis[0] = 1.0 / 2.0 * SHANK_WEIGHT * THIGH_LENGTH * SHANK_LENGTH * Math.Sin(radian[0]) * ampObjAngleVelActual[1] * ampObjAngleVelActual[1];
+            gravity[0] = 1.0 / 2.0 * SHANK_WEIGHT * G * SHANK_LENGTH * Math.Sin(radian[0] + radian[1]);
             //左髋
-            inertia[1] = (1.0 / 3.0 * LEFT_THIGH_WEIGHT * LEFT_THIGH_LENGTH * LEFT_THIGH_LENGTH +
-                         LEFT_SHANK_WEIGHT * LEFT_THIGH_LENGTH * LEFT_THIGH_LENGTH +
-                         1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH +
-                         LEFT_SHANK_WEIGHT * LEFT_THIGH_LENGTH * LEFT_SHANK_LENGTH * Math.Cos(radian[0])) * ampObjAngleAccActual[1] +
-                         (1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH +
-                         1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Cos(radian[0])) * ampObjAngleAccActual[0];
-            coriolis[1] = -1.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Sin(radian[0]) * ampObjAngleVelActual[0] * ampObjAngleVelActual[1] -
-                          1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Sin(radian[0]) * ampObjAngleVelActual[0] * ampObjAngleVelActual[0];
-            gravity[1] = (1.0 / 2.0 * LEFT_THIGH_WEIGHT + LEFT_SHANK_WEIGHT) * G * LEFT_THIGH_LENGTH * Math.Sin(radian[1]) +
-                          1.0 / 2.0 * LEFT_SHANK_WEIGHT * G * LEFT_SHANK_LENGTH * Math.Sin(radian[0] + radian[1]);
+            inertia[1] = (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH +
+                         SHANK_WEIGHT * THIGH_LENGTH * THIGH_LENGTH +
+                         1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH +
+                         SHANK_WEIGHT * THIGH_LENGTH * SHANK_LENGTH * Math.Cos(radian[0])) * ampObjAngleAccActual[1] +
+                         (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH +
+                         1.0 / 2.0 * SHANK_WEIGHT * SHANK_LENGTH * THIGH_LENGTH * Math.Cos(radian[0])) * ampObjAngleAccActual[0];
+            coriolis[1] = -1.0 * SHANK_WEIGHT * SHANK_LENGTH * THIGH_LENGTH * Math.Sin(radian[0]) * ampObjAngleVelActual[0] * ampObjAngleVelActual[1] -
+                          1.0 / 2.0 * SHANK_WEIGHT * SHANK_LENGTH * THIGH_LENGTH * Math.Sin(radian[0]) * ampObjAngleVelActual[0] * ampObjAngleVelActual[0];
+            gravity[1] = (1.0 / 2.0 * THIGH_WEIGHT + SHANK_WEIGHT) * G * THIGH_LENGTH * Math.Sin(radian[1]) +
+                          1.0 / 2.0 * SHANK_WEIGHT * G * SHANK_LENGTH * Math.Sin(radian[0] + radian[1]);
             //右髋
-            inertia[2] = (1.0 / 3.0 * LEFT_THIGH_WEIGHT * LEFT_THIGH_LENGTH * LEFT_THIGH_LENGTH +
-                       LEFT_SHANK_WEIGHT * LEFT_THIGH_LENGTH * LEFT_THIGH_LENGTH +
-                       1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH +
-                       LEFT_SHANK_WEIGHT * LEFT_THIGH_LENGTH * LEFT_SHANK_LENGTH * Math.Cos(radian[3])) * ampObjAngleAccActual[2] +
-                       (1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH +
-                       1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Cos(radian[3])) * ampObjAngleAccActual[3];
-            coriolis[2] = -1.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Sin(radian[3]) * ampObjAngleVelActual[3] * ampObjAngleVelActual[2] -
-                          1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Sin(radian[3]) * ampObjAngleVelActual[3] * ampObjAngleVelActual[3];
-            gravity[2] = (1.0 / 2.0 * LEFT_THIGH_WEIGHT + LEFT_SHANK_WEIGHT) * G * LEFT_THIGH_LENGTH * Math.Sin(radian[2]) +
-                          1.0 / 2.0 * LEFT_SHANK_WEIGHT * G * LEFT_SHANK_LENGTH * Math.Sin(radian[3] + radian[2]);
+            inertia[2] = (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH +
+                       SHANK_WEIGHT * THIGH_LENGTH * THIGH_LENGTH +
+                       1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH +
+                       SHANK_WEIGHT * THIGH_LENGTH * SHANK_LENGTH * Math.Cos(radian[3])) * ampObjAngleAccActual[2] +
+                       (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH +
+                       1.0 / 2.0 * SHANK_WEIGHT * SHANK_LENGTH * THIGH_LENGTH * Math.Cos(radian[3])) * ampObjAngleAccActual[3];
+            coriolis[2] = -1.0 * SHANK_WEIGHT * SHANK_LENGTH * THIGH_LENGTH * Math.Sin(radian[3]) * ampObjAngleVelActual[3] * ampObjAngleVelActual[2] -
+                          1.0 / 2.0 * SHANK_WEIGHT * SHANK_LENGTH * THIGH_LENGTH * Math.Sin(radian[3]) * ampObjAngleVelActual[3] * ampObjAngleVelActual[3];
+            gravity[2] = (1.0 / 2.0 * THIGH_WEIGHT + SHANK_WEIGHT) * G * THIGH_LENGTH * Math.Sin(radian[2]) +
+                          1.0 / 2.0 * SHANK_WEIGHT * G * SHANK_LENGTH * Math.Sin(radian[3] + radian[2]);
             //右膝
-            inertia[3] = (1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH +
-                       1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_THIGH_LENGTH * Math.Cos(radian[3])) * ampObjAngleAccActual[2] +
-                       1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH * ampObjAngleAccActual[3];
-            coriolis[3] = 1.0 / 2.0 * LEFT_SHANK_WEIGHT * LEFT_THIGH_LENGTH * LEFT_SHANK_LENGTH * Math.Sin(radian[3]) * ampObjAngleVelActual[2] * ampObjAngleVelActual[2];
-            gravity[3] = 1.0 / 2.0 * LEFT_SHANK_WEIGHT * G * LEFT_SHANK_LENGTH * Math.Sin(radian[3] + radian[2]);
+            inertia[3] = (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH +
+                       1.0 / 2.0 * SHANK_WEIGHT * SHANK_LENGTH * THIGH_LENGTH * Math.Cos(radian[3])) * ampObjAngleAccActual[2] +
+                       1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH * ampObjAngleAccActual[3];
+            coriolis[3] = 1.0 / 2.0 * SHANK_WEIGHT * THIGH_LENGTH * SHANK_LENGTH * Math.Sin(radian[3]) * ampObjAngleVelActual[2] * ampObjAngleVelActual[2];
+            gravity[3] = 1.0 / 2.0 * SHANK_WEIGHT * G * SHANK_LENGTH * Math.Sin(radian[3] + radian[2]);
 
             for (int i = 0; i < NUM_MOTOR; i++)
             {
@@ -709,7 +713,6 @@ namespace ExoGaitMonitor
             //这里说的符号和MoveRel()里的符号相同
             //拉压力传感器受压力presN为正，受拉力presN为负
             //即左边受压力时，应配合向后弯曲，
-
             #region 左膝
             if (Math.Abs(methods.presN[0]) <= 1)
             {
@@ -723,8 +726,8 @@ namespace ExoGaitMonitor
                     torque[0] *= -1.0;
                 }
 
-                ang_vel[0] = Math.Abs(((9550.0 * Math.Abs(ampObj[0].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[0] + torque[0]))) * (userUnits[0] / 60.0)) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[0] = Math.Abs(((torque[0] + methods.presN[0]) / (1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[0]) * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[0] = Math.Abs(((9550.0 * Math.Abs(ampObj[0].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[0] * SHANK_MOMENT + torque[0]))) * (userUnits[0] / 60.0)) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[0] = Math.Abs(((torque[0] + methods.presN[0] * SHANK_MOMENT) / (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[0]) * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[0];
                 profileSettingsObj.ProfileAccel = ang_acc[0];
@@ -749,8 +752,8 @@ namespace ExoGaitMonitor
                     torque[0] *= -1.0;
                 }
 
-                ang_vel[0] = ((9550.0 * Math.Abs(ampObj[0].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[0] + torque[0]))) * (userUnits[0] / 60.0) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[0] = ((torque[0] + methods.presN[0]) / (1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[0] * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[0] = ((9550.0 * Math.Abs(ampObj[0].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[0] * SHANK_MOMENT + torque[0]))) * (userUnits[0] / 60.0) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[0] = ((torque[0] + methods.presN[0] * SHANK_MOMENT) / (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[0] * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[0];
                 profileSettingsObj.ProfileAccel = ang_acc[0];
@@ -784,8 +787,8 @@ namespace ExoGaitMonitor
                     torque[1] *= -1.0;
                 }
 
-                ang_vel[1] = Math.Abs(((9550.0 * Math.Abs(ampObj[1].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[1] + torque[1]))) * (userUnits[1] / 60.0)) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[1] = Math.Abs(((torque[1] + methods.presN[1]) / (1.0 / 3.0 * LEFT_THIGH_WEIGHT * LEFT_THIGH_LENGTH * LEFT_THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[1]) * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[1] = Math.Abs(((9550.0 * Math.Abs(ampObj[1].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[1] * THIGH_MOMENT + torque[1]))) * (userUnits[1] / 60.0)) * 0.01; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[1] = Math.Abs(((torque[1] + methods.presN[1] * THIGH_MOMENT) / (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[1]) * 0.001; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[1];
                 profileSettingsObj.ProfileAccel = ang_acc[1];
@@ -812,8 +815,8 @@ namespace ExoGaitMonitor
                     torque[1] *= -1.0;
                 }
 
-                ang_vel[1] = ((9550.0 * Math.Abs(ampObj[1].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[1] + torque[1]))) * (userUnits[1] / 60.0) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[1] = ((torque[1] + methods.presN[1]) / (1.0 / 3.0 * LEFT_THIGH_WEIGHT * LEFT_THIGH_LENGTH * LEFT_THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[1] * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[1] = ((9550.0 * Math.Abs(ampObj[1].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[1] * THIGH_MOMENT + torque[1]))) * (userUnits[1] / 60.0) * 0.01; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[1] = ((torque[1] + methods.presN[1] * THIGH_MOMENT) / (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[1] * 0.001; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[1];
                 profileSettingsObj.ProfileAccel = ang_acc[1];
@@ -846,8 +849,8 @@ namespace ExoGaitMonitor
                     torque[2] *= -1.0;
                 }
 
-                ang_vel[2] = Math.Abs(((9550.0 * Math.Abs(ampObj[2].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[2] + torque[2]))) * (userUnits[2] / 60.0)) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[2] = Math.Abs(((torque[2] + methods.presN[2]) / (1.0 / 3.0 * LEFT_THIGH_WEIGHT * LEFT_THIGH_LENGTH * LEFT_THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[2]) * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[2] = Math.Abs(((9550.0 * Math.Abs(ampObj[2].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[2] * THIGH_MOMENT + torque[2]))) * (userUnits[2] / 60.0)) * 0.01; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[2] = Math.Abs(((torque[2] + methods.presN[2] * THIGH_MOMENT) / (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[2]) * 0.001; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[2];
                 profileSettingsObj.ProfileAccel = ang_acc[2];
@@ -873,8 +876,8 @@ namespace ExoGaitMonitor
                     torque[2] *= -1.0;
                 }
 
-                ang_vel[2] = ((9550.0 * Math.Abs(ampObj[2].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[2] + torque[2]))) * (userUnits[2] / 60.0) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[2] = ((torque[2] + methods.presN[2]) / (1.0 / 3.0 * LEFT_THIGH_WEIGHT * LEFT_THIGH_LENGTH * LEFT_THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[2] * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[2] = ((9550.0 * Math.Abs(ampObj[2].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[2] * THIGH_MOMENT + torque[2]))) * (userUnits[2] / 60.0) * 0.01; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[2] = ((torque[2] + methods.presN[2] * THIGH_MOMENT) / (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[2] * 0.001; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
 
                 profileSettingsObj.ProfileVel = ang_vel[2];
@@ -908,8 +911,8 @@ namespace ExoGaitMonitor
                     torque[3] *= -1.0;
                 }
 
-                ang_vel[3] = Math.Abs(((9550.0 * Math.Abs(ampObj[3].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[3] + torque[3]))) * (userUnits[3] / 60.0)) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[3] = Math.Abs(((torque[3] + methods.presN[3]) / (1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[3]) * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[3] = Math.Abs(((9550.0 * Math.Abs(ampObj[3].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[3] * SHANK_MOMENT + torque[3]))) * (userUnits[3] / 60.0)) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[3] = Math.Abs(((torque[3] + methods.presN[3] * SHANK_MOMENT) / (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[3]) * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[3];
                 profileSettingsObj.ProfileAccel = ang_acc[3];
@@ -935,8 +938,8 @@ namespace ExoGaitMonitor
                     torque[3] *= -1.0;
                 }
 
-                ang_vel[3] = ((9550.0 * Math.Abs(ampObj[3].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[3] + torque[3]))) * (userUnits[3] / 60.0) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
-                ang_acc[3] = ((torque[3] + methods.presN[3]) / (1.0 / 3.0 * LEFT_SHANK_WEIGHT * LEFT_SHANK_LENGTH * LEFT_SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[3] * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
+                ang_vel[3] = ((9550.0 * Math.Abs(ampObj[3].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[3] * SHANK_MOMENT + torque[3]))) * (userUnits[3] / 60.0) * 0.1; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
+                ang_acc[3] = ((torque[3] + methods.presN[3] * SHANK_MOMENT) / (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[3] * 0.01; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
                 profileSettingsObj.ProfileVel = ang_vel[3];
                 profileSettingsObj.ProfileAccel = ang_acc[3];
@@ -955,23 +958,62 @@ namespace ExoGaitMonitor
             }
             #endregion
 
-            StreamWriter toText = new StreamWriter("SAC.txt", true);//打开记录数据文本,可于
-            //-------------------------------------------------写电机扭矩参数
-            toText.WriteLine(timeCountor.ToString() + '\t' +
-            methods.presN[3].ToString() + '\t' +
-            ampObjAngleActual[3].ToString() + '\t' +
-            radian[3].ToString() + '\t' +
-            ampObjAngleVelActual[3].ToString() + '\t' +
-            ampObjAngleAccActual[3].ToString() + '\t' +
-            inertia[3].ToString() + '\t' +
-            coriolis[3].ToString() + '\t' +
-            gravity[3].ToString() + '\t' +
-            torque[3].ToString() + '\t' +
-            ang_vel[3].ToString() + '\t' +
-            ang_acc[3].ToString() + '\t' +
-            (ampObj[3].CurrentActual * 0.01).ToString());
+            StreamWriter sacText = new StreamWriter("SAC.txt", true);
+
+            sacText.WriteLine(timeCountor.ToString() + '\t' +
+                methods.presN[0].ToString() + '\t' +
+                ampObjAngleActual[0].ToString() + '\t' +
+                radian[0].ToString() + '\t' +
+                ampObjAngleVelActual[0].ToString() + '\t' +
+                ampObjAngleAccActual[0].ToString() + '\t' +
+                inertia[0].ToString() + '\t' +
+                coriolis[0].ToString() + '\t' +
+                gravity[0].ToString() + '\t' +
+                torque[0].ToString() + '\t' +
+                ang_vel[0].ToString() + '\t' +
+                ang_acc[0].ToString() + '\t' +
+                (ampObj[0].CurrentActual * 0.01).ToString()+ '\t' + '\t' +
+                timeCountor.ToString() + '\t' +
+                methods.presN[1].ToString() + '\t' +
+                ampObjAngleActual[1].ToString() + '\t' +
+                radian[1].ToString() + '\t' +
+                ampObjAngleVelActual[1].ToString() + '\t' +
+                ampObjAngleAccActual[1].ToString() + '\t' +
+                inertia[1].ToString() + '\t' +
+                coriolis[1].ToString() + '\t' +
+                gravity[1].ToString() + '\t' +
+                torque[1].ToString() + '\t' +
+                ang_vel[1].ToString() + '\t' +
+                ang_acc[1].ToString() + '\t' +
+                (ampObj[1].CurrentActual * 0.01).ToString() + '\t' + '\t' +
+                timeCountor.ToString() + '\t' +
+                methods.presN[2].ToString() + '\t' +
+                ampObjAngleActual[2].ToString() + '\t' +
+                radian[2].ToString() + '\t' +
+                ampObjAngleVelActual[2].ToString() + '\t' +
+                ampObjAngleAccActual[2].ToString() + '\t' +
+                inertia[2].ToString() + '\t' +
+                coriolis[2].ToString() + '\t' +
+                gravity[2].ToString() + '\t' +
+                torque[2].ToString() + '\t' +
+                ang_vel[2].ToString() + '\t' +
+                ang_acc[2].ToString() + '\t' +
+                (ampObj[2].CurrentActual * 0.01).ToString() + '\t' + '\t' +
+                timeCountor.ToString() + '\t' +
+                methods.presN[3].ToString() + '\t' +
+                ampObjAngleActual[3].ToString() + '\t' +
+                radian[3].ToString() + '\t' +
+                ampObjAngleVelActual[3].ToString() + '\t' +
+                ampObjAngleAccActual[3].ToString() + '\t' +
+                inertia[3].ToString() + '\t' +
+                coriolis[3].ToString() + '\t' +
+                gravity[3].ToString() + '\t' +
+                torque[3].ToString() + '\t' +
+                ang_vel[3].ToString() + '\t' +
+                ang_acc[3].ToString() + '\t' +
+                (ampObj[3].CurrentActual * 0.01).ToString());
+            sacText.Close();
             timeCountor++;
-            toText.Close();
         }
 
         private void SACEndButton_Click(object sender, RoutedEventArgs e)//点击【SAC停止】按钮时执行
