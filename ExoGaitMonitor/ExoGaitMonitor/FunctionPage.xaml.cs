@@ -127,6 +127,8 @@ namespace ExoGaitMonitor
             ShowCurTimeTimer.Interval = new TimeSpan(0, 0, 0, 1, 0);
             ShowCurTimeTimer.Start();
 
+            timeCountor = 0;
+
             try
             {
                 canObj = new canOpenObj(); //实例化网络接口
@@ -1026,6 +1028,13 @@ namespace ExoGaitMonitor
             timeDateTextBlock.Text = timeDateString;
 
             ScanPorts();//扫描可用串口
+
+            StreamWriter toText = new StreamWriter("test.txt", true);
+            //写参数
+            toText.WriteLine(timeCountor.ToString() + '\t' +
+            ampObj[0].CountsPerUnit.ToString());
+            timeCountor++;
+            toText.Close();
         }
 
         public void ScanPorts()//扫描可用串口
