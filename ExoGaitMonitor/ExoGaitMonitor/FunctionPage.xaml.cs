@@ -98,6 +98,7 @@ namespace ExoGaitMonitor
         public string sensor1_com = null;         //传感器1所用串口
         bool forceflag = false;
         const double FORCE_THRES = 0.4; //力學模式拉壓力傳感器閾值 
+        const double FORCE_VEL = 100000; //设置力学模式下速度
 
         //SAC
         const double THIGH_LENGTH = 0.384; //外骨骼大腿长，单位：m
@@ -111,11 +112,11 @@ namespace ExoGaitMonitor
         const double G = 9.8; //重力加速度
         const double BATVOL = 26.9; //电池电压
         const double ETA = 0.8; //减速器使用系数
-        const int INTERVAL = 10; //SAC执行频率，单位：ms
-        const double SHANK_VEL_FAC = 0.2; //小腿速度可執行係數
-        const double SHANK_ACC_FAC = 0.02; //小腿加速度可執行係數
-        const double THIGH_VEL_FAC = 0.5; //大腿速度可執行係數
-        const double THIGH_ACC_FAC = 0.05; //大腿加速度可執行係數
+        const double INTERVAL = 20; //SAC执行频率，单位：ms
+        const double SHANK_VEL_FAC = 0.25; //小腿速度可執行係數
+        const double SHANK_ACC_FAC = 0.025; //小腿加速度可執行係數
+        const double THIGH_VEL_FAC = 0.1; //大腿速度可執行係數
+        const double THIGH_ACC_FAC = 0.1; //大腿加速度可執行係數
         const double SAC_THRES = 0.5; //SAC模式拉壓力傳感器閾值
 
         double[] radian = new double[NUM_MOTOR]; //角度矩阵，单位：rad
@@ -125,7 +126,7 @@ namespace ExoGaitMonitor
         double[] coriolis = new double[NUM_MOTOR]; //科里奥利矩阵
         double[] gravity = new double[NUM_MOTOR]; //重力矩阵
         double[] torque = new double[NUM_MOTOR]; //减速器扭矩
-        double[] tempAcc = new double[NUM_MOTOR]; //記錄上次的減速器角加速度
+        double[] tempVel = new double[NUM_MOTOR]; //記錄上次的減速器角速度，单位：rad/s
         #endregion
 
         private void FunctionPage_Loaded(object sender, RoutedEventArgs e)//打开窗口后进行的初始化操作
@@ -161,6 +162,7 @@ namespace ExoGaitMonitor
                 }
 
                 Linkage.Initialize(ampObj);
+                Linkage.SetMoveLimits(200000, 3000000, 3000000, 200000);
             }
             catch
             {
@@ -205,8 +207,8 @@ namespace ExoGaitMonitor
                 ProfileSettings.ProfileVel = (ampObj[i].VelocityLoopSettings.VelLoopMaxVel) / 10;
                 ProfileSettings.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP; //PVT模式下的控制模式类型
                 ampObj[i].ProfileSettings = ProfileSettings;
-                ampObj[i].MoveAbs(pvtPositions[0, i]);
-                ampObj[i].WaitMoveDone(4000);
+                ampObj[i].MoveAbs(pvtPositions[0, i]); //PVT模式开始后先移动到各关节初始位置
+                ampObj[i].WaitMoveDone(10000); //等待各关节回到初始位置的最大时间
             }
             
             Linkage.TrajectoryInitialize(pvtRich3Pos, pvtRich3Vel, Rich3times, 100); //开始步态
@@ -444,8 +446,8 @@ namespace ExoGaitMonitor
             }
             if (methods.presN[0] < -FORCE_THRES)
             {
-                profileSettingsObj.ProfileVel = 100000;
-                profileSettingsObj.ProfileAccel = 100000;
+                profileSettingsObj.ProfileVel = FORCE_VEL;
+                profileSettingsObj.ProfileAccel = FORCE_VEL;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[0].ProfileSettings = profileSettingsObj;
 
@@ -462,8 +464,8 @@ namespace ExoGaitMonitor
             }
             if (methods.presN[0] > FORCE_THRES)
             {
-                profileSettingsObj.ProfileVel = 100000;
-                profileSettingsObj.ProfileAccel = 100000;
+                profileSettingsObj.ProfileVel = FORCE_VEL;
+                profileSettingsObj.ProfileAccel = FORCE_VEL;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[0].ProfileSettings = profileSettingsObj;
                 try
@@ -487,8 +489,8 @@ namespace ExoGaitMonitor
 
             if (methods.presN[1] < -FORCE_THRES)
             {
-                profileSettingsObj.ProfileVel = 100000;
-                profileSettingsObj.ProfileAccel = 100000;
+                profileSettingsObj.ProfileVel = FORCE_VEL;
+                profileSettingsObj.ProfileAccel = FORCE_VEL;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[1].ProfileSettings = profileSettingsObj;
 
@@ -506,8 +508,8 @@ namespace ExoGaitMonitor
 
             if (methods.presN[1] > FORCE_THRES)
             {
-                profileSettingsObj.ProfileVel = 100000;
-                profileSettingsObj.ProfileAccel = 100000;
+                profileSettingsObj.ProfileVel = FORCE_VEL;
+                profileSettingsObj.ProfileAccel = FORCE_VEL;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[1].ProfileSettings = profileSettingsObj;
 
@@ -531,8 +533,8 @@ namespace ExoGaitMonitor
             }
             if (methods.presN[2] < -FORCE_THRES)
             {
-                profileSettingsObj.ProfileVel = 100000;
-                profileSettingsObj.ProfileAccel = 100000;
+                profileSettingsObj.ProfileVel = FORCE_VEL;
+                profileSettingsObj.ProfileAccel = FORCE_VEL;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[2].ProfileSettings = profileSettingsObj;
 
@@ -549,8 +551,8 @@ namespace ExoGaitMonitor
             }
             if (methods.presN[2] > FORCE_THRES)
             {
-                profileSettingsObj.ProfileVel = 100000;
-                profileSettingsObj.ProfileAccel = 100000;
+                profileSettingsObj.ProfileVel = FORCE_VEL;
+                profileSettingsObj.ProfileAccel = FORCE_VEL;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[2].ProfileSettings = profileSettingsObj;
 
@@ -574,8 +576,8 @@ namespace ExoGaitMonitor
             }
             if (methods.presN[3] < -FORCE_THRES)
             {
-                profileSettingsObj.ProfileVel = 100000;
-                profileSettingsObj.ProfileAccel = 100000;
+                profileSettingsObj.ProfileVel = FORCE_VEL;
+                profileSettingsObj.ProfileAccel = FORCE_VEL;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[3].ProfileSettings = profileSettingsObj;
 
@@ -592,8 +594,8 @@ namespace ExoGaitMonitor
             }
             if (methods.presN[3] > FORCE_THRES)
             {
-                profileSettingsObj.ProfileVel = 100000;
-                profileSettingsObj.ProfileAccel = 100000;
+                profileSettingsObj.ProfileVel = FORCE_VEL;
+                profileSettingsObj.ProfileAccel = FORCE_VEL;
                 profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                 ampObj[3].ProfileSettings = profileSettingsObj;
 
@@ -669,10 +671,11 @@ namespace ExoGaitMonitor
                 //电机的速度默认单位为0.1counts/s；加速度默认单位为10counts/s
                 ampObjAngleActual[i] = (ampObj[i].PositionActual / userUnits[i]) * (360.0 / RATIO);//减速器转的角度
                 radian[i] = Math.Abs(Math.PI / 180.0 * ampObjAngleActual[i]);//减速器角度转换为弧度，取绝对值
-                ampObjAngleVelActual[i] = (ampObj[i].TrajectoryVel / userUnits[i]) * 2.0 * Math.PI * 60.0 / RATIO;//减速器角速度单位从counts/s转化为rad/min
-                ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI * 60.0 * 60.0 / RATIO;//减速器角加速度单位从counts/s^2转化为rad/min^2
+                ampObjAngleVelActual[i] = (ampObj[i].VelocityActual / userUnits[i]) * 2.0 * Math.PI * 60.0 / RATIO;//减速器角速度单位从counts/s转化为rad/min
+                ampObjAngleAccActual[i] = (ampObjAngleVelActual[i] - tempVel[i]) / (INTERVAL / 1000.0 / 60);//减速器角加速度单位从counts/s^2转化为rad/min^2
+                tempVel[i] = ampObjAngleVelActual[i];
             }
-
+            
             //左膝
             inertia[0] = (1.0 / 3.0 * SHANK_WEIGHT * SHANK_LENGTH * SHANK_LENGTH +
                           1.0 / 2.0 * SHANK_WEIGHT * SHANK_LENGTH * THIGH_LENGTH * Math.Cos(radian[0])) * ampObjAngleAccActual[1] +
@@ -718,6 +721,7 @@ namespace ExoGaitMonitor
             //这里说的符号和MoveRel()里的符号相同
             //拉压力传感器受压力presN为正，受拉力presN为负
             //即左边受压力时，应配合向后弯曲，
+
             #region 左膝
             if (Math.Abs(methods.presN[0]) <= SAC_THRES)
             {
@@ -857,10 +861,21 @@ namespace ExoGaitMonitor
                 ang_vel[2] = Math.Abs(((9550.0 * Math.Abs(ampObj[2].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[2] * THIGH_MOMENT + torque[2]))) * (userUnits[2] / 60.0)) * THIGH_VEL_FAC; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
                 ang_acc[2] = Math.Abs(((torque[2] + methods.presN[2] * THIGH_MOMENT) / (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[2]) * THIGH_ACC_FAC; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
-                profileSettingsObj.ProfileVel = ang_vel[2];
-                profileSettingsObj.ProfileAccel = ang_acc[2];
-                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
-                ampObj[2].ProfileSettings = profileSettingsObj;
+                if(Math.Abs(ang_acc[2]) < 100000)
+                {
+                    profileSettingsObj.ProfileVel = ang_vel[2];
+                    profileSettingsObj.ProfileAccel = ang_acc[2];
+                    profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                    ampObj[2].ProfileSettings = profileSettingsObj;
+                }
+                else
+                {
+                    profileSettingsObj.ProfileVel = ang_vel[2];
+                    profileSettingsObj.ProfileAccel = 100000;
+                    profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                    ampObj[2].ProfileSettings = profileSettingsObj;
+                }
+
 
                 try
                 {
@@ -884,10 +899,20 @@ namespace ExoGaitMonitor
                 ang_vel[2] = ((9550.0 * Math.Abs(ampObj[2].CurrentActual * 0.01) * BATVOL * RATIO * ETA) / (1000.0 * (methods.presN[2] * THIGH_MOMENT + torque[2]))) * (userUnits[2] / 60.0) * THIGH_VEL_FAC; //电机转速，单位：counts/s；0.1为SL定义可执行调整系数
                 ang_acc[2] = ((torque[2] + methods.presN[2] * THIGH_MOMENT) / (1.0 / 3.0 * THIGH_WEIGHT * THIGH_LENGTH * THIGH_LENGTH)) * RATIO / (2.0 * Math.PI) * userUnits[2] * THIGH_ACC_FAC; //电机角加速度，单位：counts/s^2；0.01为SL定义可执行调整系数
 
-                profileSettingsObj.ProfileVel = ang_vel[2];
-                profileSettingsObj.ProfileAccel = ang_acc[2];
-                profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
-                ampObj[2].ProfileSettings = profileSettingsObj;
+                if (Math.Abs(ang_acc[2]) < 100000)
+                {
+                    profileSettingsObj.ProfileVel = ang_vel[2];
+                    profileSettingsObj.ProfileAccel = ang_acc[2];
+                    profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                    ampObj[2].ProfileSettings = profileSettingsObj;
+                }
+                else
+                {
+                    profileSettingsObj.ProfileVel = ang_vel[2];
+                    profileSettingsObj.ProfileAccel = 100000;
+                    profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
+                    ampObj[2].ProfileSettings = profileSettingsObj;
+                }
 
                 try
                 {
@@ -898,7 +923,6 @@ namespace ExoGaitMonitor
                     statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 255, 0, 20));
                     statusInfoTextBlock.Text = "右髋限位！";
                 }
-
             }
             #endregion
 
@@ -962,66 +986,66 @@ namespace ExoGaitMonitor
             }
             #endregion
 
-            StreamWriter sacText = new StreamWriter("SAC.txt", true);
+            //StreamWriter sacText = new StreamWriter("SAC.txt", true);
 
-            sacText.WriteLine(timeCountor.ToString() + '\t' +
-                methods.presN[0].ToString() + '\t' +
-                ampObjAngleActual[0].ToString() + '\t' +
-                radian[0].ToString() + '\t' +
-                ampObjAngleVelActual[0].ToString() + '\t' +
-                ampObj[0].TrajectoryAcc.ToString() + '\t' +
-                ampObjAngleAccActual[0].ToString() + '\t' +
-                inertia[0].ToString() + '\t' +
-                coriolis[0].ToString() + '\t' +
-                gravity[0].ToString() + '\t' +
-                torque[0].ToString() + '\t' +
-                ang_vel[0].ToString() + '\t' +
-                ang_acc[0].ToString() + '\t' +
-                (ampObj[0].CurrentActual * 0.01).ToString()+ '\t' + '\t' +
-                timeCountor.ToString() + '\t' +
-                methods.presN[1].ToString() + '\t' +
-                ampObjAngleActual[1].ToString() + '\t' +
-                radian[1].ToString() + '\t' +
-                ampObjAngleVelActual[1].ToString() + '\t' +
-                ampObj[1].TrajectoryAcc.ToString() + '\t' +
-                ampObjAngleAccActual[1].ToString() + '\t' +
-                inertia[1].ToString() + '\t' +
-                coriolis[1].ToString() + '\t' +
-                gravity[1].ToString() + '\t' +
-                torque[1].ToString() + '\t' +
-                ang_vel[1].ToString() + '\t' +
-                ang_acc[1].ToString() + '\t' +
-                (ampObj[1].CurrentActual * 0.01).ToString() + '\t' + '\t' +
-                timeCountor.ToString() + '\t' +
-                methods.presN[2].ToString() + '\t' +
-                ampObjAngleActual[2].ToString() + '\t' +
-                radian[2].ToString() + '\t' +
-                ampObjAngleVelActual[2].ToString() + '\t' +
-                ampObj[2].TrajectoryAcc.ToString() + '\t' +
-                ampObjAngleAccActual[2].ToString() + '\t' +
-                inertia[2].ToString() + '\t' +
-                coriolis[2].ToString() + '\t' +
-                gravity[2].ToString() + '\t' +
-                torque[2].ToString() + '\t' +
-                ang_vel[2].ToString() + '\t' +
-                ang_acc[2].ToString() + '\t' +
-                (ampObj[2].CurrentActual * 0.01).ToString() + '\t' + '\t' +
-                timeCountor.ToString() + '\t' +
-                methods.presN[3].ToString() + '\t' +
-                ampObjAngleActual[3].ToString() + '\t' +
-                radian[3].ToString() + '\t' +
-                ampObjAngleVelActual[3].ToString() + '\t' +
-                ampObj[3].TrajectoryAcc.ToString() + '\t' +
-                ampObjAngleAccActual[3].ToString() + '\t' +
-                inertia[3].ToString() + '\t' +
-                coriolis[3].ToString() + '\t' +
-                gravity[3].ToString() + '\t' +
-                torque[3].ToString() + '\t' +
-                ang_vel[3].ToString() + '\t' +
-                ang_acc[3].ToString() + '\t' +
-                (ampObj[3].CurrentActual * 0.01).ToString());
-            sacText.Close();
-            timeCountor++;
+            //sacText.WriteLine(timeCountor.ToString() + '\t' +
+            //    methods.presN[0].ToString() + '\t' +
+            //    ampObjAngleActual[0].ToString() + '\t' +
+            //    radian[0].ToString() + '\t' +
+            //    ampObjAngleVelActual[0].ToString() + '\t' +
+            //    ampObj[0].TrajectoryAcc.ToString() + '\t' +
+            //    ampObjAngleAccActual[0].ToString() + '\t' +
+            //    inertia[0].ToString() + '\t' +
+            //    coriolis[0].ToString() + '\t' +
+            //    gravity[0].ToString() + '\t' +
+            //    torque[0].ToString() + '\t' +
+            //    ang_vel[0].ToString() + '\t' +
+            //    ang_acc[0].ToString() + '\t' +
+            //    (ampObj[0].CurrentActual * 0.01).ToString()+ '\t' + '\t' +
+            //    timeCountor.ToString() + '\t' +
+            //    methods.presN[1].ToString() + '\t' +
+            //    ampObjAngleActual[1].ToString() + '\t' +
+            //    radian[1].ToString() + '\t' +
+            //    ampObjAngleVelActual[1].ToString() + '\t' +
+            //    ampObj[1].TrajectoryAcc.ToString() + '\t' +
+            //    ampObjAngleAccActual[1].ToString() + '\t' +
+            //    inertia[1].ToString() + '\t' +
+            //    coriolis[1].ToString() + '\t' +
+            //    gravity[1].ToString() + '\t' +
+            //    torque[1].ToString() + '\t' +
+            //    ang_vel[1].ToString() + '\t' +
+            //    ang_acc[1].ToString() + '\t' +
+            //    (ampObj[1].CurrentActual * 0.01).ToString() + '\t' + '\t' +
+            //    timeCountor.ToString() + '\t' +
+            //    methods.presN[2].ToString() + '\t' +
+            //    ampObjAngleActual[2].ToString() + '\t' +
+            //    radian[2].ToString() + '\t' +
+            //    ampObjAngleVelActual[2].ToString() + '\t' +
+            //    ampObj[2].TrajectoryAcc.ToString() + '\t' +
+            //    ampObjAngleAccActual[2].ToString() + '\t' +
+            //    inertia[2].ToString() + '\t' +
+            //    coriolis[2].ToString() + '\t' +
+            //    gravity[2].ToString() + '\t' +
+            //    torque[2].ToString() + '\t' +
+            //    ang_vel[2].ToString() + '\t' +
+            //    ang_acc[2].ToString() + '\t' +
+            //    (ampObj[2].CurrentActual * 0.01).ToString() + '\t' + '\t' +
+            //    timeCountor.ToString() + '\t' +
+            //    methods.presN[3].ToString() + '\t' +
+            //    ampObjAngleActual[3].ToString() + '\t' +
+            //    radian[3].ToString() + '\t' +
+            //    ampObjAngleVelActual[3].ToString() + '\t' +
+            //    ampObj[3].TrajectoryAcc.ToString() + '\t' +
+            //    ampObjAngleAccActual[3].ToString() + '\t' +
+            //    inertia[3].ToString() + '\t' +
+            //    coriolis[3].ToString() + '\t' +
+            //    gravity[3].ToString() + '\t' +
+            //    torque[3].ToString() + '\t' +
+            //    ang_vel[3].ToString() + '\t' +
+            //    ang_acc[3].ToString() + '\t' +
+            //    (ampObj[3].CurrentActual * 0.01).ToString());
+            //sacText.Close();
+            //timeCountor++;
         }
 
         private void SACEndButton_Click(object sender, RoutedEventArgs e)//点击【SAC停止】按钮时执行
@@ -1273,6 +1297,9 @@ namespace ExoGaitMonitor
             statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
             statusInfoTextBlock.Text = "正在执行";
 
+            const double FAST_VEL = 60000; //设置未到目标角度时较快的速度
+            const double SLOW_VEL = 25000; //设置快到目标角度时较慢的速度
+
             double angleSet = Convert.ToDouble(angleSetTextBox.Text);
             int motorNumber = Convert.ToInt16(motorNumberTextBox.Text);
             int i = motorNumber - 1;
@@ -1285,15 +1312,15 @@ namespace ExoGaitMonitor
             {
                 if (ampObjAngleActual[i] < angleSet)
                 {
-                    profileSettingsObj.ProfileVel = 100000;
-                    profileSettingsObj.ProfileAccel = 100000;
+                    profileSettingsObj.ProfileVel = FAST_VEL;
+                    profileSettingsObj.ProfileAccel = FAST_VEL;
                     profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                     ampObj[i].ProfileSettings = profileSettingsObj;
 
                     if (ampObjAngleActual[i] > (angleSet - 5))
                     {
-                        profileSettingsObj.ProfileVel = 25000;
-                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileVel = SLOW_VEL;
+                        profileSettingsObj.ProfileAccel = SLOW_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[i].ProfileSettings = profileSettingsObj;
                     }
@@ -1331,15 +1358,15 @@ namespace ExoGaitMonitor
             {
                 if (ampObjAngleActual[i] > angleSet)
                 {
-                    profileSettingsObj.ProfileVel = 100000;
-                    profileSettingsObj.ProfileAccel = 100000;
+                    profileSettingsObj.ProfileVel = FAST_VEL;
+                    profileSettingsObj.ProfileAccel = FAST_VEL;
                     profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                     ampObj[i].ProfileSettings = profileSettingsObj;
 
                     if (ampObjAngleActual[i] < (angleSet + 5))
                     {
-                        profileSettingsObj.ProfileVel = 25000;
-                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileVel = SLOW_VEL;
+                        profileSettingsObj.ProfileAccel = SLOW_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[i].ProfileSettings = profileSettingsObj;
                     }
@@ -1384,6 +1411,11 @@ namespace ExoGaitMonitor
             emergencyStopButton.IsEnabled = false;
             zeroPointSetButton.IsEnabled = false;
 
+            const double FAST_VEL = 60000; //设置未到目标角度时较快的速度
+            const double SLOW_VEL = 25000; //设置快到目标角度时较慢的速度
+            const double ORIGIN_POINT = 2; //原点阈值
+            const double TURN_POINT = 10; //快速转慢速的转变点
+
             ampObjAngleActual[0] = (ampObj[0].PositionActual / userUnits[0]) * (360.0 / RATIO);
             ampObjAngleActual[1] = (ampObj[1].PositionActual / userUnits[1]) * (360.0 / RATIO);
             ampObjAngleActual[2] = (ampObj[2].PositionActual / userUnits[2]) * (360.0 / RATIO);
@@ -1391,21 +1423,21 @@ namespace ExoGaitMonitor
 
             profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY; // 选择速度模式控制电机
 
-            if (Math.Abs(ampObjAngleActual[0]) > 3)//电机1回归原点
+            if (Math.Abs(ampObjAngleActual[0]) > ORIGIN_POINT)//电机1回归原点
             {
                 if (ampObjAngleActual[0] > 0)//此时电机1应往后转
                 {
-                    if (ampObjAngleActual[0] > 10)
+                    if (ampObjAngleActual[0] > TURN_POINT)
                     {
-                        profileSettingsObj.ProfileVel = 80000;
-                        profileSettingsObj.ProfileAccel = 80000;
+                        profileSettingsObj.ProfileVel = FAST_VEL;
+                        profileSettingsObj.ProfileAccel = FAST_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[0].ProfileSettings = profileSettingsObj;
                     }
                     else
                     {
-                        profileSettingsObj.ProfileVel = 25000;
-                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileVel = SLOW_VEL;
+                        profileSettingsObj.ProfileAccel = SLOW_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[0].ProfileSettings = profileSettingsObj;
                     }
@@ -1423,17 +1455,17 @@ namespace ExoGaitMonitor
                 }
                 else//此时电机1应往前转
                 {
-                    if (ampObjAngleActual[0] < -10)
+                    if (ampObjAngleActual[0] < -TURN_POINT)
                     {
-                        profileSettingsObj.ProfileVel = 80000;
-                        profileSettingsObj.ProfileAccel = 80000;
+                        profileSettingsObj.ProfileVel = FAST_VEL;
+                        profileSettingsObj.ProfileAccel = FAST_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[0].ProfileSettings = profileSettingsObj;
                     }
                     else
                     {
-                        profileSettingsObj.ProfileVel = 25000;
-                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileVel = SLOW_VEL;
+                        profileSettingsObj.ProfileAccel = SLOW_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[0].ProfileSettings = profileSettingsObj;
                     }
@@ -1455,21 +1487,21 @@ namespace ExoGaitMonitor
                 ampObj[0].HaltMove();
             }
 
-            if (Math.Abs(ampObjAngleActual[1]) > 3)//电机2回归原点
+            if (Math.Abs(ampObjAngleActual[1]) > ORIGIN_POINT)//电机2回归原点
             {
                 if (ampObjAngleActual[1] > 0)//此时电机2应往后转
                 {
-                    if (ampObjAngleActual[1] > 10)
+                    if (ampObjAngleActual[1] > TURN_POINT)
                     {
-                        profileSettingsObj.ProfileVel = 80000;
-                        profileSettingsObj.ProfileAccel = 80000;
+                        profileSettingsObj.ProfileVel = FAST_VEL;
+                        profileSettingsObj.ProfileAccel = FAST_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[1].ProfileSettings = profileSettingsObj;
                     }
                     else
                     {
-                        profileSettingsObj.ProfileVel = 25000;
-                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileVel = SLOW_VEL;
+                        profileSettingsObj.ProfileAccel = SLOW_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[1].ProfileSettings = profileSettingsObj;
                     }
@@ -1487,17 +1519,17 @@ namespace ExoGaitMonitor
                 }
                 else//此时电机2应往前转
                 {
-                    if (ampObjAngleActual[1] < -10)
+                    if (ampObjAngleActual[1] < -TURN_POINT)
                     {
-                        profileSettingsObj.ProfileVel = 80000;
-                        profileSettingsObj.ProfileAccel = 80000;
+                        profileSettingsObj.ProfileVel = FAST_VEL;
+                        profileSettingsObj.ProfileAccel = FAST_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[1].ProfileSettings = profileSettingsObj;
                     }
                     else
                     {
-                        profileSettingsObj.ProfileVel = 25000;
-                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileVel = SLOW_VEL;
+                        profileSettingsObj.ProfileAccel = SLOW_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[1].ProfileSettings = profileSettingsObj;
                     }
@@ -1519,21 +1551,21 @@ namespace ExoGaitMonitor
                 ampObj[1].HaltMove();
             }
 
-            if (Math.Abs(ampObjAngleActual[2]) > 3)//电机3回归原点
+            if (Math.Abs(ampObjAngleActual[2]) > ORIGIN_POINT)//电机3回归原点
             {
                 if (ampObjAngleActual[2] > 0)//此时电机3应往前转
                 {
-                    if (ampObjAngleActual[2] > 10)
+                    if (ampObjAngleActual[2] > TURN_POINT)
                     {
-                        profileSettingsObj.ProfileVel = 80000;
-                        profileSettingsObj.ProfileAccel = 80000;
+                        profileSettingsObj.ProfileVel = FAST_VEL;
+                        profileSettingsObj.ProfileAccel = FAST_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[2].ProfileSettings = profileSettingsObj;
                     }
                     else
                     {
-                        profileSettingsObj.ProfileVel = 25000;
-                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileVel = SLOW_VEL;
+                        profileSettingsObj.ProfileAccel = SLOW_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[2].ProfileSettings = profileSettingsObj;
                     }
@@ -1551,17 +1583,17 @@ namespace ExoGaitMonitor
                 }
                 else//此时电机3应往后转
                 {
-                    if (ampObjAngleActual[2] < -10)
+                    if (ampObjAngleActual[2] < -TURN_POINT)
                     {
-                        profileSettingsObj.ProfileVel = 80000;
-                        profileSettingsObj.ProfileAccel = 80000;
+                        profileSettingsObj.ProfileVel = FAST_VEL;
+                        profileSettingsObj.ProfileAccel = FAST_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[2].ProfileSettings = profileSettingsObj;
                     }
                     else
                     {
-                        profileSettingsObj.ProfileVel = 25000;
-                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileVel = SLOW_VEL;
+                        profileSettingsObj.ProfileAccel = SLOW_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[2].ProfileSettings = profileSettingsObj;
                     }
@@ -1583,21 +1615,21 @@ namespace ExoGaitMonitor
                 ampObj[2].HaltMove();
             }
 
-            if (Math.Abs(ampObjAngleActual[3]) > 3)//电机4回归原点
+            if (Math.Abs(ampObjAngleActual[3]) > ORIGIN_POINT)//电机4回归原点
             {
                 if (ampObjAngleActual[3] > 0)//此时电机4应往前转
                 {
-                    if (ampObjAngleActual[3] > 10)
+                    if (ampObjAngleActual[3] > TURN_POINT)
                     {
-                        profileSettingsObj.ProfileVel = 80000;
-                        profileSettingsObj.ProfileAccel = 80000;
+                        profileSettingsObj.ProfileVel = FAST_VEL;
+                        profileSettingsObj.ProfileAccel = FAST_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[3].ProfileSettings = profileSettingsObj;
                     }
                     else
                     {
-                        profileSettingsObj.ProfileVel = 25000;
-                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileVel = SLOW_VEL;
+                        profileSettingsObj.ProfileAccel = SLOW_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[3].ProfileSettings = profileSettingsObj;
                     }
@@ -1615,17 +1647,17 @@ namespace ExoGaitMonitor
                 }
                 else//此时电机4应往后转
                 {
-                    if (ampObjAngleActual[3] < -10)
+                    if (ampObjAngleActual[3] < -TURN_POINT)
                     {
-                        profileSettingsObj.ProfileVel = 80000;
-                        profileSettingsObj.ProfileAccel = 80000;
+                        profileSettingsObj.ProfileVel = FAST_VEL;
+                        profileSettingsObj.ProfileAccel = FAST_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[3].ProfileSettings = profileSettingsObj;
                     }
                     else
                     {
-                        profileSettingsObj.ProfileVel = 25000;
-                        profileSettingsObj.ProfileAccel = 25000;
+                        profileSettingsObj.ProfileVel = SLOW_VEL;
+                        profileSettingsObj.ProfileAccel = SLOW_VEL;
                         profileSettingsObj.ProfileDecel = profileSettingsObj.ProfileAccel;
                         ampObj[3].ProfileSettings = profileSettingsObj;
                     }
@@ -1647,7 +1679,7 @@ namespace ExoGaitMonitor
                 ampObj[3].HaltMove();
             }
 
-            if (Math.Abs(ampObjAngleActual[0]) < 3 && Math.Abs(ampObjAngleActual[1]) < 3 && Math.Abs(ampObjAngleActual[2]) < 3 && Math.Abs(ampObjAngleActual[3]) < 3)
+            if (Math.Abs(ampObjAngleActual[0]) < ORIGIN_POINT && Math.Abs(ampObjAngleActual[1]) < ORIGIN_POINT && Math.Abs(ampObjAngleActual[2]) < ORIGIN_POINT && Math.Abs(ampObjAngleActual[3]) < ORIGIN_POINT)
             {
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
                 statusInfoTextBlock.Text = "回归原点完毕";
