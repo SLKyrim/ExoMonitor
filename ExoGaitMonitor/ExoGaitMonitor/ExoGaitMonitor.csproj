@@ -81,6 +81,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ChartPlotter.cs" />
     <Compile Include="FunctionPage.xaml.cs">
       <DependentUpon>FunctionPage.xaml</DependentUpon>
     </Compile>

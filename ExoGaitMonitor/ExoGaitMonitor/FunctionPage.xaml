@@ -113,19 +113,19 @@
                                 <d3:ChartPlotter.HorizontalAxis>
                                     <d3:HorizontalDateTimeAxis x:Name="PosAx_M1"/>
                                 </d3:ChartPlotter.HorizontalAxis>
-                                <d3:VerticalAxisTitle FontFamily="Georgia" Content="关节角度 [°]"/>
+                                <d3:Header FontFamily="Georgia" Content="关节角度 [°]"/>
                             </d3:ChartPlotter>
                             <d3:ChartPlotter x:Name="VelPlot_M1" Grid.Row="2">
                                 <d3:ChartPlotter.HorizontalAxis>
                                     <d3:HorizontalDateTimeAxis x:Name="VelAx_M1"/>
                                 </d3:ChartPlotter.HorizontalAxis>
-                                <d3:VerticalAxisTitle FontFamily="Georgia" Content="电机转速 [°]"/>
+                                <d3:Header FontFamily="Georgia" Content="电机转速 [counts/s]"/>
                             </d3:ChartPlotter>
                             <d3:ChartPlotter x:Name="CurPlot_M1" Grid.Row="3">
                                 <d3:ChartPlotter.HorizontalAxis>
                                     <d3:HorizontalDateTimeAxis x:Name="CurAx_M1"/>
                                 </d3:ChartPlotter.HorizontalAxis>
-                                <d3:VerticalAxisTitle FontFamily="Georgia" Content="电机电流 [A]"/>
+                                <d3:Header FontFamily="Georgia" Content="电机电流 [A]"/>
                             </d3:ChartPlotter>
                         </Grid>
                     </TabItem>

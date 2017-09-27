@@ -1,24 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.IO.Ports;
 using System.IO;
 using System.Windows.Threading;
-using System.Xml.Serialization;
 using CMLCOMLib;
-using System.Diagnostics;
-using Visifire.Charts;
+using System.Windows.Input;
+using Microsoft.Research.DynamicDataDisplay;
+using Microsoft.Research.DynamicDataDisplay.DataSources;
+
 
 namespace ExoGaitMonitor
 {
@@ -47,12 +38,6 @@ namespace ExoGaitMonitor
         private DispatcherTimer ForceTimer; //力学控制模式的计时器
         private DispatcherTimer SACTimer; //SAC模式的计时器
 
-        private double[] trajectory = new double[1100]; //步态采集数据轨迹
-        private double[,] trajectories = new double[1001, 4]; //输入四个关节的步态数据
-        private double[,] tempPositionActual = new double[1001, 4]; //记录步态进行时电机的实际位置
-        private int[] countor = new int[1001];
-        private double[,] originalTrajectories = new double[1001, 4]; //保存初始输入数据
-
         //输出文本委托的参数
         private double[] ampObjAngleActual = new double[NUM_MOTOR];//电机的转角，单位：°
         private double[] ampObjAngleVelActual = new double[NUM_MOTOR];//电机的角速度，单位：rad/s
@@ -62,7 +47,6 @@ namespace ExoGaitMonitor
         const int ARRAY_COL = 4; //轨迹数据数组列数的大小
 
         public LinkageObj Linkage; //连接一组电机，能够按输入序列同时操作
-        public eventObj PVT_EventObj = new eventObj(); //PVT事件对象
         private AmpObj[] ampObjs = new AmpObj[ARRAY_COL]; //一组电机
         private double[] userUnits = new double[ARRAY_COL]; // 用户定义单位：编码器每圈计数
         private int timeCountor = 0; //计数器，写数据的计时器用到
@@ -111,6 +95,9 @@ namespace ExoGaitMonitor
         double[] gravity = new double[NUM_MOTOR]; //重力矩阵
         double[] torque = new double[NUM_MOTOR]; //减速器扭矩
         double[] tempVel = new double[NUM_MOTOR]; //記錄上次的減速器角速度，单位：rad/s
+
+        //绘图
+
         #endregion
 
         private void FunctionPage_Loaded(object sender, RoutedEventArgs e)//打开窗口后进行的初始化操作
