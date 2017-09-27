@@ -61,12 +61,6 @@ namespace ExoGaitMonitor
                 byte[] bytes = new byte[bufferlen];          //声明一个临时数组存储当前来的串口数据
                 sensor1_SerialPort.Read(bytes, 0, bufferlen);  //读取串口内部缓冲区数据到buf数组
                 sensor1_SerialPort.DiscardInBuffer();          //清空串口内部缓存
-                                                               //string presVolt = bytes[4].ToString();
-
-                //presVolt[0] = bytes[3].ToString("X2") + bytes[4].ToString("X2");//接收AI0的信号
-                //presVolt[1] = bytes[5].ToString("X2") + bytes[6].ToString("X2");//接收AI1的信号
-                //presVolt[2] = bytes[7].ToString("X2") + bytes[8].ToString("X2");//接收AI2的信号
-                //presVolt[3] = bytes[9].ToString("X2") + bytes[10].ToString("X2");//接收AI3的信号
 
                 for (int i = 0; i < SENSOR_NUM; i++)
                 {
@@ -78,8 +72,7 @@ namespace ExoGaitMonitor
                
                 countor++;
 
-                //滤波
-                if(countor == FILTER_COUNT)
+                if(countor == FILTER_COUNT) //滤波
                 {
                     countor = 0;//计数器归零
 
@@ -122,9 +115,6 @@ namespace ExoGaitMonitor
 
         public bool SerialPortClose()//关闭窗口时执行
         {
-            //byte[] clearBytes = new byte[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
-            //SendControlCMD(clearBytes);//避免不规范操作造成再开机时电机自启动
-
             if (sensor1_SerialPort != null)
             {
                 sensor1_SerialPort.DataReceived -= new System.IO.Ports.SerialDataReceivedEventHandler(sensor1_DataReceived);
@@ -134,30 +124,5 @@ namespace ExoGaitMonitor
 
             return true;
         }
-
-        //public void SendControlCMD(byte[] command)//串口写入字节命令
-        //{
-        //    //byte[] command = new byte[19];
-        //    //command[0] = 0x23;//开始字符
-        //    //command[1] = 0x01;//电机1 使能端
-        //    //command[2] = 0x01;//电机1 方向
-        //    //command[3] = 0x08;//电机1 转速高位
-        //    //command[4] = 0x88;//电机1 转速低位（范围1800-16200）对应速度范围（0-2590r/min）
-        //    //command[5] = 0x01;//电机2
-        //    //command[6] = 0x01;//电机2
-        //    //command[7] = 0x08;//电机2
-        //    //command[8] = 0x88;//电机2
-        //    //command[9] = 0x01;//电机3
-        //    //command[10] = 0x01;//电机3
-        //    //command[11] = 0x08;//电机3
-        //    //command[12] = 0x88;//电机3
-        //    //command[13] = 0x01;//电机4
-        //    //command[14] = 0x01;//电机4
-        //    //command[15] = 0x08;//电机4
-        //    //command[16] = 0x88;//电机4
-        //    //command[17] = 0x0D;//结束字符
-        //    //command[18] = 0x0A;
-        //    sensor1_SerialPort.Write(command, 0, 8);
-        //}
     }
 }

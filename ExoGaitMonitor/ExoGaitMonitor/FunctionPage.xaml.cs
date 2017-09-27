@@ -59,38 +59,18 @@ namespace ExoGaitMonitor
         private double[] ampObjAngleAccActual = new double[NUM_MOTOR];//电机的角加速度，单位：rad/s^2
 
         //PVT
-        const int ARRAY_LEN = 181; //轨迹数据数组行数的大小
         const int ARRAY_COL = 4; //轨迹数据数组列数的大小
 
-        public LinkageObj Linkage; //连接一组电机，能够同时操作
+        public LinkageObj Linkage; //连接一组电机，能够按输入序列同时操作
         public eventObj PVT_EventObj = new eventObj(); //PVT事件对象
         private AmpObj[] ampObjs = new AmpObj[ARRAY_COL]; //一组电机
         private double[] userUnits = new double[ARRAY_COL]; // 用户定义单位：编码器每圈计数
-        const int RATIO = 160; //减速比 
-        const int FirstRich = ARRAY_LEN * 2 - 1;//第一次扩充数据后的数组行数
-        const int SecondRich = FirstRich * 2 - 1;//第二次扩充数据后的数组行数
-        const int ThirdRich = SecondRich * 2 - 1;//第三次扩充数据后的数组行数
-        const double SAFE = -1; //对轨迹角度进行缩放的安全系数
-
-        private double[,] pvtPositions = new double[ARRAY_LEN, ARRAY_COL];//TrajectoryInitialize参数，轨迹数据
-        private double[,] pvtVelocities = new double[ARRAY_LEN, ARRAY_COL];//TrajectoryInitialize参数，速度数据
-        private int[] times = new int[ARRAY_LEN];//TrajectoryInitialize参数，时间间隔数据
-
-        private double[,] pvtRichPos = new double[FirstRich, ARRAY_COL];//扩充后的pos
-        private double[,] pvtRichVel = new double[FirstRich, ARRAY_COL];//扩充后的vel
-        private int[] Richtimes = new int[FirstRich];//扩充后的times
-
-        private double[,] pvtRich2Pos = new double[SecondRich, ARRAY_COL];//二次扩充后的pos
-        private double[,] pvtRich2Vel = new double[SecondRich, ARRAY_COL];//二次扩充后的vel
-        private int[] Rich2times = new int[SecondRich];//二次扩充后的times
-
-        private double[,] pvtRich3Pos = new double[ThirdRich, ARRAY_COL];//三次扩充后的pos
-        private double[,] pvtRich3Vel = new double[ThirdRich, ARRAY_COL];//三次扩充后的vel
-        private int[] Rich3times = new int[ThirdRich];//三次扩充后的times
-
         private int timeCountor = 0; //计数器，写数据的计时器用到
-
         Methods methods = new Methods();
+
+        const int RATIO = 160; //减速比
+        const double SAFE = -1; //PVT原始数据缩减比例
+        private int MAXRICH = 0; //记录最终扩充数据的大小，用来标记写实时位置计时器的结束
 
         //力学模式
         public string[] SPCount = null;           //用来存储计算机串口名称数组
@@ -191,15 +171,96 @@ namespace ExoGaitMonitor
             watchButton.IsEnabled = true;
             SACStartButton.IsEnabled = false;
 
-            File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\PVT_ExoGaitData.txt", string.Empty);
-            timeCountor = 0;
-
-            if (forceflag)
+            if (forceflag)//避免和力学模式及SAC模式冲突
             {
                 SensorTimer.Stop();
+                forceflag = false;
             }
 
-            calcSegments(); //计算轨迹位置，速度和时间间隔序列
+            #region 计算轨迹位置，速度和时间间隔序列
+            //原始数据
+            string[] ral = File.ReadAllLines(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\GaitData.txt", Encoding.Default);
+            int lineCounter = ral.Length; //获取步态数据行数
+            string[] col = (ral[0] ?? string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
+            int colCounter = col.Length; //获取步态数据列数
+            double[,] pos0 = new double[lineCounter, colCounter]; //原始位置数据
+            for (int i = 0; i < lineCounter; i++)
+            {
+                string[] str = (ral[i] ?? string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                for (int j = 0; j < colCounter; j++)
+                {
+                    pos0[i, j] = double.Parse(str[j]) / (360.0 / RATIO) * userUnits[j] * SAFE;
+                }
+            }
+
+            //一次扩充
+            int richLine = lineCounter * 2 - 1;
+            double[,] pos1 = new double[richLine, colCounter]; //一次扩充位置数据
+            for (int i = 0; i < richLine; i++)
+            {
+                for (int j = 0; j < colCounter; j++)
+                {
+                    if (i % 2 == 0)//偶数位存放原始数据
+                    {
+                        pos1[i, j] = pos0[i / 2, j];
+                    }
+                    else//奇数位存放扩充数据
+                    {
+                        pos1[i, j] = (pos0[i / 2 + 1, j] + pos0[i / 2, j]) / 2.0;
+                    }
+                }
+            }
+
+            //二次扩充
+            int rich2Line = richLine * 2 - 1;
+            double[,] pos2 = new double[rich2Line, colCounter]; //二次扩充位置数据
+            for (int i = 0; i < rich2Line; i++)
+            {
+                for (int j = 0; j < colCounter; j++)
+                {
+                    if (i % 2 == 0)//偶数位存放原始数据
+                    {
+                        pos2[i, j] = pos1[i / 2, j];
+                    }
+                    else//奇数位存放扩充数据
+                    {
+                        pos2[i, j] = (pos1[i / 2 + 1, j] + pos1[i / 2, j]) / 2.0;
+                    }
+                }
+            }
+
+            //三次扩充
+            int rich3Line = rich2Line * 2 - 1;
+            double[,] pos3 = new double[rich3Line, colCounter]; //三次扩充位置数据
+            int[] times = new int[rich3Line]; //时间间隔
+            double[,] vel = new double[rich3Line, colCounter]; //速度
+            for (int i = 0; i < rich3Line; i++)
+            {
+                times[i] = 5; //【设置】时间间隔
+                for (int j = 0; j < colCounter; j++)
+                {
+                    if (i % 2 == 0)//偶数位存放原始数据
+                    {
+                        pos3[i, j] = pos2[i / 2, j];
+                    }
+                    else//奇数位存放扩充数据
+                    {
+                        pos3[i, j] = (pos2[i / 2 + 1, j] + pos2[i / 2, j]) / 2.0;
+                    }
+                }
+            }
+            for (int i = 0; i < rich3Line - 1; i++)
+            {
+                for (int j = 0; j < colCounter; j++)
+                {
+                    vel[i, j] = (pos3[i + 1, j] - pos3[i, j]) * 1000.0 / times[i];
+                }
+            }
+            vel[rich3Line - 1, 0] = 0;
+            vel[rich3Line - 1, 1] = 0;
+            vel[rich3Line - 1, 2] = 0;
+            vel[rich3Line - 1, 3] = 0;
+            #endregion
 
             for (int i = 0; i < ARRAY_COL; i++)//开始步态前各电机回到轨迹初始位置
             {
@@ -211,15 +272,19 @@ namespace ExoGaitMonitor
                 ProfileSettings.ProfileVel = (ampObj[i].VelocityLoopSettings.VelLoopMaxVel) / 10;
                 ProfileSettings.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP; //PVT模式下的控制模式类型
                 ampObj[i].ProfileSettings = ProfileSettings;
-                ampObj[i].MoveAbs(pvtPositions[0, i]); //PVT模式开始后先移动到各关节初始位置
+                ampObj[i].MoveAbs(pos0[0, i]); //PVT模式开始后先移动到各关节初始位置
                 ampObj[i].WaitMoveDone(10000); //等待各关节回到初始位置的最大时间
             }
-            
-            Linkage.TrajectoryInitialize(pvtRich3Pos, pvtRich3Vel, Rich3times, 100); //开始步态
 
-            TempTimer = new DispatcherTimer();            
+            Linkage.TrajectoryInitialize(pos3, vel, times, 100); //开始步态
+
+            File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\PVT_ExoGaitData.txt", string.Empty);
+            timeCountor = 0;
+            MAXRICH = rich3Line;
+
+            TempTimer = new DispatcherTimer();
             TempTimer.Tick += new EventHandler(tempTimer); //写电机在运动过程的一些实际参数
-            TempTimer.Interval = TimeSpan.FromMilliseconds(Rich3times[0]);
+            TempTimer.Interval = TimeSpan.FromMilliseconds(times[0]);
             TempTimer.Start();
         }
 
@@ -228,7 +293,7 @@ namespace ExoGaitMonitor
             statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
             statusInfoTextBlock.Text = "正在执行";
 
-            if (timeCountor == ThirdRich)
+            if (timeCountor == MAXRICH)
             {
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
                 statusInfoTextBlock.Text = "执行完毕";
@@ -243,7 +308,6 @@ namespace ExoGaitMonitor
             ampObj[3].PositionActual.ToString());
             timeCountor++;
             toText.Close();
-
         }
 
         private void endButton_Click(object sender, RoutedEventArgs e)//点击【PVT停止】按钮时执行
@@ -256,92 +320,6 @@ namespace ExoGaitMonitor
 
             Linkage.HaltMove();
             TempTimer.Stop();
-        }
-
-        private void calcSegments()//计算轨迹位置，速度和时间间隔序列
-        {
-
-            #region 获取原始数据
-            string[] ral = File.ReadAllLines(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\GaitData.txt", Encoding.Default);
-
-            for (int i = 0; i < ARRAY_LEN; i++)
-            {
-                string[] str = (ral[i] ?? string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                for (int j = 0; j < ARRAY_COL; j++)
-                {
-                    pvtPositions[i, j] = double.Parse(str[j]) / (360.0 / RATIO) * userUnits[j] * SAFE;
-                }
-            }
-            #endregion
-
-            #region 一次扩充
-            for (int i = 0; i < FirstRich; i++)
-            {
-                for (int j = 0; j < ARRAY_COL; j++)
-                {
-                    if (i % 2 == 0)//偶数位存放原始数据
-                    {
-                        pvtRichPos[i, j] = pvtPositions[i / 2, j];
-                    }
-                    else//奇数位存放扩充数据
-                    {
-                        pvtRichPos[i, j] = (pvtPositions[i / 2 + 1, j] + pvtPositions[i / 2, j]) / 2.0;
-                    }
-                }
-            }
-            #endregion
-
-            #region 二次扩充
-            for (int i = 0; i < SecondRich; i++)
-            {
-                for (int j = 0; j < ARRAY_COL; j++)
-                {
-                    if (i % 2 == 0)//偶数位存放原始数据
-                    {
-                        pvtRich2Pos[i, j] = pvtRichPos[i / 2, j];
-                    }
-                    else//奇数位存放扩充数据
-                    {
-                        pvtRich2Pos[i, j] = (pvtRichPos[i / 2 + 1, j] + pvtRichPos[i / 2, j]) / 2.0;
-                    }
-                }
-            }
-            #endregion
-
-            #region 三次扩充
-            for (int i = 0; i < ThirdRich; i++)
-            {
-
-                Rich3times[i] = 5; //时间间隔
-
-                for (int j = 0; j < ARRAY_COL; j++)
-                {
-                    if (i % 2 == 0)//偶数位存放原始数据
-                    {
-                        pvtRich3Pos[i, j] = pvtRich2Pos[i / 2, j];
-                    }
-                    else//奇数位存放扩充数据
-                    {
-                        pvtRich3Pos[i, j] = (pvtRich2Pos[i / 2 + 1, j] + pvtRich2Pos[i / 2, j]) / 2.0;
-                    }
-                }
-            }
-
-            for (int i = 0; i < ThirdRich - 1; i++)
-            {
-                for (int j = 0; j < ARRAY_COL; j++)
-                {
-                    pvtRich3Vel[i, j] = (pvtRich3Pos[i + 1, j] - pvtRich3Pos[i, j]) * 1000.0 / ((double)(Rich3times[i]));
-                }
-            }
-
-            pvtRich3Vel[ThirdRich - 1, 0] = 0;
-            pvtRich3Vel[ThirdRich - 1, 1] = 0;
-            pvtRich3Vel[ThirdRich - 1, 2] = 0;
-            pvtRich3Vel[ThirdRich - 1, 3] = 0;
-            #endregion
-
-
         }
 
         #endregion
