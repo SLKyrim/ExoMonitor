@@ -26,7 +26,7 @@ namespace ExoGaitMonitor
 
             InitializeComponent();
 
-            cp = App.Current.Resources["Cp"] as ChartPlotter;
+            cp = App.Current.Resources["Vm"] as ChartPlotter;
 
             //动态绘图
             ds_PositionActual = new EnumerableDataSource<MyPoint>(cp.pointcollection_PositionActual);
@@ -292,7 +292,7 @@ namespace ExoGaitMonitor
             statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
             statusInfoTextBlock.Text = "PVT正在执行";
 
-            cp = App.Current.Resources["Cp"] as ChartPlotter;
+            cp = App.Current.Resources["Vm"] as ChartPlotter;
             timeCountor++;
 
             cp.pointcollection_PositionActual.Add(new MyPoint(ampObj[0].PositionActual, timeCountor));

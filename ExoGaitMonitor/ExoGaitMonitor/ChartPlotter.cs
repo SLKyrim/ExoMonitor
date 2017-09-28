@@ -15,9 +15,9 @@ namespace ExoGaitMonitor
         }
     }
 
-    public class PointCollection : RingArray<MyPoint> //一幅图中显示200个点
+    public class PointCollection : RingArray<MyPoint> //一幅图中显示TOTAL_POINTS个点
     {
-        private const int TOTAL_POINTS = 200; 
+        private const int TOTAL_POINTS = 1000; 
         public PointCollection() : base(TOTAL_POINTS) { }
     }
 
