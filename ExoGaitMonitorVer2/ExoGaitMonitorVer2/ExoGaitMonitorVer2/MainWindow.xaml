@@ -1,0 +1,194 @@
+﻿<Window x:Class="ExoGaitMonitorVer2.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:d3="http://research.microsoft.com/DynamicDataDisplay/1.0"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ExoGaitMonitorVer2"
+        mc:Ignorable="d" WindowState="Maximized"
+        Title="外骨骼控制界面" Icon="Images/SingleLong.png" 
+        Height="960" Width="1200"
+        Loaded="Window_Loaded">
+    <DockPanel Background="White">
+        <!--状态栏-->
+        <StatusBar DockPanel.Dock="Bottom" x:Name="statusBar" Background="#FF007ACC" Padding="2">
+            <StatusBarItem HorizontalAlignment="Left">
+                <TextBlock x:Name="statusInfoTextBlock" Foreground="White"><Run Text="外骨骼控制界面"/></TextBlock>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock x:Name="timeDateTextBlock" Foreground="White"/>
+            </StatusBarItem>
+        </StatusBar>
+        <!--主界面-->
+        <Grid>
+            <DockPanel>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <Grid DockPanel.Dock="Left" Visibility="Visible">
+                        <GroupBox Name="ParaDispPanel" Header="参数显示面板" Margin="1" BorderThickness="1" BorderBrush="#FF7199E0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="20*"/>
+                                    <RowDefinition Height="10*"/>
+                                </Grid.RowDefinitions>
+                                <GroupBox Header="电机面板" Grid.Row="0" Margin="1" BorderBrush="{Binding ElementName=ParaDispPanel, Path=BorderBrush}" BorderThickness="{Binding ElementName=ParaDispPanel, Path=BorderThickness}">
+                                    <StackPanel>
+                                        <GroupBox Header="电机1左膝" Margin="1" BorderBrush="{Binding ElementName=ParaDispPanel, Path=BorderBrush}" BorderThickness="{Binding ElementName=ParaDispPanel, Path=BorderThickness}">
+                                            <DockPanel>
+                                                <Grid Margin="2,0,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock x:Name="Motor_Pos_Label" Text="位置(°)" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor1_Pos_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                                <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock x:Name="Motor_Cur_Label" Text="电流(A)" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor1_Cur_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                                <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock x:Name="Motor_Vel_Label" Text="速度(/s)" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor1_Vel_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                                <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock x:Name="Motor_Acc_Label" Text="加速度" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor1_Acc_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                            </DockPanel>
+                                        </GroupBox>
+                                        
+                                        <GroupBox Header="电机2左髋" Margin="1" BorderBrush="{Binding ElementName=ParaDispPanel, Path=BorderBrush}" BorderThickness="{Binding ElementName=ParaDispPanel, Path=BorderThickness}">
+                                            <DockPanel>
+                                                <Grid Margin="2,0,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Text, ElementName=Motor_Pos_Label}" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor2_Pos_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                                <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Text, ElementName=Motor_Cur_Label}" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor2_Cur_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                                <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Text, ElementName=Motor_Vel_Label}" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor2_Vel_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                                <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Text, ElementName=Motor_Acc_Label}" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor2_Acc_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                            </DockPanel>
+                                        </GroupBox>
+
+                                        <GroupBox Header="电机3右髋" Margin="1" BorderBrush="{Binding ElementName=ParaDispPanel, Path=BorderBrush}" BorderThickness="{Binding ElementName=ParaDispPanel, Path=BorderThickness}">
+                                            <DockPanel>
+                                                <Grid Margin="2,0,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Text, ElementName=Motor_Pos_Label}" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor3_Pos_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                                <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Text, ElementName=Motor_Cur_Label}" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor3_Cur_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                                <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Text, ElementName=Motor_Vel_Label}" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor3_Vel_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                                <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Text, ElementName=Motor_Acc_Label}" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor3_Acc_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                            </DockPanel>
+                                        </GroupBox>
+
+                                        <GroupBox Header="电机4右膝" Margin="1" BorderBrush="{Binding ElementName=ParaDispPanel, Path=BorderBrush}" BorderThickness="{Binding ElementName=ParaDispPanel, Path=BorderThickness}">
+                                            <DockPanel>
+                                                <Grid Margin="2,0,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Text, ElementName=Motor_Pos_Label}" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor4_Pos_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                                <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Text, ElementName=Motor_Cur_Label}" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor4_Cur_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                                <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Text, ElementName=Motor_Vel_Label}" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor4_Vel_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                                <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="10*"/>
+                                                        <ColumnDefinition Width="10*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Text, ElementName=Motor_Acc_Label}" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                                    <TextBox x:Name="Motor4_Acc_TextBox" IsReadOnly="True" Grid.Column="1" Padding="1" Width="60"/>
+                                                </Grid>
+                                            </DockPanel>
+                                        </GroupBox>
+                                    </StackPanel>
+                                </GroupBox>
+                                <GroupBox Header="传感器面板" Grid.Row="1" Margin="1" BorderBrush="{Binding ElementName=ParaDispPanel, Path=BorderBrush}" BorderThickness="{Binding ElementName=ParaDispPanel, Path=BorderThickness}">
+
+                                </GroupBox>
+                            </Grid>
+                        </GroupBox>
+                    </Grid>
+                </ScrollViewer>
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</Window>
