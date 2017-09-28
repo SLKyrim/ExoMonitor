@@ -18,14 +18,26 @@ namespace ExoGaitMonitor
     /// </summary>
     public partial class FunctionPage : Page
     {
+        private ChartPlotter cp;
+
         public FunctionPage()
         {
+            EnumerableDataSource<MyPoint> ds_PositionActual;
+
             InitializeComponent();
+
+            cp = App.Current.Resources["Cp"] as ChartPlotter;
+
+            //动态绘图
+            ds_PositionActual = new EnumerableDataSource<MyPoint>(cp.pointcollection_PositionActual);
+            ds_PositionActual.SetXMapping(x => PosAx_M1.ConvertToDouble(x.Date));
+            ds_PositionActual.SetYMapping(y => y._point);
+            PosPlot_M1.AddLineGraph(ds_PositionActual, Colors.Red, 2, "电机实际位置");
         }
 
         #region 参数定义
 
-        private AmpObj[] ampObj; //声明驱动器
+        public AmpObj[] ampObj; //声明驱动器
         private ProfileSettingsObj profileSettingsObj; //声明驱动器属性
         private canOpenObj canObj; //声明网络接口
 
@@ -46,8 +58,8 @@ namespace ExoGaitMonitor
         //PVT
         const int ARRAY_COL = 4; //轨迹数据数组列数的大小
 
-        public LinkageObj Linkage; //连接一组电机，能够按输入序列同时操作
-        private AmpObj[] ampObjs = new AmpObj[ARRAY_COL]; //一组电机
+        private LinkageObj Linkage; //连接一组电机，能够按输入序列同时操作
+        public AmpObj[] ampObjs = new AmpObj[ARRAY_COL]; //一组电机
         private double[] userUnits = new double[ARRAY_COL]; // 用户定义单位：编码器每圈计数
         private int timeCountor = 0; //计数器，写数据的计时器用到
         Methods methods = new Methods();
@@ -278,23 +290,28 @@ namespace ExoGaitMonitor
         public void tempTimer(object sender, EventArgs e)//写电机实际位置的委托
         {
             statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-            statusInfoTextBlock.Text = "正在执行";
+            statusInfoTextBlock.Text = "PVT正在执行";
 
-            if (timeCountor == MAXRICH)
-            {
-                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
-                statusInfoTextBlock.Text = "执行完毕";
-                TempTimer.Stop();
-            }
-
-            StreamWriter toText = new StreamWriter("PVT_ExoGaitData.txt", true);//打开记录数据文本,可于
-            toText.WriteLine(timeCountor.ToString() + '\t' +
-            ampObj[0].PositionActual.ToString() + '\t' +
-            ampObj[1].PositionActual.ToString() + '\t' +
-            ampObj[2].PositionActual.ToString() + '\t' +
-            ampObj[3].PositionActual.ToString());
+            cp = App.Current.Resources["Cp"] as ChartPlotter;
             timeCountor++;
-            toText.Close();
+
+            cp.pointcollection_PositionActual.Add(new MyPoint(ampObj[0].PositionActual, timeCountor));
+
+            //if (timeCountor == MAXRICH)
+            //{
+            //    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+            //    statusInfoTextBlock.Text = "执行完毕";
+            //    TempTimer.Stop();
+            //}
+
+            //StreamWriter toText = new StreamWriter("PVT_ExoGaitData.txt", true);//打开记录数据文本,可于
+            //toText.WriteLine(timeCountor.ToString() + '\t' +
+            //ampObj[0].PositionActual.ToString() + '\t' +
+            //ampObj[1].PositionActual.ToString() + '\t' +
+            //ampObj[2].PositionActual.ToString() + '\t' +
+            //ampObj[3].PositionActual.ToString());
+            //timeCountor++;
+            //toText.Close();
         }
 
         private void endButton_Click(object sender, RoutedEventArgs e)//点击【PVT停止】按钮时执行
@@ -598,7 +615,7 @@ namespace ExoGaitMonitor
             endButton.IsEnabled = false;
 
             timeCountor = 0;
-            File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\SAC.txt", string.Empty);
+            //File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\SAC.txt", string.Empty);
 
             SACTimer = new DispatcherTimer();
             SACTimer.Tick += new EventHandler(sacTimer);
@@ -912,66 +929,66 @@ namespace ExoGaitMonitor
             }
             #endregion
 
-            StreamWriter sacText = new StreamWriter("SAC.txt", true);
+            //StreamWriter sacText = new StreamWriter("SAC.txt", true);
 
-            sacText.WriteLine(timeCountor.ToString() + '\t' +
-                methods.presN[0].ToString() + '\t' +
-                ampObjAngleActual[0].ToString() + '\t' +
-                radian[0].ToString() + '\t' +
-                ampObjAngleVelActual[0].ToString() + '\t' +
-                ampObj[0].TrajectoryAcc.ToString() + '\t' +
-                ampObjAngleAccActual[0].ToString() + '\t' +
-                inertia[0].ToString() + '\t' +
-                coriolis[0].ToString() + '\t' +
-                gravity[0].ToString() + '\t' +
-                torque[0].ToString() + '\t' +
-                ang_vel[0].ToString() + '\t' +
-                ang_acc[0].ToString() + '\t' +
-                (ampObj[0].CurrentActual * 0.01).ToString() + '\t' + '\t' +
-                timeCountor.ToString() + '\t' +
-                methods.presN[1].ToString() + '\t' +
-                ampObjAngleActual[1].ToString() + '\t' +
-                radian[1].ToString() + '\t' +
-                ampObjAngleVelActual[1].ToString() + '\t' +
-                ampObj[1].TrajectoryAcc.ToString() + '\t' +
-                ampObjAngleAccActual[1].ToString() + '\t' +
-                inertia[1].ToString() + '\t' +
-                coriolis[1].ToString() + '\t' +
-                gravity[1].ToString() + '\t' +
-                torque[1].ToString() + '\t' +
-                ang_vel[1].ToString() + '\t' +
-                ang_acc[1].ToString() + '\t' +
-                (ampObj[1].CurrentActual * 0.01).ToString() + '\t' + '\t' +
-                timeCountor.ToString() + '\t' +
-                methods.presN[2].ToString() + '\t' +
-                ampObjAngleActual[2].ToString() + '\t' +
-                radian[2].ToString() + '\t' +
-                ampObjAngleVelActual[2].ToString() + '\t' +
-                ampObj[2].TrajectoryAcc.ToString() + '\t' +
-                ampObjAngleAccActual[2].ToString() + '\t' +
-                inertia[2].ToString() + '\t' +
-                coriolis[2].ToString() + '\t' +
-                gravity[2].ToString() + '\t' +
-                torque[2].ToString() + '\t' +
-                ang_vel[2].ToString() + '\t' +
-                ang_acc[2].ToString() + '\t' +
-                (ampObj[2].CurrentActual * 0.01).ToString() + '\t' + '\t' +
-                timeCountor.ToString() + '\t' +
-                methods.presN[3].ToString() + '\t' +
-                ampObjAngleActual[3].ToString() + '\t' +
-                radian[3].ToString() + '\t' +
-                ampObjAngleVelActual[3].ToString() + '\t' +
-                ampObj[3].TrajectoryAcc.ToString() + '\t' +
-                ampObjAngleAccActual[3].ToString() + '\t' +
-                inertia[3].ToString() + '\t' +
-                coriolis[3].ToString() + '\t' +
-                gravity[3].ToString() + '\t' +
-                torque[3].ToString() + '\t' +
-                ang_vel[3].ToString() + '\t' +
-                ang_acc[3].ToString() + '\t' +
-                (ampObj[3].CurrentActual * 0.01).ToString());
-            sacText.Close();
-            timeCountor++;
+            //sacText.WriteLine(timeCountor.ToString() + '\t' +
+            //    methods.presN[0].ToString() + '\t' +
+            //    ampObjAngleActual[0].ToString() + '\t' +
+            //    radian[0].ToString() + '\t' +
+            //    ampObjAngleVelActual[0].ToString() + '\t' +
+            //    ampObj[0].TrajectoryAcc.ToString() + '\t' +
+            //    ampObjAngleAccActual[0].ToString() + '\t' +
+            //    inertia[0].ToString() + '\t' +
+            //    coriolis[0].ToString() + '\t' +
+            //    gravity[0].ToString() + '\t' +
+            //    torque[0].ToString() + '\t' +
+            //    ang_vel[0].ToString() + '\t' +
+            //    ang_acc[0].ToString() + '\t' +
+            //    (ampObj[0].CurrentActual * 0.01).ToString() + '\t' + '\t' +
+            //    timeCountor.ToString() + '\t' +
+            //    methods.presN[1].ToString() + '\t' +
+            //    ampObjAngleActual[1].ToString() + '\t' +
+            //    radian[1].ToString() + '\t' +
+            //    ampObjAngleVelActual[1].ToString() + '\t' +
+            //    ampObj[1].TrajectoryAcc.ToString() + '\t' +
+            //    ampObjAngleAccActual[1].ToString() + '\t' +
+            //    inertia[1].ToString() + '\t' +
+            //    coriolis[1].ToString() + '\t' +
+            //    gravity[1].ToString() + '\t' +
+            //    torque[1].ToString() + '\t' +
+            //    ang_vel[1].ToString() + '\t' +
+            //    ang_acc[1].ToString() + '\t' +
+            //    (ampObj[1].CurrentActual * 0.01).ToString() + '\t' + '\t' +
+            //    timeCountor.ToString() + '\t' +
+            //    methods.presN[2].ToString() + '\t' +
+            //    ampObjAngleActual[2].ToString() + '\t' +
+            //    radian[2].ToString() + '\t' +
+            //    ampObjAngleVelActual[2].ToString() + '\t' +
+            //    ampObj[2].TrajectoryAcc.ToString() + '\t' +
+            //    ampObjAngleAccActual[2].ToString() + '\t' +
+            //    inertia[2].ToString() + '\t' +
+            //    coriolis[2].ToString() + '\t' +
+            //    gravity[2].ToString() + '\t' +
+            //    torque[2].ToString() + '\t' +
+            //    ang_vel[2].ToString() + '\t' +
+            //    ang_acc[2].ToString() + '\t' +
+            //    (ampObj[2].CurrentActual * 0.01).ToString() + '\t' + '\t' +
+            //    timeCountor.ToString() + '\t' +
+            //    methods.presN[3].ToString() + '\t' +
+            //    ampObjAngleActual[3].ToString() + '\t' +
+            //    radian[3].ToString() + '\t' +
+            //    ampObjAngleVelActual[3].ToString() + '\t' +
+            //    ampObj[3].TrajectoryAcc.ToString() + '\t' +
+            //    ampObjAngleAccActual[3].ToString() + '\t' +
+            //    inertia[3].ToString() + '\t' +
+            //    coriolis[3].ToString() + '\t' +
+            //    gravity[3].ToString() + '\t' +
+            //    torque[3].ToString() + '\t' +
+            //    ang_vel[3].ToString() + '\t' +
+            //    ang_acc[3].ToString() + '\t' +
+            //    (ampObj[3].CurrentActual * 0.01).ToString());
+            //sacText.Close();
+            //timeCountor++;
         }
 
         private void SACEndButton_Click(object sender, RoutedEventArgs e)//点击【SAC停止】按钮时执行

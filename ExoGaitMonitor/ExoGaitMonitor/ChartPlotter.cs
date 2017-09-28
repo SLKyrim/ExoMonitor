@@ -1,4 +1,5 @@
-﻿using Microsoft.Research.DynamicDataDisplay.Common;
+﻿using System;
+using Microsoft.Research.DynamicDataDisplay.Common;
 using System.ComponentModel;
 
 namespace ExoGaitMonitor
@@ -20,7 +21,7 @@ namespace ExoGaitMonitor
         public PointCollection() : base(TOTAL_POINTS) { }
     }
 
-    class ChartPlotter : INotifyPropertyChanged
+    class ChartPlotter
     {
         //声明绘制对象
         public PointCollection pointcollection_PositionActual;
@@ -31,13 +32,6 @@ namespace ExoGaitMonitor
             //为一堆点分配空间
             pointcollection_PositionActual = new PointCollection();
             pointcollection_PositionCommand = new PointCollection();
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged(string propertyName)
-        {
-            if (PropertyChanged != null)
-                this.PropertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
         }
     }
 }
