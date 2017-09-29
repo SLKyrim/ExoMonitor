@@ -5,14 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO.Ports;
 
-namespace ExoGaitMonitor
+namespace ExoGaitMonitorVer2
 {
-    class Methods
+    class Sensors
     {
         #region 参数定义
 
         //串口
-        public SerialPort sensor1_SerialPort = new SerialPort(); //传感器1串口
+        public SerialPort forceSensor_SerialPort = new SerialPort(); //传感器1串口
 
         //获取可用串口名
         private string[] IsOpenSerialPortCount = null;
@@ -32,36 +32,36 @@ namespace ExoGaitMonitor
 
         #endregion
 
-        #region 传感器1串口
+        #region 拉压力传感器串口
 
-        public void sensor1_SerialPort_Init(string comstring)//拉压力传感器串口初始化
+        public void forceSensor_SerialPort_Init(string comstring)//拉压力传感器串口初始化
         {
-            if (sensor1_SerialPort != null)
+            if (forceSensor_SerialPort != null)
             {
-                if (sensor1_SerialPort.IsOpen)
+                if (forceSensor_SerialPort.IsOpen)
                 {
-                    sensor1_SerialPort.Close();
+                    forceSensor_SerialPort.Close();
                 }
             }
 
-            sensor1_SerialPort = new SerialPort();
-            sensor1_SerialPort.PortName = comstring;
-            sensor1_SerialPort.BaudRate = 115200;
-            sensor1_SerialPort.Parity = Parity.None;
-            sensor1_SerialPort.StopBits = StopBits.One;
-            sensor1_SerialPort.Open();
+            forceSensor_SerialPort = new SerialPort();
+            forceSensor_SerialPort.PortName = comstring;
+            forceSensor_SerialPort.BaudRate = 115200;
+            forceSensor_SerialPort.Parity = Parity.None;
+            forceSensor_SerialPort.StopBits = StopBits.One;
+            forceSensor_SerialPort.Open();
             countor = 0;
-            sensor1_SerialPort.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(sensor1_DataReceived);
+            forceSensor_SerialPort.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(sensor1_DataReceived);
         }
 
         private void sensor1_DataReceived(object sender, SerialDataReceivedEventArgs e)//拉压力传感器串口接收数据
         {
-            int bufferlen = sensor1_SerialPort.BytesToRead;
+            int bufferlen = forceSensor_SerialPort.BytesToRead;
             if (bufferlen >= 13)
             {
                 byte[] bytes = new byte[bufferlen];          //声明一个临时数组存储当前来的串口数据
-                sensor1_SerialPort.Read(bytes, 0, bufferlen);  //读取串口内部缓冲区数据到buf数组
-                sensor1_SerialPort.DiscardInBuffer();          //清空串口内部缓存
+                forceSensor_SerialPort.Read(bytes, 0, bufferlen);  //读取串口内部缓冲区数据到buf数组
+                forceSensor_SerialPort.DiscardInBuffer();          //清空串口内部缓存
 
                 for (int i = 0; i < SENSOR_NUM; i++)
                 {
@@ -70,10 +70,10 @@ namespace ExoGaitMonitor
                     presVoltDec[i] = Int16.Parse(presVolt[i], System.Globalization.NumberStyles.HexNumber);
                     tempPresNs[countor, i] = ((1.40 - presVoltDec[i] * 5.0 / 4095) * 50.0 / 1.40) - _pressInitialization[i]; //拉压力传感器输出，单位N
                 }
-               
+
                 countor++;
 
-                if(countor == FILTER_COUNT) //滤波
+                if (countor == FILTER_COUNT) //滤波
                 {
                     countor = 0;//计数器归零
 
@@ -84,16 +84,16 @@ namespace ExoGaitMonitor
                             tempPresN[i] += tempPresNs[j, i];
                         }
                         presN[i] = tempPresN[i] / FILTER_COUNT;//取平均值作为最终输出，单位N
-                    }                 
+                    }
                 }
-            }    
+            }
         }
 
         public void pressInit()//压力初始化
         {
             int numberOfGather = 5;
 
-            for (int i = 0; i< SENSOR_NUM; i++)
+            for (int i = 0; i < SENSOR_NUM; i++)
             {
                 _pressInitialization[i] = 0;
 
@@ -116,14 +116,14 @@ namespace ExoGaitMonitor
 
         public bool SerialPortClose()//关闭窗口时执行
         {
-            if (sensor1_SerialPort != null)
+            if (forceSensor_SerialPort != null)
             {
-                sensor1_SerialPort.DataReceived -= new System.IO.Ports.SerialDataReceivedEventHandler(sensor1_DataReceived);
+                forceSensor_SerialPort.DataReceived -= new System.IO.Ports.SerialDataReceivedEventHandler(sensor1_DataReceived);
 
-                sensor1_SerialPort.Close();
+                forceSensor_SerialPort.Close();
             }
-
             return true;
         }
+
     }
 }
