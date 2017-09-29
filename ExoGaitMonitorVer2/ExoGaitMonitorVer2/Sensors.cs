@@ -46,7 +46,7 @@ namespace ExoGaitMonitorVer2
         {
             if (forceSensor_SerialPort != null)
             {
-                forceSensor_SerialPort.DataReceived -= new System.IO.Ports.SerialDataReceivedEventHandler(sensor1_DataReceived);
+                forceSensor_SerialPort.DataReceived -= new System.IO.Ports.SerialDataReceivedEventHandler(forceSensor_DataReceived);
 
                 forceSensor_SerialPort.Close();
             }
@@ -72,10 +72,10 @@ namespace ExoGaitMonitorVer2
             forceSensor_SerialPort.StopBits = StopBits.One;
             forceSensor_SerialPort.Open();
             countor = 0;
-            forceSensor_SerialPort.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(sensor1_DataReceived);
+            forceSensor_SerialPort.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(forceSensor_DataReceived);
         }
 
-        private void sensor1_DataReceived(object sender, SerialDataReceivedEventArgs e)//拉压力传感器串口接收数据
+        private void forceSensor_DataReceived(object sender, SerialDataReceivedEventArgs e)//拉压力传感器串口接收数据
         {
             int bufferlen = forceSensor_SerialPort.BytesToRead;
             if (bufferlen >= 13)

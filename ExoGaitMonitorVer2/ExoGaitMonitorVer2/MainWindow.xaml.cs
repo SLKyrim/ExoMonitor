@@ -27,7 +27,6 @@ namespace ExoGaitMonitorVer2
 
         //CMO
         private Motors motors = new Motors(); //声明电机类
-        const int MOTOR_NUM = 4; //设置电机个数
 
         //手动操作设置
         private DispatcherTimer controlTimer; //操作线程
@@ -104,13 +103,13 @@ namespace ExoGaitMonitorVer2
         {
             //2017-8-11-用ampObj[2].MotorInfo.ctsPerRev测得EC90盘式电机编码器一圈有25600个计数
             //2017-8-11-验证减速器减速比为160-即电机转160圈，关节转1圈
-            double[] ampObjAngleActual = new double[MOTOR_NUM];//电机的转角，单位：°
-            double[] ampObjAngleVelActual = new double[MOTOR_NUM];//电机的角速度，单位：rad/s
-            double[] ampObjAngleAccActual = new double[MOTOR_NUM];//电机的角加速度，单位：rad/s^2
+            double[] ampObjAngleActual = new double[motors.motor_num];//电机的转角，单位：°
+            double[] ampObjAngleVelActual = new double[motors.motor_num];//电机的角速度，单位：rad/s
+            double[] ampObjAngleAccActual = new double[motors.motor_num];//电机的角加速度，单位：rad/s^2
 
             try
             {
-                for (int i = 0; i < MOTOR_NUM; i++)
+                for (int i = 0; i < motors.motor_num; i++)
                 {
                     ampObjAngleActual[i] = (motors.ampObj[i].PositionActual / motors.userUnits[i]) * (360.0 / motors.RATIO);//角度单位从counts转化为°
                     ampObjAngleVelActual[i] = (motors.ampObj[i].VelocityActual / motors.userUnits[i]) * 2.0 * Math.PI;//角速度单位从counts/s转化为rad/s
@@ -329,7 +328,7 @@ namespace ExoGaitMonitorVer2
                 {
                     motors.ampObj[i].HaltMove();
                     motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
-                    for (int j = 0; j < MOTOR_NUM; j++)
+                    for (int j = 0; j < motors.motor_num; j++)
                     {
                         motors.profileSettingsObj.ProfileVel = 0;
                         motors.profileSettingsObj.ProfileAccel = 0;
@@ -377,7 +376,7 @@ namespace ExoGaitMonitorVer2
                 {
                     motors.ampObj[i].HaltMove();
                     motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
-                    for (int j = 0; j < MOTOR_NUM; j++)
+                    for (int j = 0; j < motors.motor_num; j++)
                     {
                         motors.profileSettingsObj.ProfileVel = 0;
                         motors.profileSettingsObj.ProfileAccel = 0;
@@ -443,15 +442,15 @@ namespace ExoGaitMonitorVer2
             emergencyStopButton.IsEnabled = false;
             zeroPointSetButton.IsEnabled = false;
 
-            double[] ampObjAngleActual = new double[MOTOR_NUM];
+            double[] ampObjAngleActual = new double[motors.motor_num];
 
-            for (int i = 0; i < MOTOR_NUM; i++)
+            for (int i = 0; i < motors.motor_num; i++)
             {
                 ampObjAngleActual[i] = (motors.ampObj[i].PositionActual / motors.userUnits[i]) * (360.0 / motors.RATIO);
             }
             motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY; // 选择速度模式控制电机
 
-            for(int i = 0; i < MOTOR_NUM; i++)//电机回归原点
+            for(int i = 0; i < motors.motor_num; i++)//电机回归原点
             {
                 if (Math.Abs(ampObjAngleActual[i]) > ORIGIN_POINT)
                 {
@@ -521,7 +520,7 @@ namespace ExoGaitMonitorVer2
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
                 statusInfoTextBlock.Text = "回归原点完毕";
                 motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
-                for (int i = 0; i < MOTOR_NUM; i++)
+                for (int i = 0; i < motors.motor_num; i++)
                 {
                     motors.profileSettingsObj.ProfileVel = 0;
                     motors.profileSettingsObj.ProfileAccel = 0;
@@ -555,121 +554,16 @@ namespace ExoGaitMonitorVer2
                     watchButton.IsEnabled = true;
                     SAC_flag = false;
                 }
-
                 bt.Content = "Stop";
-
-                #region 计算轨迹位置，速度和时间间隔序列
-                //原始数据
-                string[] ral = File.ReadAllLines(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\GaitData.txt", Encoding.Default);
-                int lineCounter = ral.Length; //获取步态数据行数
-                string[] col = (ral[0] ?? string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                int colCounter = col.Length; //获取步态数据列数
-                double[,] pos0 = new double[lineCounter, colCounter]; //原始位置数据
-                for (int i = 0; i < lineCounter; i++)
-                {
-                    string[] str = (ral[i] ?? string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                    for (int j = 0; j < colCounter; j++)
-                    {
-                        pos0[i, j] = double.Parse(str[j]) / (360.0 / motors.RATIO) * motors.userUnits[j];
-                    }
-                }
-
-                //一次扩充
-                int richLine = lineCounter * 2 - 1;
-                double[,] pos1 = new double[richLine, colCounter]; //一次扩充位置数据
-                for (int i = 0; i < richLine; i++)
-                {
-                    for (int j = 0; j < colCounter; j++)
-                    {
-                        if (i % 2 == 0)//偶数位存放原始数据
-                        {
-                            pos1[i, j] = pos0[i / 2, j];
-                        }
-                        else//奇数位存放扩充数据
-                        {
-                            pos1[i, j] = (pos0[i / 2 + 1, j] + pos0[i / 2, j]) / 2.0;
-                        }
-                    }
-                }
-
-                //二次扩充
-                int rich2Line = richLine * 2 - 1;
-                double[,] pos2 = new double[rich2Line, colCounter]; //二次扩充位置数据
-                for (int i = 0; i < rich2Line; i++)
-                {
-                    for (int j = 0; j < colCounter; j++)
-                    {
-                        if (i % 2 == 0)//偶数位存放原始数据
-                        {
-                            pos2[i, j] = pos1[i / 2, j];
-                        }
-                        else//奇数位存放扩充数据
-                        {
-                            pos2[i, j] = (pos1[i / 2 + 1, j] + pos1[i / 2, j]) / 2.0;
-                        }
-                    }
-                }
-
-                //三次扩充
-                int rich3Line = rich2Line * 2 - 1;
-                double[,] pos3 = new double[rich3Line, colCounter]; //三次扩充位置数据
-                int[] times = new int[rich3Line]; //时间间隔
-                double[,] vel = new double[rich3Line, colCounter]; //速度
-                for (int i = 0; i < rich3Line; i++)
-                {
-                    times[i] = 5; //【设置】时间间隔
-                    for (int j = 0; j < colCounter; j++)
-                    {
-                        if (i % 2 == 0)//偶数位存放原始数据
-                        {
-                            pos3[i, j] = pos2[i / 2, j];
-                        }
-                        else//奇数位存放扩充数据
-                        {
-                            pos3[i, j] = (pos2[i / 2 + 1, j] + pos2[i / 2, j]) / 2.0;
-                        }
-                    }
-                }
-                for (int i = 0; i < rich3Line - 1; i++)
-                {
-                    for (int j = 0; j < colCounter; j++)
-                    {
-                        vel[i, j] = (pos3[i + 1, j] - pos3[i, j]) * 1000.0 / times[i];
-                    }
-                }
-                vel[rich3Line - 1, 0] = 0;
-                vel[rich3Line - 1, 1] = 0;
-                vel[rich3Line - 1, 2] = 0;
-                vel[rich3Line - 1, 3] = 0;
-                #endregion
-
-                for (int i = 0; i < MOTOR_NUM; i++)//开始步态前各电机回到轨迹初始位置
-                {
-                    ProfileSettingsObj ProfileSettings;
-
-                    ProfileSettings = motors.ampObj[i].ProfileSettings;
-                    ProfileSettings.ProfileAccel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxAcc) / 10;
-                    ProfileSettings.ProfileDecel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxDec) / 10;
-                    ProfileSettings.ProfileVel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxVel) / 10;
-                    ProfileSettings.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP; //PVT模式下的控制模式类型
-                    motors.ampObj[i].ProfileSettings = ProfileSettings;
-                    motors.ampObj[i].MoveAbs(pos0[0, i]); //PVT模式开始后先移动到各关节初始位置
-                    motors.ampObj[i].WaitMoveDone(10000); //等待各关节回到初始位置的最大时间
-                }
-
-                motors.Linkage.TrajectoryInitialize(pos3, vel, times, 100); //开始步态
-
-                File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\PVT_ExoGaitData.txt", string.Empty);
+                pvt.StartPVT();
             }
 
             else
             {
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
                 statusInfoTextBlock.Text = "PVT控制模式已停止";
-
-                motors.Linkage.HaltMove();
-
                 bt.Content = "PVT Mode";
+                pvt.StopPVT();
             }
         }
 

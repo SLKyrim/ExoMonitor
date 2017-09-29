@@ -24,7 +24,8 @@ namespace ExoGaitMonitorVer2
         public canOpenObj canObj; //声明网络接口
         public LinkageObj Linkage; //连接一组电机，能够按输入序列同时操作
 
-        public const int MOTOR_NUM = 4; //设置电机个数
+        private const int MOTOR_NUM = 4; //设置电机个数
+        public int motor_num = MOTOR_NUM; //供调用
         public int RATIO = 160; //减速比
 
         public double[] userUnits = new double[MOTOR_NUM]; // 用户定义单位：编码器每圈计数
