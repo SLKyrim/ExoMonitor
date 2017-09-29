@@ -23,29 +23,37 @@ namespace ExoGaitMonitorVer2
         }
 
         #region 声明
+        //主界面窗口
 
         //CMO
-        public AmpObj[] ampObj; //声明驱动器
-        private ProfileSettingsObj profileSettingsObj; //声明驱动器属性
-        private canOpenObj canObj; //声明网络接口
-        private LinkageObj Linkage; //连接一组电机，能够按输入序列同时操作
-
-        private DispatcherTimer controlTimer; //控制线程
-
+        private Motors motors = new Motors(); //声明电机类
         const int MOTOR_NUM = 4; //设置电机个数
-        const int RATIO = 160; //减速比
 
-        private double[] userUnits = new double[MOTOR_NUM]; // 用户定义单位：编码器每圈计数
+        //手动操作设置
+        private DispatcherTimer controlTimer; //操作线程
 
-        //SAC模式
+        const double FAST_VEL = 60000; //设置未到目标角度时较快的速度
+        const double SLOW_VEL = 30000; //设置快到目标角度时较慢的速度
+        const double ORIGIN_POINT = 2; //原点阈值
+        const double TURN_POINT = 10; //快速转慢速的转变点
+
+        //传感器
         private Sensors sensors = new Sensors();
         private string[] SPCount = null; //存储计算机串口名称数组
         private string forceSensors_com = null; //拉压力传感器所用串口
         private int comCount = 0; //用来存储计算机可用串口数目，初始化为0
         private bool scanPorts_flag = false;
+
+        //PVT模式
+        private PVT pvt = new PVT();
+
+        //SAC模式
+        private SAC sac = new SAC();
         private bool SAC_flag = false;
 
         #endregion
+
+        #region 界面初始化
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -56,27 +64,7 @@ namespace ExoGaitMonitorVer2
 
             try
             {
-                canObj = new canOpenObj(); //实例化网络接口
-                profileSettingsObj = new ProfileSettingsObj(); //实例化驱动器属性
-
-                canObj.BitRate = CML_BIT_RATES.BITRATE_1_Mbit_per_sec; //设置CAN传输速率为1M/s
-
-                canObj.Initialize(); //网络接口初始化
-
-                ampObj = new AmpObj[MOTOR_NUM]; //实例化四个驱动器（盘式电机）
-                Linkage = new LinkageObj();//实例化驱动器联动器
-
-                for (int i = 0; i < MOTOR_NUM; i++)//初始化四个驱动器
-                {
-                    ampObj[i] = new AmpObj();
-                    ampObj[i].Initialize(canObj, (short)(i + 1));
-                    ampObj[i].HaltMode = CML_HALT_MODE.HALT_DECEL; //选择通过减速来停止电机的方式
-                    ampObj[i].CountsPerUnit = 1; //电机转一圈编码器默认计数25600次，设置为4后转一圈计数6400次
-                    userUnits[i] = ampObj[i].MotorInfo.ctsPerRev / ampObj[i].CountsPerUnit; //用户定义单位，counts/圈
-                }
-
-                Linkage.Initialize(ampObj);
-                Linkage.SetMoveLimits(200000, 3000000, 3000000, 200000);
+                motors.motors_Init();
             }
             catch
             {
@@ -88,6 +76,11 @@ namespace ExoGaitMonitorVer2
             showParaTimer.Tick += new EventHandler(showParaTimer_Tick);
             showParaTimer.Interval = TimeSpan.FromMilliseconds(100);
             showParaTimer.Start();
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            sensors.SerialPortClose();
         }
 
         private void dateTimer_Tick(object sender, EventArgs e)//取当前时间的委托
@@ -119,33 +112,41 @@ namespace ExoGaitMonitorVer2
             {
                 for (int i = 0; i < MOTOR_NUM; i++)
                 {
-                    ampObjAngleActual[i] = (ampObj[i].PositionActual / userUnits[i]) * (360.0 / RATIO);//角度单位从counts转化为°
-                    ampObjAngleVelActual[i] = (ampObj[i].VelocityActual / userUnits[i]) * 2.0 * Math.PI;//角速度单位从counts/s转化为rad/s
-                    ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI;//角加速度单位从counts/s^2转化为rad/s^2
+                    ampObjAngleActual[i] = (motors.ampObj[i].PositionActual / motors.userUnits[i]) * (360.0 / motors.RATIO);//角度单位从counts转化为°
+                    ampObjAngleVelActual[i] = (motors.ampObj[i].VelocityActual / motors.userUnits[i]) * 2.0 * Math.PI;//角速度单位从counts/s转化为rad/s
+                    ampObjAngleAccActual[i] = (motors.ampObj[i].TrajectoryAcc / motors.userUnits[i]) * 2.0 * Math.PI;//角加速度单位从counts/s^2转化为rad/s^2
                 }
                 //电机1(左膝)的文本框输出
                 Motor1_Pos_TextBox.Text = ampObjAngleActual[0].ToString("F"); //电机实际位置，单位：°
-                Motor1_Cur_TextBox.Text = (ampObj[0].CurrentActual * 0.01).ToString("F"); //电机电流，单位：A
+                Motor1_Cur_TextBox.Text = (motors.ampObj[0].CurrentActual * 0.01).ToString("F"); //电机电流，单位：A
                 Motor1_Vel_TextBox.Text = ampObjAngleVelActual[0].ToString("F"); //电机实际速度，单位：rad/s
                 Motor1_Acc_TextBox.Text = ampObjAngleAccActual[0].ToString("F"); //由轨迹计算而得的加速度，单位：rad/s^2
 
                 //电机2(左髋)的文本框输出
-                Motor2_Pos_TextBox.Text = ampObjAngleActual[0].ToString("F");
-                Motor2_Cur_TextBox.Text = (ampObj[0].CurrentActual * 0.01).ToString("F");
-                Motor2_Vel_TextBox.Text = ampObjAngleVelActual[0].ToString("F");
-                Motor2_Acc_TextBox.Text = ampObjAngleAccActual[0].ToString("F");
+                Motor2_Pos_TextBox.Text = ampObjAngleActual[1].ToString("F");
+                Motor2_Cur_TextBox.Text = (motors.ampObj[1].CurrentActual * 0.01).ToString("F");
+                Motor2_Vel_TextBox.Text = ampObjAngleVelActual[1].ToString("F");
+                Motor2_Acc_TextBox.Text = ampObjAngleAccActual[1].ToString("F");
 
                 //电机3(右髋)的文本框输出
-                Motor3_Pos_TextBox.Text = ampObjAngleActual[0].ToString("F");
-                Motor3_Cur_TextBox.Text = (ampObj[0].CurrentActual * 0.01).ToString("F");
-                Motor3_Vel_TextBox.Text = ampObjAngleVelActual[0].ToString("F");
-                Motor3_Acc_TextBox.Text = ampObjAngleAccActual[0].ToString("F");
+                Motor3_Pos_TextBox.Text = ampObjAngleActual[2].ToString("F");
+                Motor3_Cur_TextBox.Text = (motors.ampObj[2].CurrentActual * 0.01).ToString("F");
+                Motor3_Vel_TextBox.Text = ampObjAngleVelActual[2].ToString("F");
+                Motor3_Acc_TextBox.Text = ampObjAngleAccActual[2].ToString("F");
 
                 //电机4(右膝)的文本框输出
-                Motor4_Pos_TextBox.Text = ampObjAngleActual[0].ToString("F");
-                Motor4_Cur_TextBox.Text = (ampObj[0].CurrentActual * 0.01).ToString("F");
-                Motor4_Vel_TextBox.Text = ampObjAngleVelActual[0].ToString("F");
-                Motor4_Acc_TextBox.Text = ampObjAngleAccActual[0].ToString("F");
+                Motor4_Pos_TextBox.Text = ampObjAngleActual[3].ToString("F");
+                Motor4_Cur_TextBox.Text = (motors.ampObj[3].CurrentActual * 0.01).ToString("F");
+                Motor4_Vel_TextBox.Text = ampObjAngleVelActual[3].ToString("F");
+                Motor4_Acc_TextBox.Text = ampObjAngleAccActual[3].ToString("F");
+
+                if(SAC_flag)//拉压力传感器的文本框输出
+                {
+                    ForceSensor1_TextBox.Text = sensors.presN[0].ToString("F");
+                    ForceSensor2_TextBox.Text = sensors.presN[1].ToString("F");
+                    ForceSensor3_TextBox.Text = sensors.presN[2].ToString("F");
+                    ForceSensor4_TextBox.Text = sensors.presN[3].ToString("F");
+                }
             }
             catch
             {
@@ -216,9 +217,13 @@ namespace ExoGaitMonitorVer2
             }
         }
 
+        #endregion
+
+        #region 传感器Sensors
+
         private void ForceSensorPort_ComboBox_DropDownClosed(object sender, EventArgs e)//选择拉压力传感器串口
         {
-            ComboBoxItem item = ForceSensorPort_ComboBox.SelectedItem as ComboBoxItem; 
+            ComboBoxItem item = ForceSensorPort_ComboBox.SelectedItem as ComboBoxItem;
             string tempstr = item.Content.ToString();
 
             for (int i = 0; i < SPCount.Length; i++)
@@ -241,65 +246,434 @@ namespace ExoGaitMonitorVer2
             }
         }
 
-        #region SAC模式
         private void watchButton_Click(object sender, RoutedEventArgs e)//点击【启动监视】按钮时执行
         {
-            controlTimer = new DispatcherTimer();
-            controlTimer.Tick += new EventHandler(WriteCMD);
-            controlTimer.Interval = TimeSpan.FromMilliseconds(10);
-            controlTimer.Start();
-
             initButton.IsEnabled = true;
             watchButton.IsEnabled = false;
 
             SAC_flag = true;
-        }
-
-        public void WriteCMD(object sender, EventArgs e)//向传感器写命令以及向传感器接收数据的委托
-        {
-
-            byte[] command = new byte[8];
-            command[0] = 0x01;//#设备地址
-            command[1] = 0x03;//#功能代码，读寄存器的值
-            command[2] = 0x00;//
-            command[3] = 0x00;//
-            command[4] = 0x00;//从第AI0号口开始读数据
-            command[5] = 0x04;//读四个口
-            command[6] = 0x44;//读四个口时的 CRC 校验的低 8 位
-            command[7] = 0x09;//读四个口时的 CRC 校验的高 8 位 
-            //一路的CRC校验位84 0A; 二路的是C4 0B; 三路的是 05 CB; 四路的是 44 09.
-
-            sensors.forceSensor_SerialPort.Write(command, 0, 8);
-            ForceSensor1_TextBox.Text = sensors.presN[0].ToString("F");
-            ForceSensor2_TextBox.Text = sensors.presN[1].ToString("F");
-            ForceSensor3_TextBox.Text = sensors.presN[2].ToString("F");
-            ForceSensor4_TextBox.Text = sensors.presN[3].ToString("F");
+            sensors.writeCommandStart();
         }
 
         private void initButton_Click(object sender, RoutedEventArgs e)//点击【初始归零】按钮时执行
         {
             sensors.pressInit();
-            //SACStartButton.IsEnabled = true;
+            SAC_Button.IsEnabled = true;
             initButton.IsEnabled = false;
+        }
+
+        #endregion
+
+        #region 手动操作设置
+
+        private void angleSetButton_Click(object sender, RoutedEventArgs e)//点击【执行命令】按钮时执行
+        {
+            angleSetButton.IsEnabled = false;
+            emergencyStopButton.IsEnabled = true;
+            zeroPointSetButton.IsEnabled = true;
+            angleSetTextBox.IsReadOnly = true;
+            motorNumberTextBox.IsReadOnly = true;
+
+            int motorNumber = Convert.ToInt16(motorNumberTextBox.Text);
+            int i = motorNumber - 1;
+
+            motors.ampObj[i].PositionActual = 0;
+
+            controlTimer = new DispatcherTimer();
+            controlTimer.Tick += new EventHandler(angleSetTimer_Tick);
+            controlTimer.Interval = TimeSpan.FromMilliseconds(20);// 该时钟频率决定电机运行速度
+            controlTimer.Start();
+        }
+
+        public void angleSetTimer_Tick(object sender, EventArgs e)//电机按设置角度转动的委托
+        {
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+            statusInfoTextBlock.Text = "正在执行";
+
+            double angleSet = Convert.ToDouble(angleSetTextBox.Text);
+            int motorNumber = Convert.ToInt16(motorNumberTextBox.Text);
+            int i = motorNumber - 1;
+
+            double ampObjAngleActual = (motors.ampObj[i].PositionActual / motors.userUnits[i]) * (360.0 / motors.RATIO);
+
+            motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY; // 选择速度模式控制电机
+
+            if (angleSet > 0)
+            {
+                if (ampObjAngleActual < angleSet)
+                {
+                    motors.profileSettingsObj.ProfileVel = FAST_VEL;
+                    motors.profileSettingsObj.ProfileAccel = FAST_VEL;
+                    motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
+                    motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
+
+                    if (ampObjAngleActual > (angleSet - 5))
+                    {
+                        motors.profileSettingsObj.ProfileVel = SLOW_VEL;
+                        motors.profileSettingsObj.ProfileAccel = SLOW_VEL;
+                        motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
+                        motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
+                    }
+                    try
+                    {
+                        motors.ampObj[i].MoveRel(1);
+                    }
+                    catch
+                    {
+                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                        statusInfoTextBlock.Text = "电机" + (i + 1).ToString() + "已限位！";
+                    }
+
+                }
+                else
+                {
+                    motors.ampObj[i].HaltMove();
+                    motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
+                    for (int j = 0; j < MOTOR_NUM; j++)
+                    {
+                        motors.profileSettingsObj.ProfileVel = 0;
+                        motors.profileSettingsObj.ProfileAccel = 0;
+                        motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
+                        motors.ampObj[j].ProfileSettings = motors.profileSettingsObj;
+                    }
+                    angleSetButton.IsEnabled = true;
+                    emergencyStopButton.IsEnabled = false;
+                    angleSetTextBox.IsReadOnly = false;
+                    motorNumberTextBox.IsReadOnly = false;
+                    controlTimer.Stop();
+                    controlTimer.Tick -= new EventHandler(angleSetTimer_Tick);
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+                    statusInfoTextBlock.Text = "执行完毕";
+                }
+            }
+
+            if (angleSet < 0)
+            {
+                if (ampObjAngleActual > angleSet)
+                {
+                    motors.profileSettingsObj.ProfileVel = FAST_VEL;
+                    motors.profileSettingsObj.ProfileAccel = FAST_VEL;
+                    motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
+                    motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
+
+                    if (ampObjAngleActual < (angleSet + 5))
+                    {
+                        motors.profileSettingsObj.ProfileVel = SLOW_VEL;
+                        motors.profileSettingsObj.ProfileAccel = SLOW_VEL;
+                        motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
+                        motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
+                    }
+                    try
+                    {
+                        motors.ampObj[i].MoveRel(-1);
+                    }
+                    catch
+                    {
+                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                        statusInfoTextBlock.Text = "电机" + (i + 1).ToString() + "已限位！"; ;
+                    }
+                }
+                else
+                {
+                    motors.ampObj[i].HaltMove();
+                    motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
+                    for (int j = 0; j < MOTOR_NUM; j++)
+                    {
+                        motors.profileSettingsObj.ProfileVel = 0;
+                        motors.profileSettingsObj.ProfileAccel = 0;
+                        motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
+                        motors.ampObj[j].ProfileSettings = motors.profileSettingsObj;
+                    }
+                    angleSetButton.IsEnabled = true;
+                    emergencyStopButton.IsEnabled = false;
+                    angleSetTextBox.IsReadOnly = false;
+                    motorNumberTextBox.IsReadOnly = false;
+                    controlTimer.Stop();
+                    controlTimer.Tick -= new EventHandler(angleSetTimer_Tick);
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+                    statusInfoTextBlock.Text = "执行完毕";
+                }
+            }
+        }
+
+        private void emergencyStopButton_Click(object sender, RoutedEventArgs e)//点击【紧急停止】按钮时执行
+        {
+            emergencyStopButton.IsEnabled = false;
+            angleSetButton.IsEnabled = true;
+            angleSetTextBox.IsReadOnly = false;
+            motorNumberTextBox.IsReadOnly = false;
+            int motorNumber = Convert.ToInt16(motorNumberTextBox.Text);
+            int i = motorNumber - 1;
+
+            motors.ampObj[i].HaltMove();
+            controlTimer.Stop();
+            controlTimer.Tick -= new EventHandler(angleSetTimer_Tick);
+        }
+
+        private void zeroPointSetButton_Click(object sender, RoutedEventArgs e)//点击【设置原点】按钮时执行
+        {
+            motors.ampObj[0].PositionActual = 0;
+            motors.ampObj[1].PositionActual = 0;
+            motors.ampObj[2].PositionActual = 0;
+            motors.ampObj[3].PositionActual = 0;
+
+            zeroPointSetButton.IsEnabled = false;
+
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+            statusInfoTextBlock.Text = "原点设置完毕";
+        }
+
+        private void getZeroPointButton_Click(object sender, RoutedEventArgs e)//点击【回归原点】按钮时执行
+        {
+            angleSetTextBox.IsReadOnly = true;
+            motorNumberTextBox.IsReadOnly = true;
+
+            controlTimer = new DispatcherTimer();
+            controlTimer.Tick += new EventHandler(getZeroPointTimer_Tick);
+            controlTimer.Interval = TimeSpan.FromMilliseconds(20);// 该时钟频率决定电机运行速度
+            controlTimer.Start();
+        }
+
+        public void getZeroPointTimer_Tick(object sender, EventArgs e)//回归原点的委托
+        {
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+            statusInfoTextBlock.Text = "正在回归原点";
+
+            angleSetButton.IsEnabled = false;
+            emergencyStopButton.IsEnabled = false;
+            zeroPointSetButton.IsEnabled = false;
+
+            double[] ampObjAngleActual = new double[MOTOR_NUM];
+
+            for (int i = 0; i < MOTOR_NUM; i++)
+            {
+                ampObjAngleActual[i] = (motors.ampObj[i].PositionActual / motors.userUnits[i]) * (360.0 / motors.RATIO);
+            }
+            motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY; // 选择速度模式控制电机
+
+            for(int i = 0; i < MOTOR_NUM; i++)//电机回归原点
+            {
+                if (Math.Abs(ampObjAngleActual[i]) > ORIGIN_POINT)
+                {
+                    if (ampObjAngleActual[i] > 0)
+                    {
+                        if (ampObjAngleActual[i] > TURN_POINT)
+                        {
+                            motors.profileSettingsObj.ProfileVel = FAST_VEL;
+                            motors.profileSettingsObj.ProfileAccel = FAST_VEL;
+                            motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
+                            motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
+                        }
+                        else
+                        {
+                            motors.profileSettingsObj.ProfileVel = SLOW_VEL;
+                            motors.profileSettingsObj.ProfileAccel = SLOW_VEL;
+                            motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
+                            motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
+                        }
+
+                        try
+                        {
+                            motors.ampObj[i].MoveRel(-1);
+                        }
+                        catch
+                        {
+                            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                            statusInfoTextBlock.Text = "电机" + (i+1).ToString() + "已限位！";
+                        }
+                    }
+                    else
+                    {
+                        if (ampObjAngleActual[i] < -TURN_POINT)
+                        {
+                            motors.profileSettingsObj.ProfileVel = FAST_VEL;
+                            motors.profileSettingsObj.ProfileAccel = FAST_VEL;
+                            motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
+                            motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
+                        }
+                        else
+                        {
+                            motors.profileSettingsObj.ProfileVel = SLOW_VEL;
+                            motors.profileSettingsObj.ProfileAccel = SLOW_VEL;
+                            motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
+                            motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
+                        }
+
+                        try
+                        {
+                            motors.ampObj[i].MoveRel(1);
+                        }
+                        catch
+                        {
+                            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                            statusInfoTextBlock.Text = "电机" + (i+1).ToString() + "已限位！";
+                        }
+                    }
+                }
+                else
+                {
+                    motors.ampObj[i].HaltMove();
+                }
+            }
+
+            if (Math.Abs(ampObjAngleActual[0]) < ORIGIN_POINT && Math.Abs(ampObjAngleActual[1]) < ORIGIN_POINT && Math.Abs(ampObjAngleActual[2]) < ORIGIN_POINT && Math.Abs(ampObjAngleActual[3]) < ORIGIN_POINT)
+            {
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+                statusInfoTextBlock.Text = "回归原点完毕";
+                motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
+                for (int i = 0; i < MOTOR_NUM; i++)
+                {
+                    motors.profileSettingsObj.ProfileVel = 0;
+                    motors.profileSettingsObj.ProfileAccel = 0;
+                    motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
+                    motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
+                }
+                angleSetButton.IsEnabled = true;
+                angleSetTextBox.IsReadOnly = false;
+                motorNumberTextBox.IsReadOnly = false;
+                controlTimer.Stop();
+                controlTimer.Tick -= new EventHandler(getZeroPointTimer_Tick);
+            }
         }
         #endregion
 
-        private void angleSetButton_Click(object sender, RoutedEventArgs e)
+        private void PVT_Button_Click(object sender, RoutedEventArgs e)
         {
+            Button bt = sender as Button;
+            Brush brush = bt.Background;
 
+            if(bt.Content.ToString() == "PVT Mode")
+            {
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                statusInfoTextBlock.Text = "PVT模式";
+
+                SAC_Button.IsEnabled = false;
+
+                if (SAC_flag)//避免和力学模式及SAC模式冲突
+                {                    
+                    sensors.writeCommandStop();
+                    watchButton.IsEnabled = true;
+                    SAC_flag = false;
+                }
+
+                bt.Content = "Stop";
+
+                #region 计算轨迹位置，速度和时间间隔序列
+                //原始数据
+                string[] ral = File.ReadAllLines(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\GaitData.txt", Encoding.Default);
+                int lineCounter = ral.Length; //获取步态数据行数
+                string[] col = (ral[0] ?? string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                int colCounter = col.Length; //获取步态数据列数
+                double[,] pos0 = new double[lineCounter, colCounter]; //原始位置数据
+                for (int i = 0; i < lineCounter; i++)
+                {
+                    string[] str = (ral[i] ?? string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    for (int j = 0; j < colCounter; j++)
+                    {
+                        pos0[i, j] = double.Parse(str[j]) / (360.0 / motors.RATIO) * motors.userUnits[j];
+                    }
+                }
+
+                //一次扩充
+                int richLine = lineCounter * 2 - 1;
+                double[,] pos1 = new double[richLine, colCounter]; //一次扩充位置数据
+                for (int i = 0; i < richLine; i++)
+                {
+                    for (int j = 0; j < colCounter; j++)
+                    {
+                        if (i % 2 == 0)//偶数位存放原始数据
+                        {
+                            pos1[i, j] = pos0[i / 2, j];
+                        }
+                        else//奇数位存放扩充数据
+                        {
+                            pos1[i, j] = (pos0[i / 2 + 1, j] + pos0[i / 2, j]) / 2.0;
+                        }
+                    }
+                }
+
+                //二次扩充
+                int rich2Line = richLine * 2 - 1;
+                double[,] pos2 = new double[rich2Line, colCounter]; //二次扩充位置数据
+                for (int i = 0; i < rich2Line; i++)
+                {
+                    for (int j = 0; j < colCounter; j++)
+                    {
+                        if (i % 2 == 0)//偶数位存放原始数据
+                        {
+                            pos2[i, j] = pos1[i / 2, j];
+                        }
+                        else//奇数位存放扩充数据
+                        {
+                            pos2[i, j] = (pos1[i / 2 + 1, j] + pos1[i / 2, j]) / 2.0;
+                        }
+                    }
+                }
+
+                //三次扩充
+                int rich3Line = rich2Line * 2 - 1;
+                double[,] pos3 = new double[rich3Line, colCounter]; //三次扩充位置数据
+                int[] times = new int[rich3Line]; //时间间隔
+                double[,] vel = new double[rich3Line, colCounter]; //速度
+                for (int i = 0; i < rich3Line; i++)
+                {
+                    times[i] = 5; //【设置】时间间隔
+                    for (int j = 0; j < colCounter; j++)
+                    {
+                        if (i % 2 == 0)//偶数位存放原始数据
+                        {
+                            pos3[i, j] = pos2[i / 2, j];
+                        }
+                        else//奇数位存放扩充数据
+                        {
+                            pos3[i, j] = (pos2[i / 2 + 1, j] + pos2[i / 2, j]) / 2.0;
+                        }
+                    }
+                }
+                for (int i = 0; i < rich3Line - 1; i++)
+                {
+                    for (int j = 0; j < colCounter; j++)
+                    {
+                        vel[i, j] = (pos3[i + 1, j] - pos3[i, j]) * 1000.0 / times[i];
+                    }
+                }
+                vel[rich3Line - 1, 0] = 0;
+                vel[rich3Line - 1, 1] = 0;
+                vel[rich3Line - 1, 2] = 0;
+                vel[rich3Line - 1, 3] = 0;
+                #endregion
+
+                for (int i = 0; i < MOTOR_NUM; i++)//开始步态前各电机回到轨迹初始位置
+                {
+                    ProfileSettingsObj ProfileSettings;
+
+                    ProfileSettings = motors.ampObj[i].ProfileSettings;
+                    ProfileSettings.ProfileAccel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxAcc) / 10;
+                    ProfileSettings.ProfileDecel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxDec) / 10;
+                    ProfileSettings.ProfileVel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxVel) / 10;
+                    ProfileSettings.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP; //PVT模式下的控制模式类型
+                    motors.ampObj[i].ProfileSettings = ProfileSettings;
+                    motors.ampObj[i].MoveAbs(pos0[0, i]); //PVT模式开始后先移动到各关节初始位置
+                    motors.ampObj[i].WaitMoveDone(10000); //等待各关节回到初始位置的最大时间
+                }
+
+                motors.Linkage.TrajectoryInitialize(pos3, vel, times, 100); //开始步态
+
+                File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\PVT_ExoGaitData.txt", string.Empty);
+            }
+
+            else
+            {
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+                statusInfoTextBlock.Text = "PVT控制模式已停止";
+
+                motors.Linkage.HaltMove();
+
+                bt.Content = "PVT Mode";
+            }
         }
 
-        private void emergencyStopButton_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void zeroPointSetButton_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void getZeroPointButton_Click(object sender, RoutedEventArgs e)
+        private void SAC_Button_Click(object sender, RoutedEventArgs e)
         {
 
         }

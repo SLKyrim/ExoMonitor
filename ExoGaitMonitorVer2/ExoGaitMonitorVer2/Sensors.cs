@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO.Ports;
+using System.Windows.Threading;
 
 namespace ExoGaitMonitorVer2
 {
     class Sensors
     {
-        #region 参数定义
+        #region 声明
+        //传感器类，包括拉压力传感器的初始化和关闭；向拉压力传感器写命令的线程
 
         //串口
         public SerialPort forceSensor_SerialPort = new SerialPort(); //传感器1串口
@@ -30,7 +32,26 @@ namespace ExoGaitMonitorVer2
         private double[,] tempPresNs = new double[FILTER_COUNT, SENSOR_NUM];//滤波取 FILTERCOUNT个接收数据的平均值
         private double[] _pressInitialization = new double[SENSOR_NUM];// 初始化所用压力值
 
+        static DispatcherTimer sensorsTimer; //向传感器发送命令的线程
+
         #endregion
+
+        public string[] CheckSerialPortCount()//获取可用串口名
+        {
+            IsOpenSerialPortCount = SerialPort.GetPortNames();
+            return IsOpenSerialPortCount;
+        }
+
+        public bool SerialPortClose()//关闭窗口时执行
+        {
+            if (forceSensor_SerialPort != null)
+            {
+                forceSensor_SerialPort.DataReceived -= new System.IO.Ports.SerialDataReceivedEventHandler(sensor1_DataReceived);
+
+                forceSensor_SerialPort.Close();
+            }
+            return true;
+        }
 
         #region 拉压力传感器串口
 
@@ -106,24 +127,41 @@ namespace ExoGaitMonitorVer2
             }
         }
 
-        #endregion
-
-        public string[] CheckSerialPortCount()//获取可用串口名
+        public void writeCommandTimer_Tick(object sender, EventArgs e)//向传感器写命令以及向传感器接收数据的委托
         {
-            IsOpenSerialPortCount = SerialPort.GetPortNames();
-            return IsOpenSerialPortCount;
+            //一路的CRC校验位84 0A; 二路的是C4 0B; 三路的是 05 CB; 四路的是 44 09.
+            byte[] command = new byte[8];
+            command[0] = 0x01;//#设备地址
+            command[1] = 0x03;//#功能代码，读寄存器的值
+            command[2] = 0x00;//
+            command[3] = 0x00;//
+            command[4] = 0x00;//从第AI0号口开始读数据
+            command[5] = 0x04;//读四个口
+            command[6] = 0x44;//读四个口时的 CRC 校验的低 8 位
+            command[7] = 0x09;//读四个口时的 CRC 校验的高 8 位 
+            
+            forceSensor_SerialPort.Write(command, 0, 8);
         }
 
-        public bool SerialPortClose()//关闭窗口时执行
+        public void writeCommandStart()//开始向传感器写入命令
         {
-            if (forceSensor_SerialPort != null)
+            sensorsTimer = new DispatcherTimer();
+            sensorsTimer.Interval = TimeSpan.FromMilliseconds(10);
+            sensorsTimer.Tick += new EventHandler(writeCommandTimer_Tick);
+
+            if (!sensorsTimer.IsEnabled)
+                sensorsTimer.Start();
+        }
+
+        public void writeCommandStop()//开始向传感器写入命令
+        {
+            if (!sensorsTimer.IsEnabled)
             {
-                forceSensor_SerialPort.DataReceived -= new System.IO.Ports.SerialDataReceivedEventHandler(sensor1_DataReceived);
-
-                forceSensor_SerialPort.Close();
+                sensorsTimer.Tick -= new EventHandler(writeCommandTimer_Tick);
+                sensorsTimer.Stop();
             }
-            return true;
+              
         }
-
+        #endregion
     }
 }

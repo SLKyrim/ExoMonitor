@@ -5,10 +5,10 @@
         xmlns:d3="http://research.microsoft.com/DynamicDataDisplay/1.0"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ExoGaitMonitorVer2"
-        mc:Ignorable="d" WindowState="Maximized"
+        mc:Ignorable="d" WindowStartupLocation="CenterScreen"
         Title="外骨骼控制界面" Icon="Images/SingleLong.png" 
-        Height="960" Width="1200"
-        Loaded="Window_Loaded">
+        Height="780" Width="1200" MinHeight="780" MinWidth="1000" 
+        Loaded="Window_Loaded" Closed="Window_Closed">
     <DockPanel Background="White">
         <!--状态栏-->
         <StatusBar DockPanel.Dock="Bottom" x:Name="statusBar" Background="#FF007ACC" Padding="2">
@@ -258,7 +258,7 @@
                                                 <ColumnDefinition Width="10*"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="角度设定(  °  )" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
-                                            <TextBox x:Name="angleSetTextBox" Grid.Column="1" Padding="1" Width="80"/>
+                                            <TextBox x:Name="angleSetTextBox" Grid.Column="1" Padding="1" Width="80">-30</TextBox>
                                         </Grid>
                                         <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
                                             <Grid.ColumnDefinitions>
@@ -266,7 +266,7 @@
                                                 <ColumnDefinition Width="10*"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="电机号数(1-4)" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
-                                            <TextBox x:Name="motorNumberTextBox" Grid.Column="1" Padding="1" Width="80"/>
+                                            <TextBox x:Name="motorNumberTextBox" Grid.Column="1" Padding="1" Width="80">1</TextBox>
                                         </Grid>
                                         <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
                                             <Grid.ColumnDefinitions>
@@ -298,7 +298,10 @@
 
                                 <GroupBox Header="控制模式选择" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
                                     <DockPanel>
-
+                                        <StackPanel>
+                                            <Button x:Name="PVT_Button" Content="PVT Mode" Margin="3" Padding="3" Click="PVT_Button_Click"/>
+                                            <Button x:Name="SAC_Button" IsEnabled="False" Content="SAC Mode" Margin="3" Padding="3" Click="SAC_Button_Click"/>                                  
+                                        </StackPanel>
                                     </DockPanel>
                                 </GroupBox>
                             </StackPanel>
@@ -309,7 +312,35 @@
                 <!--绘图面板-->
                 <Grid>
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                        
+                        <TabControl Margin="5,8,5,1">
+                            <TabItem Header="电机1左膝">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="100*"/>
+                                        <RowDefinition Height="100*"/>
+                                        <RowDefinition Height="100*"/>
+                                    </Grid.RowDefinitions>
+                                    <d3:ChartPlotter x:Name="PosPlot_M1" Grid.Row="0">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="PosAx_M1"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="关节角度 [°]"/>
+                                    </d3:ChartPlotter>
+                                    <d3:ChartPlotter x:Name="VelPlot_M1" Grid.Row="1">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="VelAx_M1"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="电机转速 [counts/s]"/>
+                                    </d3:ChartPlotter>
+                                    <d3:ChartPlotter x:Name="CurPlot_M1" Grid.Row="2">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="CurAx_M1"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="电机电流 [A]"/>
+                                    </d3:ChartPlotter>
+                                </Grid>
+                            </TabItem>
+                        </TabControl>
                     </ScrollViewer>
                 </Grid>
             </DockPanel>
