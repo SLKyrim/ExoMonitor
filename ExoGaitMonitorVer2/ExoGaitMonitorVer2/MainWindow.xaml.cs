@@ -17,9 +17,30 @@ namespace ExoGaitMonitorVer2
     /// </summary>
     public partial class MainWindow : Window
     {
+        private ChartPlotter cp;
+
         public MainWindow()
         {
+            EnumerableDataSource<MyPoint> M1_Pos;
+            EnumerableDataSource<MyPoint> M1_Vel;
+            EnumerableDataSource<MyPoint> M1_Cur;
+
             InitializeComponent();
+
+            cp = App.Current.Resources["Cp"] as ChartPlotter;
+
+            M1_Pos = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_PositionActual);
+            M1_Pos.SetXMapping(x => PosAx_M1.ConvertToDouble(x.Date));
+            M1_Pos.SetYMapping(y => y._point);
+            PosPlot_M1.AddLineGraph(M1_Pos, Colors.Red, 2, "左膝实际位置");
+            M1_Vel = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_VelocityActual);
+            M1_Vel.SetXMapping(x => VelAx_M1.ConvertToDouble(x.Date));
+            M1_Vel.SetYMapping(y => y._point);
+            VelPlot_M1.AddLineGraph(M1_Vel, Colors.Red, 2, "左膝电机速度");
+            M1_Cur = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_CurrentActual);
+            M1_Cur.SetXMapping(x => CurAx_M1.ConvertToDouble(x.Date));
+            M1_Cur.SetYMapping(y => y._point);
+            CurPlot_M1.AddLineGraph(M1_Cur, Colors.Red, 2, "左膝电机电流");
         }
 
         #region 声明
@@ -69,6 +90,8 @@ namespace ExoGaitMonitorVer2
             showParaTimer.Tick += new EventHandler(showParaTimer_Tick);
             showParaTimer.Interval = TimeSpan.FromMilliseconds(100);
             showParaTimer.Start();
+
+            cp.plotStart(motors);
         }
 
         private void Window_Closed(object sender, EventArgs e)

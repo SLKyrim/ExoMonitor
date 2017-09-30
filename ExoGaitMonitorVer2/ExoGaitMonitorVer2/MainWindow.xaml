@@ -250,6 +250,7 @@
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                         <GroupBox Header="控制面板" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
                             <StackPanel>
+                                
                                 <GroupBox Header="手动操作设置" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
                                     <DockPanel>
                                         <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
@@ -304,6 +305,15 @@
                                         </StackPanel>
                                     </DockPanel>
                                 </GroupBox>
+
+                                <GroupBox Header="数据记录" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
+                                    <DockPanel>
+                                        <StackPanel>
+                                            <Button x:Name="Plot_Button" Content="停止绘图" Margin="3" Padding="3" Click="PVT_Button_Click"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </GroupBox>
+
                             </StackPanel>
                         </GroupBox>
                     </ScrollViewer>
