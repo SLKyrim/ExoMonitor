@@ -434,6 +434,7 @@ namespace ExoGaitMonitorVer2
             PVT_Button.IsEnabled = false;
             getZeroPointButton.IsEnabled = false;
 
+            motors.motors_Init();
             controlTimer = new DispatcherTimer();
             controlTimer.Tick += new EventHandler(getZeroPointTimer_Tick);
             controlTimer.Interval = TimeSpan.FromMilliseconds(20);// 该时钟频率决定电机运行速度
