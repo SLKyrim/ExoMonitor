@@ -27,14 +27,25 @@ namespace ExoGaitMonitorVer2
         #region 声明
 
         //声明绘制对象
-        public PointCollection M1_pointcollection_PositionActual;
-        public PointCollection M1_pointcollection_VelocityActual;
-        public PointCollection M1_pointcollection_CurrentActual;
+        public PointCollection M0_pointcollection_Pos;
+        public PointCollection M0_pointcollection_Vel;
+        public PointCollection M0_pointcollection_Cur;
+        public PointCollection M1_pointcollection_Pos;
+        public PointCollection M1_pointcollection_Vel;
+        public PointCollection M1_pointcollection_Cur;
+        public PointCollection M2_pointcollection_Pos;
+        public PointCollection M2_pointcollection_Vel;
+        public PointCollection M2_pointcollection_Cur;
+        public PointCollection M3_pointcollection_Pos;
+        public PointCollection M3_pointcollection_Vel;
+        public PointCollection M3_pointcollection_Cur;
 
         private DispatcherTimer timer;
         private Motors motors = new Motors();
         private static ChartPlotter cp;
         private int count;
+        private int lastCount = 0; //记录上次绘图所在位置
+        private const int MOTOR_NUM = 4;
         #endregion
 
 
@@ -42,15 +53,27 @@ namespace ExoGaitMonitorVer2
         public ChartPlotter()
         {
             //为一堆点分配空间
-            M1_pointcollection_PositionActual = new PointCollection();
-            M1_pointcollection_VelocityActual = new PointCollection();
-            M1_pointcollection_CurrentActual = new PointCollection();
+            M0_pointcollection_Pos = new PointCollection();
+            M0_pointcollection_Vel = new PointCollection();
+            M0_pointcollection_Cur = new PointCollection();
+
+            M1_pointcollection_Pos = new PointCollection();
+            M1_pointcollection_Vel = new PointCollection();
+            M1_pointcollection_Cur = new PointCollection();
+
+            M2_pointcollection_Pos = new PointCollection();
+            M2_pointcollection_Vel = new PointCollection();
+            M2_pointcollection_Cur = new PointCollection();
+
+            M3_pointcollection_Pos = new PointCollection();
+            M3_pointcollection_Vel = new PointCollection();
+            M3_pointcollection_Cur = new PointCollection();
         }
 
         public void plotStart(Motors motorsIn)
         {
             motors = motorsIn;
-            count = 0;
+            count = lastCount;
 
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromMilliseconds(10);
@@ -58,14 +81,35 @@ namespace ExoGaitMonitorVer2
             timer.Start();
         }
 
+        public void plotStop()
+        {
+            timer.Stop();
+            timer.Tick -= new EventHandler(plotTimer_Tick);
+
+            lastCount = count;
+        }
+
         private void plotTimer_Tick(object sender, EventArgs e)
         {
             cp = App.Current.Resources["Cp"] as ChartPlotter;
-            count++;
 
-            cp.M1_pointcollection_PositionActual.Add(new MyPoint(motors.ampObjAngleActual[0], count));
-            cp.M1_pointcollection_VelocityActual.Add(new MyPoint(motors.ampObjAngleVelActual[0], count));
-            cp.M1_pointcollection_CurrentActual.Add(new MyPoint((motors.ampObj[0].CurrentActual * 0.01), count));
+            cp.M0_pointcollection_Pos.Add(new MyPoint(motors.ampObjAngleActual[0], count));
+            cp.M0_pointcollection_Vel.Add(new MyPoint(motors.ampObjAngleVelActual[0], count));
+            cp.M0_pointcollection_Cur.Add(new MyPoint((motors.ampObj[0].CurrentActual * 0.01), count));
+
+            cp.M1_pointcollection_Pos.Add(new MyPoint(motors.ampObjAngleActual[1], count));
+            cp.M1_pointcollection_Vel.Add(new MyPoint(motors.ampObjAngleVelActual[1], count));
+            cp.M1_pointcollection_Cur.Add(new MyPoint((motors.ampObj[1].CurrentActual * 0.01), count));
+
+            cp.M2_pointcollection_Pos.Add(new MyPoint(motors.ampObjAngleActual[2], count));
+            cp.M2_pointcollection_Vel.Add(new MyPoint(motors.ampObjAngleVelActual[2], count));
+            cp.M2_pointcollection_Cur.Add(new MyPoint((motors.ampObj[2].CurrentActual * 0.01), count));
+
+            cp.M3_pointcollection_Pos.Add(new MyPoint(motors.ampObjAngleActual[3], count));
+            cp.M3_pointcollection_Vel.Add(new MyPoint(motors.ampObjAngleVelActual[3], count));
+            cp.M3_pointcollection_Cur.Add(new MyPoint((motors.ampObj[3].CurrentActual * 0.01), count));
+
+            count++;
         }
     }
 }

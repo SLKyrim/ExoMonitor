@@ -17,31 +17,168 @@ namespace ExoGaitMonitorVer2
     /// </summary>
     public partial class MainWindow : Window
     {
+        #region 绘图 
+
         private ChartPlotter cp;
 
         public MainWindow()
         {
+            EnumerableDataSource<MyPoint> total_M0_Pos;
+            EnumerableDataSource<MyPoint> total_M1_Pos;
+            EnumerableDataSource<MyPoint> total_M2_Pos;
+            EnumerableDataSource<MyPoint> total_M3_Pos;
+            EnumerableDataSource<MyPoint> total_M0_Vel;
+            EnumerableDataSource<MyPoint> total_M1_Vel;
+            EnumerableDataSource<MyPoint> total_M2_Vel;
+            EnumerableDataSource<MyPoint> total_M3_Vel;
+            EnumerableDataSource<MyPoint> total_M0_Cur;
+            EnumerableDataSource<MyPoint> total_M1_Cur;
+            EnumerableDataSource<MyPoint> total_M2_Cur;
+            EnumerableDataSource<MyPoint> total_M3_Cur;
+
+            EnumerableDataSource<MyPoint> M0_Pos;
             EnumerableDataSource<MyPoint> M1_Pos;
+            EnumerableDataSource<MyPoint> M2_Pos;
+            EnumerableDataSource<MyPoint> M3_Pos;
+            EnumerableDataSource<MyPoint> M0_Vel;
             EnumerableDataSource<MyPoint> M1_Vel;
+            EnumerableDataSource<MyPoint> M2_Vel;
+            EnumerableDataSource<MyPoint> M3_Vel;
+            EnumerableDataSource<MyPoint> M0_Cur;
             EnumerableDataSource<MyPoint> M1_Cur;
+            EnumerableDataSource<MyPoint> M2_Cur;
+            EnumerableDataSource<MyPoint> M3_Cur;
 
             InitializeComponent();
 
             cp = App.Current.Resources["Cp"] as ChartPlotter;
 
-            M1_Pos = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_PositionActual);
+            #region 整体系统绘图
+
+            total_M0_Pos = new EnumerableDataSource<MyPoint>(cp.M0_pointcollection_Pos);
+            total_M0_Pos.SetXMapping(x => PosAx_total.ConvertToDouble(x.Date));
+            total_M0_Pos.SetYMapping(y => y._point);
+            PosPlot_total.AddLineGraph(total_M0_Pos, Colors.Red, 2, "左膝实际位置");
+            total_M0_Vel = new EnumerableDataSource<MyPoint>(cp.M0_pointcollection_Vel);
+            total_M0_Vel.SetXMapping(x => VelAx_total.ConvertToDouble(x.Date));
+            total_M0_Vel.SetYMapping(y => y._point);
+            VelPlot_total.AddLineGraph(total_M0_Vel, Colors.Red, 2, "左膝电机速度");
+            total_M0_Cur = new EnumerableDataSource<MyPoint>(cp.M0_pointcollection_Cur);
+            total_M0_Cur.SetXMapping(x => CurAx_total.ConvertToDouble(x.Date));
+            total_M0_Cur.SetYMapping(y => y._point);
+            CurPlot_total.AddLineGraph(total_M0_Cur, Colors.Red, 2, "左膝电机电流");
+
+            total_M1_Pos = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_Pos);
+            total_M1_Pos.SetXMapping(x => PosAx_total.ConvertToDouble(x.Date));
+            total_M1_Pos.SetYMapping(y => y._point);
+            PosPlot_total.AddLineGraph(total_M1_Pos, Colors.Green, 2, "左髋实际位置");
+            total_M1_Vel = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_Vel);
+            total_M1_Vel.SetXMapping(x => VelAx_total.ConvertToDouble(x.Date));
+            total_M1_Vel.SetYMapping(y => y._point);
+            VelPlot_total.AddLineGraph(total_M1_Vel, Colors.Green, 2, "左髋电机速度");
+            total_M1_Cur = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_Cur);
+            total_M1_Cur.SetXMapping(x => CurAx_total.ConvertToDouble(x.Date));
+            total_M1_Cur.SetYMapping(y => y._point);
+            CurPlot_total.AddLineGraph(total_M1_Cur, Colors.Green, 2, "左髋电机电流");
+
+            total_M2_Pos = new EnumerableDataSource<MyPoint>(cp.M2_pointcollection_Pos);
+            total_M2_Pos.SetXMapping(x => PosAx_total.ConvertToDouble(x.Date));
+            total_M2_Pos.SetYMapping(y => y._point);
+            PosPlot_total.AddLineGraph(total_M2_Pos, Colors.Brown, 2, "右髋实际位置");
+            total_M2_Vel = new EnumerableDataSource<MyPoint>(cp.M2_pointcollection_Vel);
+            total_M2_Vel.SetXMapping(x => VelAx_total.ConvertToDouble(x.Date));
+            total_M2_Vel.SetYMapping(y => y._point);
+            VelPlot_total.AddLineGraph(total_M2_Vel, Colors.Brown, 2, "右髋电机速度");
+            total_M2_Cur = new EnumerableDataSource<MyPoint>(cp.M2_pointcollection_Cur);
+            total_M2_Cur.SetXMapping(x => CurAx_total.ConvertToDouble(x.Date));
+            total_M2_Cur.SetYMapping(y => y._point);
+            CurPlot_total.AddLineGraph(total_M2_Cur, Colors.Brown, 2, "右髋电机电流");
+
+            total_M3_Pos = new EnumerableDataSource<MyPoint>(cp.M3_pointcollection_Pos);
+            total_M3_Pos.SetXMapping(x => PosAx_total.ConvertToDouble(x.Date));
+            total_M3_Pos.SetYMapping(y => y._point);
+            PosPlot_total.AddLineGraph(total_M3_Pos, Colors.Purple, 2, "右膝实际位置");
+            total_M3_Vel = new EnumerableDataSource<MyPoint>(cp.M3_pointcollection_Vel);
+            total_M3_Vel.SetXMapping(x => VelAx_total.ConvertToDouble(x.Date));
+            total_M3_Vel.SetYMapping(y => y._point);
+            VelPlot_total.AddLineGraph(total_M3_Vel, Colors.Purple, 2, "右膝电机速度");
+            total_M3_Cur = new EnumerableDataSource<MyPoint>(cp.M3_pointcollection_Cur);
+            total_M3_Cur.SetXMapping(x => CurAx_total.ConvertToDouble(x.Date));
+            total_M3_Cur.SetYMapping(y => y._point);
+            CurPlot_total.AddLineGraph(total_M3_Cur, Colors.Purple, 2, "右膝电机电流");
+
+            #endregion
+
+            M0_Pos = new EnumerableDataSource<MyPoint>(cp.M0_pointcollection_Pos);
+            M0_Pos.SetXMapping(x => PosAx_M0.ConvertToDouble(x.Date));
+            M0_Pos.SetYMapping(y => y._point);
+            PosPlot_M0.AddLineGraph(M0_Pos, Colors.Red, 2, "左膝实际位置");
+            M0_Vel = new EnumerableDataSource<MyPoint>(cp.M0_pointcollection_Vel);
+            M0_Vel.SetXMapping(x => VelAx_M0.ConvertToDouble(x.Date));
+            M0_Vel.SetYMapping(y => y._point);
+            VelPlot_M0.AddLineGraph(M0_Vel, Colors.Red, 2, "左膝电机速度");
+            M0_Cur = new EnumerableDataSource<MyPoint>(cp.M0_pointcollection_Cur);
+            M0_Cur.SetXMapping(x => CurAx_M0.ConvertToDouble(x.Date));
+            M0_Cur.SetYMapping(y => y._point);
+            CurPlot_M0.AddLineGraph(M0_Cur, Colors.Red, 2, "左膝电机电流");
+
+            M1_Pos = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_Pos);
             M1_Pos.SetXMapping(x => PosAx_M1.ConvertToDouble(x.Date));
             M1_Pos.SetYMapping(y => y._point);
-            PosPlot_M1.AddLineGraph(M1_Pos, Colors.Red, 2, "左膝实际位置");
-            M1_Vel = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_VelocityActual);
+            PosPlot_M1.AddLineGraph(M1_Pos, Colors.Green, 2, "左膝实际位置");
+            M1_Vel = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_Vel);
             M1_Vel.SetXMapping(x => VelAx_M1.ConvertToDouble(x.Date));
             M1_Vel.SetYMapping(y => y._point);
-            VelPlot_M1.AddLineGraph(M1_Vel, Colors.Red, 2, "左膝电机速度");
-            M1_Cur = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_CurrentActual);
+            VelPlot_M1.AddLineGraph(M1_Vel, Colors.Green, 2, "左膝电机速度");
+            M1_Cur = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_Cur);
             M1_Cur.SetXMapping(x => CurAx_M1.ConvertToDouble(x.Date));
             M1_Cur.SetYMapping(y => y._point);
-            CurPlot_M1.AddLineGraph(M1_Cur, Colors.Red, 2, "左膝电机电流");
+            CurPlot_M1.AddLineGraph(M1_Cur, Colors.Green, 2, "左膝电机电流");
+
+            M2_Pos = new EnumerableDataSource<MyPoint>(cp.M2_pointcollection_Pos);
+            M2_Pos.SetXMapping(x => PosAx_M2.ConvertToDouble(x.Date));
+            M2_Pos.SetYMapping(y => y._point);
+            PosPlot_M2.AddLineGraph(M2_Pos, Colors.Brown, 2, "左膝实际位置");
+            M2_Vel = new EnumerableDataSource<MyPoint>(cp.M2_pointcollection_Vel);
+            M2_Vel.SetXMapping(x => VelAx_M2.ConvertToDouble(x.Date));
+            M2_Vel.SetYMapping(y => y._point);
+            VelPlot_M2.AddLineGraph(M2_Vel, Colors.Brown, 2, "左膝电机速度");
+            M2_Cur = new EnumerableDataSource<MyPoint>(cp.M2_pointcollection_Cur);
+            M2_Cur.SetXMapping(x => CurAx_M2.ConvertToDouble(x.Date));
+            M2_Cur.SetYMapping(y => y._point);
+            CurPlot_M2.AddLineGraph(M2_Cur, Colors.Brown, 2, "左膝电机电流");
+
+            M3_Pos = new EnumerableDataSource<MyPoint>(cp.M3_pointcollection_Pos);
+            M3_Pos.SetXMapping(x => PosAx_M3.ConvertToDouble(x.Date));
+            M3_Pos.SetYMapping(y => y._point);
+            PosPlot_M3.AddLineGraph(M3_Pos, Colors.Purple, 2, "左膝实际位置");
+            M3_Vel = new EnumerableDataSource<MyPoint>(cp.M3_pointcollection_Vel);
+            M3_Vel.SetXMapping(x => VelAx_M3.ConvertToDouble(x.Date));
+            M3_Vel.SetYMapping(y => y._point);
+            VelPlot_M3.AddLineGraph(M3_Vel, Colors.Purple, 2, "左膝电机速度");
+            M3_Cur = new EnumerableDataSource<MyPoint>(cp.M3_pointcollection_Cur);
+            M3_Cur.SetXMapping(x => CurAx_M3.ConvertToDouble(x.Date));
+            M3_Cur.SetYMapping(y => y._point);
+            CurPlot_M3.AddLineGraph(M3_Cur, Colors.Purple, 2, "左膝电机电流");
         }
+
+        private void Plot_Button_Click(object sender, RoutedEventArgs e)
+        {
+            Button bt = sender as Button;
+
+            if (bt.Content.ToString() == "开始绘图")
+            {
+                bt.Content = "停止绘图";
+                cp.plotStart(motors);
+            }
+            else
+            {
+                cp.plotStop();
+                bt.Content = "开始绘图";
+            }
+        }
+
+        #endregion
 
         #region 声明
         //主界面窗口
@@ -337,7 +474,6 @@ namespace ExoGaitMonitorVer2
         private void PVT_Button_Click(object sender, RoutedEventArgs e)//进入PVT模式
         {
             Button bt = sender as Button;
-            Brush brush = bt.Background;
 
             if(bt.Content.ToString() == "PVT Mode")
             {
@@ -370,7 +506,7 @@ namespace ExoGaitMonitorVer2
             }
         }
 
-        private void SAC_Button_Click(object sender, RoutedEventArgs e)
+        private void SAC_Button_Click(object sender, RoutedEventArgs e)//进入SAC模式
         {
 
         }

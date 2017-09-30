@@ -309,7 +309,7 @@
                                 <GroupBox Header="数据记录" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
                                     <DockPanel>
                                         <StackPanel>
-                                            <Button x:Name="Plot_Button" Content="停止绘图" Margin="3" Padding="3" Click="PVT_Button_Click"/>
+                                            <Button x:Name="Plot_Button" Content="停止绘图" Margin="3" Padding="3" Click="Plot_Button_Click"/>
                                         </StackPanel>
                                     </DockPanel>
                                 </GroupBox>
@@ -323,7 +323,64 @@
                 <Grid>
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                         <TabControl Margin="5,8,5,1">
+                            
+                            <TabItem Header="整体系统">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="100*"/>
+                                        <RowDefinition Height="100*"/>
+                                        <RowDefinition Height="100*"/>
+                                    </Grid.RowDefinitions>
+                                    <d3:ChartPlotter x:Name="PosPlot_total" Grid.Row="0">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="PosAx_total"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="关节角度 [°]"/>
+                                    </d3:ChartPlotter>
+                                    <d3:ChartPlotter x:Name="VelPlot_total" Grid.Row="1">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="VelAx_total"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="电机转速 [rad/s]"/>
+                                    </d3:ChartPlotter>
+                                    <d3:ChartPlotter x:Name="CurPlot_total" Grid.Row="2">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="CurAx_total"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="电机电流 [A]"/>
+                                    </d3:ChartPlotter>
+                                </Grid>
+                            </TabItem>
+
                             <TabItem Header="电机1左膝">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="100*"/>
+                                        <RowDefinition Height="100*"/>
+                                        <RowDefinition Height="100*"/>
+                                    </Grid.RowDefinitions>
+                                    <d3:ChartPlotter x:Name="PosPlot_M0" Grid.Row="0">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="PosAx_M0"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="关节角度 [°]"/>
+                                    </d3:ChartPlotter>
+                                    <d3:ChartPlotter x:Name="VelPlot_M0" Grid.Row="1">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="VelAx_M0"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="电机转速 [rad/s]"/>
+                                    </d3:ChartPlotter>
+                                    <d3:ChartPlotter x:Name="CurPlot_M0" Grid.Row="2">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="CurAx_M0"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="电机电流 [A]"/>
+                                    </d3:ChartPlotter>
+                                </Grid>
+                            </TabItem>
+
+                            <TabItem Header="电机2左髋">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="100*"/>
@@ -340,7 +397,7 @@
                                         <d3:ChartPlotter.HorizontalAxis>
                                             <d3:HorizontalIntegerAxis x:Name="VelAx_M1"/>
                                         </d3:ChartPlotter.HorizontalAxis>
-                                        <d3:Header FontFamily="Georgia" Content="电机转速 [counts/s]"/>
+                                        <d3:Header FontFamily="Georgia" Content="电机转速 [rad/s]"/>
                                     </d3:ChartPlotter>
                                     <d3:ChartPlotter x:Name="CurPlot_M1" Grid.Row="2">
                                         <d3:ChartPlotter.HorizontalAxis>
@@ -350,6 +407,65 @@
                                     </d3:ChartPlotter>
                                 </Grid>
                             </TabItem>
+
+                            <TabItem Header="电机3右髋">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="100*"/>
+                                        <RowDefinition Height="100*"/>
+                                        <RowDefinition Height="100*"/>
+                                    </Grid.RowDefinitions>
+                                    <d3:ChartPlotter x:Name="PosPlot_M2" Grid.Row="0">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="PosAx_M2"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="关节角度 [°]"/>
+                                    </d3:ChartPlotter>
+                                    <d3:ChartPlotter x:Name="VelPlot_M2" Grid.Row="1">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="VelAx_M2"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="电机转速 [rad/s]"/>
+                                    </d3:ChartPlotter>
+                                    <d3:ChartPlotter x:Name="CurPlot_M2" Grid.Row="2">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="CurAx_M2"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="电机电流 [A]"/>
+                                    </d3:ChartPlotter>
+                                </Grid>
+                            </TabItem>
+
+                            <TabItem Header="电机4右膝">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="100*"/>
+                                        <RowDefinition Height="100*"/>
+                                        <RowDefinition Height="100*"/>
+                                    </Grid.RowDefinitions>
+                                    <d3:ChartPlotter x:Name="PosPlot_M3" Grid.Row="0">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="PosAx_M3"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="关节角度 [°]"/>
+                                    </d3:ChartPlotter>
+                                    <d3:ChartPlotter x:Name="VelPlot_M3" Grid.Row="1">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="VelAx_M3"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="电机转速 [rad/s]"/>
+                                    </d3:ChartPlotter>
+                                    <d3:ChartPlotter x:Name="CurPlot_M3" Grid.Row="2">
+                                        <d3:ChartPlotter.HorizontalAxis>
+                                            <d3:HorizontalIntegerAxis x:Name="CurAx_M3"/>
+                                        </d3:ChartPlotter.HorizontalAxis>
+                                        <d3:Header FontFamily="Georgia" Content="电机电流 [A]"/>
+                                    </d3:ChartPlotter>
+                                </Grid>
+                            </TabItem>
+
+
+
                         </TabControl>
                     </ScrollViewer>
                 </Grid>
