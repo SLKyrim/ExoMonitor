@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:ExoGaitMonitorVer2"
         mc:Ignorable="d" WindowStartupLocation="CenterScreen"
         Title="外骨骼控制界面" Icon="Images/SingleLong.png" 
-        Height="780" Width="1200" MinHeight="780" MinWidth="1000" 
+        Height="730" Width="1200" MinHeight="600" MinWidth="1000" 
         Loaded="Window_Loaded" Closed="Window_Closed">
     <DockPanel Background="White">
         <!--状态栏-->

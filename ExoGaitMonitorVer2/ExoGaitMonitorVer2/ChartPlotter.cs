@@ -2,6 +2,9 @@
 using Microsoft.Research.DynamicDataDisplay.Common;
 using System.ComponentModel;
 using System.Windows.Threading;
+using System.Windows.Controls.Primitives;
+using System.Windows.Media;
+using System.Windows.Controls;
 
 namespace ExoGaitMonitorVer2
 {
@@ -46,9 +49,9 @@ namespace ExoGaitMonitorVer2
         private int count;
         private int lastCount = 0; //记录上次绘图所在位置
         private const int MOTOR_NUM = 4;
+        private StatusBar statusBar;
+        private TextBlock statusInfoTextBlock;
         #endregion
-
-
 
         public ChartPlotter()
         {
@@ -70,10 +73,12 @@ namespace ExoGaitMonitorVer2
             M3_pointcollection_Cur = new PointCollection();
         }
 
-        public void plotStart(Motors motorsIn)
+        public void plotStart(Motors motorsIn, StatusBar statusBarIn, TextBlock statusInfoTextBlockIn)
         {
             motors = motorsIn;
             count = lastCount;
+            statusBar = statusBarIn;
+            statusInfoTextBlock = statusInfoTextBlockIn;
 
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromMilliseconds(10);
@@ -93,21 +98,29 @@ namespace ExoGaitMonitorVer2
         {
             cp = App.Current.Resources["Cp"] as ChartPlotter;
 
-            cp.M0_pointcollection_Pos.Add(new MyPoint(motors.ampObjAngleActual[0], count));
-            cp.M0_pointcollection_Vel.Add(new MyPoint(motors.ampObjAngleVelActual[0], count));
-            cp.M0_pointcollection_Cur.Add(new MyPoint((motors.ampObj[0].CurrentActual * 0.01), count));
+            try
+            {
+                cp.M0_pointcollection_Pos.Add(new MyPoint(motors.ampObjAngleActual[0], count));
+                cp.M0_pointcollection_Vel.Add(new MyPoint(motors.ampObjAngleVelActual[0], count));
+                cp.M0_pointcollection_Cur.Add(new MyPoint((motors.ampObj[0].CurrentActual * 0.01), count));
 
-            cp.M1_pointcollection_Pos.Add(new MyPoint(motors.ampObjAngleActual[1], count));
-            cp.M1_pointcollection_Vel.Add(new MyPoint(motors.ampObjAngleVelActual[1], count));
-            cp.M1_pointcollection_Cur.Add(new MyPoint((motors.ampObj[1].CurrentActual * 0.01), count));
+                cp.M1_pointcollection_Pos.Add(new MyPoint(motors.ampObjAngleActual[1], count));
+                cp.M1_pointcollection_Vel.Add(new MyPoint(motors.ampObjAngleVelActual[1], count));
+                cp.M1_pointcollection_Cur.Add(new MyPoint((motors.ampObj[1].CurrentActual * 0.01), count));
 
-            cp.M2_pointcollection_Pos.Add(new MyPoint(motors.ampObjAngleActual[2], count));
-            cp.M2_pointcollection_Vel.Add(new MyPoint(motors.ampObjAngleVelActual[2], count));
-            cp.M2_pointcollection_Cur.Add(new MyPoint((motors.ampObj[2].CurrentActual * 0.01), count));
+                cp.M2_pointcollection_Pos.Add(new MyPoint(motors.ampObjAngleActual[2], count));
+                cp.M2_pointcollection_Vel.Add(new MyPoint(motors.ampObjAngleVelActual[2], count));
+                cp.M2_pointcollection_Cur.Add(new MyPoint((motors.ampObj[2].CurrentActual * 0.01), count));
 
-            cp.M3_pointcollection_Pos.Add(new MyPoint(motors.ampObjAngleActual[3], count));
-            cp.M3_pointcollection_Vel.Add(new MyPoint(motors.ampObjAngleVelActual[3], count));
-            cp.M3_pointcollection_Cur.Add(new MyPoint((motors.ampObj[3].CurrentActual * 0.01), count));
+                cp.M3_pointcollection_Pos.Add(new MyPoint(motors.ampObjAngleActual[3], count));
+                cp.M3_pointcollection_Vel.Add(new MyPoint(motors.ampObjAngleVelActual[3], count));
+                cp.M3_pointcollection_Cur.Add(new MyPoint((motors.ampObj[3].CurrentActual * 0.01), count));
+            }
+            catch
+            {
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                statusInfoTextBlock.Text = "绘图失败！";
+            }
 
             count++;
         }

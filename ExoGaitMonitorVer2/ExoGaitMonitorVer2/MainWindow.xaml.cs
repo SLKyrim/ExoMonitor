@@ -125,41 +125,41 @@ namespace ExoGaitMonitorVer2
             M1_Pos = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_Pos);
             M1_Pos.SetXMapping(x => PosAx_M1.ConvertToDouble(x.Date));
             M1_Pos.SetYMapping(y => y._point);
-            PosPlot_M1.AddLineGraph(M1_Pos, Colors.Green, 2, "左膝实际位置");
+            PosPlot_M1.AddLineGraph(M1_Pos, Colors.Green, 2, "左髋实际位置");
             M1_Vel = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_Vel);
             M1_Vel.SetXMapping(x => VelAx_M1.ConvertToDouble(x.Date));
             M1_Vel.SetYMapping(y => y._point);
-            VelPlot_M1.AddLineGraph(M1_Vel, Colors.Green, 2, "左膝电机速度");
+            VelPlot_M1.AddLineGraph(M1_Vel, Colors.Green, 2, "左髋电机速度");
             M1_Cur = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_Cur);
             M1_Cur.SetXMapping(x => CurAx_M1.ConvertToDouble(x.Date));
             M1_Cur.SetYMapping(y => y._point);
-            CurPlot_M1.AddLineGraph(M1_Cur, Colors.Green, 2, "左膝电机电流");
+            CurPlot_M1.AddLineGraph(M1_Cur, Colors.Green, 2, "左髋电机电流");
 
             M2_Pos = new EnumerableDataSource<MyPoint>(cp.M2_pointcollection_Pos);
             M2_Pos.SetXMapping(x => PosAx_M2.ConvertToDouble(x.Date));
             M2_Pos.SetYMapping(y => y._point);
-            PosPlot_M2.AddLineGraph(M2_Pos, Colors.Brown, 2, "左膝实际位置");
+            PosPlot_M2.AddLineGraph(M2_Pos, Colors.Brown, 2, "右髋实际位置");
             M2_Vel = new EnumerableDataSource<MyPoint>(cp.M2_pointcollection_Vel);
             M2_Vel.SetXMapping(x => VelAx_M2.ConvertToDouble(x.Date));
             M2_Vel.SetYMapping(y => y._point);
-            VelPlot_M2.AddLineGraph(M2_Vel, Colors.Brown, 2, "左膝电机速度");
+            VelPlot_M2.AddLineGraph(M2_Vel, Colors.Brown, 2, "右髋电机速度");
             M2_Cur = new EnumerableDataSource<MyPoint>(cp.M2_pointcollection_Cur);
             M2_Cur.SetXMapping(x => CurAx_M2.ConvertToDouble(x.Date));
             M2_Cur.SetYMapping(y => y._point);
-            CurPlot_M2.AddLineGraph(M2_Cur, Colors.Brown, 2, "左膝电机电流");
+            CurPlot_M2.AddLineGraph(M2_Cur, Colors.Brown, 2, "右髋电机电流");
 
             M3_Pos = new EnumerableDataSource<MyPoint>(cp.M3_pointcollection_Pos);
             M3_Pos.SetXMapping(x => PosAx_M3.ConvertToDouble(x.Date));
             M3_Pos.SetYMapping(y => y._point);
-            PosPlot_M3.AddLineGraph(M3_Pos, Colors.Purple, 2, "左膝实际位置");
+            PosPlot_M3.AddLineGraph(M3_Pos, Colors.Purple, 2, "右膝实际位置");
             M3_Vel = new EnumerableDataSource<MyPoint>(cp.M3_pointcollection_Vel);
             M3_Vel.SetXMapping(x => VelAx_M3.ConvertToDouble(x.Date));
             M3_Vel.SetYMapping(y => y._point);
-            VelPlot_M3.AddLineGraph(M3_Vel, Colors.Purple, 2, "左膝电机速度");
+            VelPlot_M3.AddLineGraph(M3_Vel, Colors.Purple, 2, "右膝电机速度");
             M3_Cur = new EnumerableDataSource<MyPoint>(cp.M3_pointcollection_Cur);
             M3_Cur.SetXMapping(x => CurAx_M3.ConvertToDouble(x.Date));
             M3_Cur.SetYMapping(y => y._point);
-            CurPlot_M3.AddLineGraph(M3_Cur, Colors.Purple, 2, "左膝电机电流");
+            CurPlot_M3.AddLineGraph(M3_Cur, Colors.Purple, 2, "右膝电机电流");
         }
 
         private void Plot_Button_Click(object sender, RoutedEventArgs e)
@@ -169,7 +169,7 @@ namespace ExoGaitMonitorVer2
             if (bt.Content.ToString() == "开始绘图")
             {
                 bt.Content = "停止绘图";
-                cp.plotStart(motors);
+                cp.plotStart(motors, statusBar, statusInfoTextBlock);
             }
             else
             {
@@ -216,6 +216,7 @@ namespace ExoGaitMonitorVer2
             try
             {
                 motors.motors_Init();
+                cp.plotStart(motors, statusBar, statusInfoTextBlock);
             }
             catch
             {
@@ -227,8 +228,6 @@ namespace ExoGaitMonitorVer2
             showParaTimer.Tick += new EventHandler(showParaTimer_Tick);
             showParaTimer.Interval = TimeSpan.FromMilliseconds(100);
             showParaTimer.Start();
-
-            cp.plotStart(motors);
         }
 
         private void Window_Closed(object sender, EventArgs e)
