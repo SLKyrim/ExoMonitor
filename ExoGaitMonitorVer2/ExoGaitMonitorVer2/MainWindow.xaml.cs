@@ -29,12 +29,7 @@ namespace ExoGaitMonitorVer2
         public Motors motors = new Motors(); //声明电机类
 
         //手动操作设置
-        private DispatcherTimer controlTimer; //操作线程
-
-        const double FAST_VEL = 60000; //设置未到目标角度时较快的速度
-        const double SLOW_VEL = 30000; //设置快到目标角度时较慢的速度
-        const double ORIGIN_POINT = 2; //原点阈值
-        const double TURN_POINT = 10; //快速转慢速的转变点
+        private Manumotive manumotive = new Manumotive();
 
         //传感器
         private Sensors sensors = new Sensors();
@@ -257,146 +252,34 @@ namespace ExoGaitMonitorVer2
             angleSetButton.IsEnabled = false;
             emergencyStopButton.IsEnabled = true;
             getZeroPointButton.IsEnabled = false;
+            zeroPointSetButton.IsEnabled = false;
+            PVT_Button.IsEnabled = false;
+
             angleSetTextBox.IsReadOnly = true;
             motorNumberTextBox.IsReadOnly = true;
-            zeroPointSetButton.IsEnabled = false;
+
 
             int motorNumber = Convert.ToInt16(motorNumberTextBox.Text);
             int i = motorNumber - 1;
 
             motors.ampObj[i].PositionActual = 0;
 
-            controlTimer = new DispatcherTimer();
-            controlTimer.Tick += new EventHandler(angleSetTimer_Tick);
-            controlTimer.Interval = TimeSpan.FromMilliseconds(20);// 该时钟频率决定电机运行速度
-            controlTimer.Start();
-        }
-
-        public void angleSetTimer_Tick(object sender, EventArgs e)//电机按设置角度转动的委托
-        {
-            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-            statusInfoTextBlock.Text = "正在执行";
-
-            double angleSet = Convert.ToDouble(angleSetTextBox.Text);
-            int motorNumber = Convert.ToInt16(motorNumberTextBox.Text);
-            int i = motorNumber - 1;
-
-            motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY; // 选择速度模式控制电机
-
-            if (angleSet > 0)
-            {
-                if (motors.ampObjAngleActual[i] < angleSet)
-                {
-                    motors.profileSettingsObj.ProfileVel = FAST_VEL;
-                    motors.profileSettingsObj.ProfileAccel = FAST_VEL;
-                    motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
-                    motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
-
-                    if (motors.ampObjAngleActual[i] > (angleSet - 5))
-                    {
-                        motors.profileSettingsObj.ProfileVel = SLOW_VEL;
-                        motors.profileSettingsObj.ProfileAccel = SLOW_VEL;
-                        motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
-                        motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
-                    }
-                    try
-                    {
-                        motors.ampObj[i].MoveRel(1);
-                    }
-                    catch
-                    {
-                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-                        statusInfoTextBlock.Text = "电机" + (i + 1).ToString() + "已限位！";
-                    }
-
-                }
-                else
-                {
-                    motors.ampObj[i].HaltMove();
-                    motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
-                    for (int j = 0; j < motors.motor_num; j++)
-                    {
-                        motors.profileSettingsObj.ProfileVel = 0;
-                        motors.profileSettingsObj.ProfileAccel = 0;
-                        motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
-                        motors.ampObj[j].ProfileSettings = motors.profileSettingsObj;
-                    }
-                    angleSetButton.IsEnabled = true;
-                    emergencyStopButton.IsEnabled = false;
-                    angleSetTextBox.IsReadOnly = false;
-                    motorNumberTextBox.IsReadOnly = false;
-                    getZeroPointButton.IsEnabled = true;
-                    zeroPointSetButton.IsEnabled = true;
-                    controlTimer.Stop();
-                    controlTimer.Tick -= new EventHandler(angleSetTimer_Tick);
-                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
-                    statusInfoTextBlock.Text = "执行完毕";
-                }
-            }
-
-            if (angleSet < 0)
-            {
-                if (motors.ampObjAngleActual[i] > angleSet)
-                {
-                    motors.profileSettingsObj.ProfileVel = FAST_VEL;
-                    motors.profileSettingsObj.ProfileAccel = FAST_VEL;
-                    motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
-                    motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
-
-                    if (motors.ampObjAngleActual[i] < (angleSet + 5))
-                    {
-                        motors.profileSettingsObj.ProfileVel = SLOW_VEL;
-                        motors.profileSettingsObj.ProfileAccel = SLOW_VEL;
-                        motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
-                        motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
-                    }
-                    try
-                    {
-                        motors.ampObj[i].MoveRel(-1);
-                    }
-                    catch
-                    {
-                        statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-                        statusInfoTextBlock.Text = "电机" + (i + 1).ToString() + "已限位！"; ;
-                    }
-                }
-                else
-                {
-                    motors.ampObj[i].HaltMove();
-                    motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
-                    for (int j = 0; j < motors.motor_num; j++)
-                    {
-                        motors.profileSettingsObj.ProfileVel = 0;
-                        motors.profileSettingsObj.ProfileAccel = 0;
-                        motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
-                        motors.ampObj[j].ProfileSettings = motors.profileSettingsObj;
-                    }
-                    angleSetButton.IsEnabled = true;
-                    emergencyStopButton.IsEnabled = false;
-                    angleSetTextBox.IsReadOnly = false;
-                    motorNumberTextBox.IsReadOnly = false;
-                    getZeroPointButton.IsEnabled = true;
-                    zeroPointSetButton.IsEnabled = true;
-                    controlTimer.Stop();
-                    controlTimer.Tick -= new EventHandler(angleSetTimer_Tick);
-                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
-                    statusInfoTextBlock.Text = "执行完毕";
-                }
-            }
+            manumotive.angleSetStart(motors, Convert.ToDouble(angleSetTextBox.Text), Convert.ToInt16(motorNumberTextBox.Text), statusBar, statusInfoTextBlock, 
+                                     angleSetButton, emergencyStopButton, getZeroPointButton, zeroPointSetButton, PVT_Button, angleSetTextBox, motorNumberTextBox);
         }
 
         private void emergencyStopButton_Click(object sender, RoutedEventArgs e)//点击【紧急停止】按钮时执行
         {
             emergencyStopButton.IsEnabled = false;
             angleSetButton.IsEnabled = true;
+            getZeroPointButton.IsEnabled = true;
             angleSetTextBox.IsReadOnly = false;
             motorNumberTextBox.IsReadOnly = false;
             int motorNumber = Convert.ToInt16(motorNumberTextBox.Text);
             int i = motorNumber - 1;
 
             motors.ampObj[i].HaltMove();
-            controlTimer.Stop();
-            controlTimer.Tick -= new EventHandler(angleSetTimer_Tick);
+            manumotive.angleSetStop();
         }
 
         private void zeroPointSetButton_Click(object sender, RoutedEventArgs e)//点击【设置原点】按钮时执行
@@ -418,110 +301,12 @@ namespace ExoGaitMonitorVer2
             motorNumberTextBox.IsReadOnly = true;
             PVT_Button.IsEnabled = false;
             getZeroPointButton.IsEnabled = false;
-
-            controlTimer = new DispatcherTimer();
-            controlTimer.Tick += new EventHandler(getZeroPointTimer_Tick);
-            controlTimer.Interval = TimeSpan.FromMilliseconds(20);// 该时钟频率决定电机运行速度
-            controlTimer.Start();
-        }
-
-        public void getZeroPointTimer_Tick(object sender, EventArgs e)//回归原点的委托
-        {
-            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-            statusInfoTextBlock.Text = "正在回归原点";
-
             angleSetButton.IsEnabled = false;
             emergencyStopButton.IsEnabled = false;
             zeroPointSetButton.IsEnabled = false;
 
-            motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY; // 选择速度模式控制电机
-
-            for(int i = 0; i < motors.motor_num; i++)//电机回归原点
-            {
-                if (Math.Abs(motors.ampObjAngleActual[i]) > ORIGIN_POINT)
-                {
-                    if (motors.ampObjAngleActual[i] > 0)
-                    {
-                        if (motors.ampObjAngleActual[i] > TURN_POINT)
-                        {
-                            motors.profileSettingsObj.ProfileVel = FAST_VEL;
-                            motors.profileSettingsObj.ProfileAccel = FAST_VEL;
-                            motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
-                            motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
-                        }
-                        else
-                        {
-                            motors.profileSettingsObj.ProfileVel = SLOW_VEL;
-                            motors.profileSettingsObj.ProfileAccel = SLOW_VEL;
-                            motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
-                            motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
-                        }
-
-                        try
-                        {
-                            motors.ampObj[i].MoveRel(-1);
-                        }
-                        catch
-                        {
-                            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-                            statusInfoTextBlock.Text = "电机" + (i+1).ToString() + "已限位！";
-                        }
-                    }
-                    else
-                    {
-                        if (motors.ampObjAngleActual[i] < -TURN_POINT)
-                        {
-                            motors.profileSettingsObj.ProfileVel = FAST_VEL;
-                            motors.profileSettingsObj.ProfileAccel = FAST_VEL;
-                            motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
-                            motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
-                        }
-                        else
-                        {
-                            motors.profileSettingsObj.ProfileVel = SLOW_VEL;
-                            motors.profileSettingsObj.ProfileAccel = SLOW_VEL;
-                            motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
-                            motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
-                        }
-
-                        try
-                        {
-                            motors.ampObj[i].MoveRel(1);
-                        }
-                        catch
-                        {
-                            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-                            statusInfoTextBlock.Text = "电机" + (i+1).ToString() + "已限位！";
-                        }
-                    }
-                }
-                else
-                {
-                    motors.ampObj[i].HaltMove();
-                }
-            }
-
-            if (Math.Abs(motors.ampObjAngleActual[0]) < ORIGIN_POINT && Math.Abs(motors.ampObjAngleActual[1]) < ORIGIN_POINT && Math.Abs(motors.ampObjAngleActual[2]) < ORIGIN_POINT && Math.Abs(motors.ampObjAngleActual[3]) < ORIGIN_POINT)
-            {
-                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
-                statusInfoTextBlock.Text = "回归原点完毕";
-                motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
-                for (int i = 0; i < motors.motor_num; i++)
-                {
-                    motors.profileSettingsObj.ProfileVel = 0;
-                    motors.profileSettingsObj.ProfileAccel = 0;
-                    motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
-                    motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
-                }
-                angleSetButton.IsEnabled = true;
-                angleSetTextBox.IsReadOnly = false;
-                motorNumberTextBox.IsReadOnly = false;
-                PVT_Button.IsEnabled = true;
-                getZeroPointButton.IsEnabled = true;
-
-                controlTimer.Stop();
-                controlTimer.Tick -= new EventHandler(getZeroPointTimer_Tick);
-            }
+            manumotive.getZeroPointStart(motors, statusBar, statusInfoTextBlock, angleSetButton, emergencyStopButton, getZeroPointButton, 
+                                          zeroPointSetButton, PVT_Button, angleSetTextBox, motorNumberTextBox);
         }
 
         #endregion

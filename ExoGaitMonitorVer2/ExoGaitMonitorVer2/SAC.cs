@@ -11,16 +11,8 @@ namespace ExoGaitMonitorVer2
     {
         #region 声明
 
-        static DispatcherTimer sacTimer;
+
 
         #endregion
-
-        public void sacStart()
-        {
-            if (!sacTimer.IsEnabled)
-                sacTimer.Start();
-        }
-
-
     }
 }
