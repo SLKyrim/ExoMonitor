@@ -14,7 +14,7 @@ namespace ExoGaitMonitorVer2
         //传感器类，包括拉压力传感器的初始化和关闭；向拉压力传感器写命令的线程
 
         //串口
-        public SerialPort forceSensor_SerialPort = new SerialPort(); //传感器1串口
+        public SerialPort forceSensor_SerialPort = new SerialPort(); //拉压力传感器串口
 
         //获取可用串口名
         private string[] IsOpenSerialPortCount = null;
@@ -148,19 +148,13 @@ namespace ExoGaitMonitorVer2
             sensorsTimer = new DispatcherTimer();
             sensorsTimer.Interval = TimeSpan.FromMilliseconds(10);
             sensorsTimer.Tick += new EventHandler(writeCommandTimer_Tick);
-
-            if (!sensorsTimer.IsEnabled)
-                sensorsTimer.Start();
+            sensorsTimer.Start();
         }
 
         public void writeCommandStop()//开始向传感器写入命令
         {
-            if (!sensorsTimer.IsEnabled)
-            {
-                sensorsTimer.Tick -= new EventHandler(writeCommandTimer_Tick);
-                sensorsTimer.Stop();
-            }
-              
+            sensorsTimer.Tick -= new EventHandler(writeCommandTimer_Tick);
+            sensorsTimer.Stop();
         }
         #endregion
     }

@@ -17,14 +17,15 @@ namespace ExoGaitMonitorVer2
         #region 声明
 
         private Motors motors = new Motors();
-        private Sensors sensors = new Sensors();
+        //private Sensors sensors = new Sensors();
 
+        LinkageObj Linkage = new LinkageObj(); //连接一组电机，能够按输入序列同时操作
         #endregion
-
-
 
         public void StartPVT()//执行PVT
         {
+            motors.motors_Init();
+            Linkage = new LinkageObj();
 
             #region 计算轨迹位置，速度和时间间隔序列
             //原始数据
@@ -38,7 +39,7 @@ namespace ExoGaitMonitorVer2
                 string[] str = (ral[i] ?? string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
                 for (int j = 0; j < colCounter; j++)
                 {
-                    pos0[i, j] = double.Parse(str[j]) / (360.0 / motors.RATIO) * motors.userUnits[j];
+                    pos0[i, j] = double.Parse(str[j]) / (360.0 / motors.RATIO) * motors.userUnits[j] * -1;
                 }
             }
 
@@ -111,28 +112,28 @@ namespace ExoGaitMonitorVer2
             vel[rich3Line - 1, 3] = 0;
             #endregion
 
+            Linkage.Initialize(motors.ampObj);
+            Linkage.SetMoveLimits(200000, 3000000, 3000000, 200000);
             for (int i = 0; i < motors.motor_num; i++)//开始步态前各电机回到轨迹初始位置
             {
-                ProfileSettingsObj ProfileSettings;
-
-                ProfileSettings = motors.ampObj[i].ProfileSettings;
-                ProfileSettings.ProfileAccel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxAcc) / 10;
-                ProfileSettings.ProfileDecel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxDec) / 10;
-                ProfileSettings.ProfileVel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxVel) / 10;
-                ProfileSettings.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP; //PVT模式下的控制模式类型
-                motors.ampObj[i].ProfileSettings = ProfileSettings;
+                motors.profileSettingsObj = motors.ampObj[i].ProfileSettings;
+                motors.profileSettingsObj.ProfileAccel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxAcc) / 10;
+                motors.profileSettingsObj.ProfileDecel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxDec) / 10;
+                motors.profileSettingsObj.ProfileVel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxVel) / 10;
+                motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP; //PVT模式下的控制模式类型
+                motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
                 motors.ampObj[i].MoveAbs(pos0[0, i]); //PVT模式开始后先移动到各关节初始位置
                 motors.ampObj[i].WaitMoveDone(10000); //等待各关节回到初始位置的最大时间
             }
 
-            motors.Linkage.TrajectoryInitialize(pos3, vel, times, 100); //开始步态
+            Linkage.TrajectoryInitialize(pos3, vel, times, 100); //开始步态
 
             File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\PVT_ExoGaitData.txt", string.Empty);
         }
 
         public void StopPVT()
         {
-            motors.Linkage.HaltMove();
+            Linkage.HaltMove();
         }
     }
 }

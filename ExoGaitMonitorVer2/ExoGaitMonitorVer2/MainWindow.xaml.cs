@@ -26,7 +26,7 @@ namespace ExoGaitMonitorVer2
         //主界面窗口
 
         //CMO
-        private Motors motors = new Motors(); //声明电机类
+        public Motors motors = new Motors(); //声明电机类
 
         //手动操作设置
         private DispatcherTimer controlTimer; //操作线程
@@ -269,9 +269,10 @@ namespace ExoGaitMonitorVer2
         {
             angleSetButton.IsEnabled = false;
             emergencyStopButton.IsEnabled = true;
-            zeroPointSetButton.IsEnabled = true;
+            getZeroPointButton.IsEnabled = false;
             angleSetTextBox.IsReadOnly = true;
             motorNumberTextBox.IsReadOnly = true;
+            zeroPointSetButton.IsEnabled = false;
 
             int motorNumber = Convert.ToInt16(motorNumberTextBox.Text);
             int i = motorNumber - 1;
@@ -339,6 +340,8 @@ namespace ExoGaitMonitorVer2
                     emergencyStopButton.IsEnabled = false;
                     angleSetTextBox.IsReadOnly = false;
                     motorNumberTextBox.IsReadOnly = false;
+                    getZeroPointButton.IsEnabled = true;
+                    zeroPointSetButton.IsEnabled = true;
                     controlTimer.Stop();
                     controlTimer.Tick -= new EventHandler(angleSetTimer_Tick);
                     statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
@@ -387,6 +390,8 @@ namespace ExoGaitMonitorVer2
                     emergencyStopButton.IsEnabled = false;
                     angleSetTextBox.IsReadOnly = false;
                     motorNumberTextBox.IsReadOnly = false;
+                    getZeroPointButton.IsEnabled = true;
+                    zeroPointSetButton.IsEnabled = true;
                     controlTimer.Stop();
                     controlTimer.Tick -= new EventHandler(angleSetTimer_Tick);
                     statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
@@ -426,6 +431,8 @@ namespace ExoGaitMonitorVer2
         {
             angleSetTextBox.IsReadOnly = true;
             motorNumberTextBox.IsReadOnly = true;
+            PVT_Button.IsEnabled = false;
+            getZeroPointButton.IsEnabled = false;
 
             controlTimer = new DispatcherTimer();
             controlTimer.Tick += new EventHandler(getZeroPointTimer_Tick);
@@ -530,6 +537,9 @@ namespace ExoGaitMonitorVer2
                 angleSetButton.IsEnabled = true;
                 angleSetTextBox.IsReadOnly = false;
                 motorNumberTextBox.IsReadOnly = false;
+                PVT_Button.IsEnabled = true;
+                getZeroPointButton.IsEnabled = true;
+
                 controlTimer.Stop();
                 controlTimer.Tick -= new EventHandler(getZeroPointTimer_Tick);
             }
@@ -547,11 +557,12 @@ namespace ExoGaitMonitorVer2
                 statusInfoTextBlock.Text = "PVT模式";
 
                 SAC_Button.IsEnabled = false;
+                angleSetButton.IsEnabled = false;
+                getZeroPointButton.IsEnabled = false;
 
                 if (SAC_flag)//避免和力学模式及SAC模式冲突
                 {                    
                     sensors.writeCommandStop();
-                    watchButton.IsEnabled = true;
                     SAC_flag = false;
                 }
                 bt.Content = "Stop";
@@ -560,6 +571,9 @@ namespace ExoGaitMonitorVer2
 
             else
             {
+                angleSetButton.IsEnabled = true;
+                getZeroPointButton.IsEnabled = true;
+
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
                 statusInfoTextBlock.Text = "PVT控制模式已停止";
                 bt.Content = "PVT Mode";
