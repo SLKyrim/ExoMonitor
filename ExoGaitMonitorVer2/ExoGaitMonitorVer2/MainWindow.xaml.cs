@@ -43,9 +43,6 @@ namespace ExoGaitMonitorVer2
         private int comCount = 0; //用来存储计算机可用串口数目，初始化为0
         private bool scanPorts_flag = false;
 
-        //PVT模式
-        private PVT pvt = new PVT();
-
         //SAC模式
         private SAC sac = new SAC();
         private bool SAC_flag = false;
@@ -101,43 +98,31 @@ namespace ExoGaitMonitorVer2
 
         private void showParaTimer_Tick(object sender, EventArgs e)//输出电机参数到相应文本框的委托
         {
-            //2017-8-11-用ampObj[2].MotorInfo.ctsPerRev测得EC90盘式电机编码器一圈有25600个计数
-            //2017-8-11-验证减速器减速比为160-即电机转160圈，关节转1圈
-            double[] ampObjAngleActual = new double[motors.motor_num];//电机的转角，单位：°
-            double[] ampObjAngleVelActual = new double[motors.motor_num];//电机的角速度，单位：rad/s
-            double[] ampObjAngleAccActual = new double[motors.motor_num];//电机的角加速度，单位：rad/s^2
-
             try
             {
-                for (int i = 0; i < motors.motor_num; i++)
-                {
-                    ampObjAngleActual[i] = (motors.ampObj[i].PositionActual / motors.userUnits[i]) * (360.0 / motors.RATIO);//角度单位从counts转化为°
-                    ampObjAngleVelActual[i] = (motors.ampObj[i].VelocityActual / motors.userUnits[i]) * 2.0 * Math.PI;//角速度单位从counts/s转化为rad/s
-                    ampObjAngleAccActual[i] = (motors.ampObj[i].TrajectoryAcc / motors.userUnits[i]) * 2.0 * Math.PI;//角加速度单位从counts/s^2转化为rad/s^2
-                }
                 //电机1(左膝)的文本框输出
-                Motor1_Pos_TextBox.Text = ampObjAngleActual[0].ToString("F"); //电机实际位置，单位：°
+                Motor1_Pos_TextBox.Text = motors.ampObjAngleActual[0].ToString("F"); //电机实际位置，单位：°
                 Motor1_Cur_TextBox.Text = (motors.ampObj[0].CurrentActual * 0.01).ToString("F"); //电机电流，单位：A
-                Motor1_Vel_TextBox.Text = ampObjAngleVelActual[0].ToString("F"); //电机实际速度，单位：rad/s
-                Motor1_Acc_TextBox.Text = ampObjAngleAccActual[0].ToString("F"); //由轨迹计算而得的加速度，单位：rad/s^2
+                Motor1_Vel_TextBox.Text = motors.ampObjAngleVelActual[0].ToString("F"); //电机实际速度，单位：rad/s
+                Motor1_Acc_TextBox.Text = motors.ampObjAngleAccActual[0].ToString("F"); //由轨迹计算而得的加速度，单位：rad/s^2
 
                 //电机2(左髋)的文本框输出
-                Motor2_Pos_TextBox.Text = ampObjAngleActual[1].ToString("F");
+                Motor2_Pos_TextBox.Text = motors.ampObjAngleActual[1].ToString("F");
                 Motor2_Cur_TextBox.Text = (motors.ampObj[1].CurrentActual * 0.01).ToString("F");
-                Motor2_Vel_TextBox.Text = ampObjAngleVelActual[1].ToString("F");
-                Motor2_Acc_TextBox.Text = ampObjAngleAccActual[1].ToString("F");
+                Motor2_Vel_TextBox.Text = motors.ampObjAngleVelActual[1].ToString("F");
+                Motor2_Acc_TextBox.Text = motors.ampObjAngleAccActual[1].ToString("F");
 
                 //电机3(右髋)的文本框输出
-                Motor3_Pos_TextBox.Text = ampObjAngleActual[2].ToString("F");
+                Motor3_Pos_TextBox.Text = motors.ampObjAngleActual[2].ToString("F");
                 Motor3_Cur_TextBox.Text = (motors.ampObj[2].CurrentActual * 0.01).ToString("F");
-                Motor3_Vel_TextBox.Text = ampObjAngleVelActual[2].ToString("F");
-                Motor3_Acc_TextBox.Text = ampObjAngleAccActual[2].ToString("F");
+                Motor3_Vel_TextBox.Text = motors.ampObjAngleVelActual[2].ToString("F");
+                Motor3_Acc_TextBox.Text = motors.ampObjAngleAccActual[2].ToString("F");
 
                 //电机4(右膝)的文本框输出
-                Motor4_Pos_TextBox.Text = ampObjAngleActual[3].ToString("F");
+                Motor4_Pos_TextBox.Text = motors.ampObjAngleActual[3].ToString("F");
                 Motor4_Cur_TextBox.Text = (motors.ampObj[3].CurrentActual * 0.01).ToString("F");
-                Motor4_Vel_TextBox.Text = ampObjAngleVelActual[3].ToString("F");
-                Motor4_Acc_TextBox.Text = ampObjAngleAccActual[3].ToString("F");
+                Motor4_Vel_TextBox.Text = motors.ampObjAngleVelActual[3].ToString("F");
+                Motor4_Acc_TextBox.Text = motors.ampObjAngleAccActual[3].ToString("F");
 
                 if(SAC_flag)//拉压力传感器的文本框输出
                 {
@@ -294,20 +279,18 @@ namespace ExoGaitMonitorVer2
             int motorNumber = Convert.ToInt16(motorNumberTextBox.Text);
             int i = motorNumber - 1;
 
-            double ampObjAngleActual = (motors.ampObj[i].PositionActual / motors.userUnits[i]) * (360.0 / motors.RATIO);
-
             motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY; // 选择速度模式控制电机
 
             if (angleSet > 0)
             {
-                if (ampObjAngleActual < angleSet)
+                if (motors.ampObjAngleActual[i] < angleSet)
                 {
                     motors.profileSettingsObj.ProfileVel = FAST_VEL;
                     motors.profileSettingsObj.ProfileAccel = FAST_VEL;
                     motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
                     motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
 
-                    if (ampObjAngleActual > (angleSet - 5))
+                    if (motors.ampObjAngleActual[i] > (angleSet - 5))
                     {
                         motors.profileSettingsObj.ProfileVel = SLOW_VEL;
                         motors.profileSettingsObj.ProfileAccel = SLOW_VEL;
@@ -351,14 +334,14 @@ namespace ExoGaitMonitorVer2
 
             if (angleSet < 0)
             {
-                if (ampObjAngleActual > angleSet)
+                if (motors.ampObjAngleActual[i] > angleSet)
                 {
                     motors.profileSettingsObj.ProfileVel = FAST_VEL;
                     motors.profileSettingsObj.ProfileAccel = FAST_VEL;
                     motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
                     motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
 
-                    if (ampObjAngleActual < (angleSet + 5))
+                    if (motors.ampObjAngleActual[i] < (angleSet + 5))
                     {
                         motors.profileSettingsObj.ProfileVel = SLOW_VEL;
                         motors.profileSettingsObj.ProfileAccel = SLOW_VEL;
@@ -434,7 +417,6 @@ namespace ExoGaitMonitorVer2
             PVT_Button.IsEnabled = false;
             getZeroPointButton.IsEnabled = false;
 
-            motors.motors_Init();
             controlTimer = new DispatcherTimer();
             controlTimer.Tick += new EventHandler(getZeroPointTimer_Tick);
             controlTimer.Interval = TimeSpan.FromMilliseconds(20);// 该时钟频率决定电机运行速度
@@ -450,21 +432,15 @@ namespace ExoGaitMonitorVer2
             emergencyStopButton.IsEnabled = false;
             zeroPointSetButton.IsEnabled = false;
 
-            double[] ampObjAngleActual = new double[motors.motor_num];
-
-            for (int i = 0; i < motors.motor_num; i++)
-            {
-                ampObjAngleActual[i] = (motors.ampObj[i].PositionActual / motors.userUnits[i]) * (360.0 / motors.RATIO);
-            }
             motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY; // 选择速度模式控制电机
 
             for(int i = 0; i < motors.motor_num; i++)//电机回归原点
             {
-                if (Math.Abs(ampObjAngleActual[i]) > ORIGIN_POINT)
+                if (Math.Abs(motors.ampObjAngleActual[i]) > ORIGIN_POINT)
                 {
-                    if (ampObjAngleActual[i] > 0)
+                    if (motors.ampObjAngleActual[i] > 0)
                     {
-                        if (ampObjAngleActual[i] > TURN_POINT)
+                        if (motors.ampObjAngleActual[i] > TURN_POINT)
                         {
                             motors.profileSettingsObj.ProfileVel = FAST_VEL;
                             motors.profileSettingsObj.ProfileAccel = FAST_VEL;
@@ -491,7 +467,7 @@ namespace ExoGaitMonitorVer2
                     }
                     else
                     {
-                        if (ampObjAngleActual[i] < -TURN_POINT)
+                        if (motors.ampObjAngleActual[i] < -TURN_POINT)
                         {
                             motors.profileSettingsObj.ProfileVel = FAST_VEL;
                             motors.profileSettingsObj.ProfileAccel = FAST_VEL;
@@ -523,7 +499,7 @@ namespace ExoGaitMonitorVer2
                 }
             }
 
-            if (Math.Abs(ampObjAngleActual[0]) < ORIGIN_POINT && Math.Abs(ampObjAngleActual[1]) < ORIGIN_POINT && Math.Abs(ampObjAngleActual[2]) < ORIGIN_POINT && Math.Abs(ampObjAngleActual[3]) < ORIGIN_POINT)
+            if (Math.Abs(motors.ampObjAngleActual[0]) < ORIGIN_POINT && Math.Abs(motors.ampObjAngleActual[1]) < ORIGIN_POINT && Math.Abs(motors.ampObjAngleActual[2]) < ORIGIN_POINT && Math.Abs(motors.ampObjAngleActual[3]) < ORIGIN_POINT)
             {
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
                 statusInfoTextBlock.Text = "回归原点完毕";
@@ -566,8 +542,109 @@ namespace ExoGaitMonitorVer2
                     sensors.writeCommandStop();
                     SAC_flag = false;
                 }
+
+                #region 计算轨迹位置，速度和时间间隔序列
+                //原始数据
+                string[] ral = File.ReadAllLines(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\GaitData.txt", Encoding.Default);
+                int lineCounter = ral.Length; //获取步态数据行数
+                string[] col = (ral[0] ?? string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                int colCounter = col.Length; //获取步态数据列数
+                double[,] pos0 = new double[lineCounter, colCounter]; //原始位置数据
+                for (int i = 0; i < lineCounter; i++)
+                {
+                    string[] str = (ral[i] ?? string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    for (int j = 0; j < colCounter; j++)
+                    {
+                        pos0[i, j] = double.Parse(str[j]) / (360.0 / motors.RATIO) * motors.userUnits[j] * -1;
+                    }
+                }
+
+                //一次扩充
+                int richLine = lineCounter * 2 - 1;
+                double[,] pos1 = new double[richLine, colCounter]; //一次扩充位置数据
+                for (int i = 0; i < richLine; i++)
+                {
+                    for (int j = 0; j < colCounter; j++)
+                    {
+                        if (i % 2 == 0)//偶数位存放原始数据
+                        {
+                            pos1[i, j] = pos0[i / 2, j];
+                        }
+                        else//奇数位存放扩充数据
+                        {
+                            pos1[i, j] = (pos0[i / 2 + 1, j] + pos0[i / 2, j]) / 2.0;
+                        }
+                    }
+                }
+
+                //二次扩充
+                int rich2Line = richLine * 2 - 1;
+                double[,] pos2 = new double[rich2Line, colCounter]; //二次扩充位置数据
+                for (int i = 0; i < rich2Line; i++)
+                {
+                    for (int j = 0; j < colCounter; j++)
+                    {
+                        if (i % 2 == 0)//偶数位存放原始数据
+                        {
+                            pos2[i, j] = pos1[i / 2, j];
+                        }
+                        else//奇数位存放扩充数据
+                        {
+                            pos2[i, j] = (pos1[i / 2 + 1, j] + pos1[i / 2, j]) / 2.0;
+                        }
+                    }
+                }
+
+                //三次扩充
+                int rich3Line = rich2Line * 2 - 1;
+                double[,] pos3 = new double[rich3Line, colCounter]; //三次扩充位置数据
+                int[] times = new int[rich3Line]; //时间间隔
+                double[,] vel = new double[rich3Line, colCounter]; //速度
+                for (int i = 0; i < rich3Line; i++)
+                {
+                    times[i] = 5; //【设置】时间间隔
+                    for (int j = 0; j < colCounter; j++)
+                    {
+                        if (i % 2 == 0)//偶数位存放原始数据
+                        {
+                            pos3[i, j] = pos2[i / 2, j];
+                        }
+                        else//奇数位存放扩充数据
+                        {
+                            pos3[i, j] = (pos2[i / 2 + 1, j] + pos2[i / 2, j]) / 2.0;
+                        }
+                    }
+                }
+                for (int i = 0; i < rich3Line - 1; i++)
+                {
+                    for (int j = 0; j < colCounter; j++)
+                    {
+                        vel[i, j] = (pos3[i + 1, j] - pos3[i, j]) * 1000.0 / times[i];
+                    }
+                }
+                vel[rich3Line - 1, 0] = 0;
+                vel[rich3Line - 1, 1] = 0;
+                vel[rich3Line - 1, 2] = 0;
+                vel[rich3Line - 1, 3] = 0;
+                #endregion
+
+                for (int i = 0; i < motors.motor_num; i++)//开始步态前各电机回到轨迹初始位置
+                {
+                    motors.profileSettingsObj = motors.ampObj[i].ProfileSettings;
+                    motors.profileSettingsObj.ProfileAccel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxAcc) / 10;
+                    motors.profileSettingsObj.ProfileDecel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxDec) / 10;
+                    motors.profileSettingsObj.ProfileVel = (motors.ampObj[i].VelocityLoopSettings.VelLoopMaxVel) / 10;
+                    motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP; //PVT模式下的控制模式类型
+                    motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
+                    motors.ampObj[i].MoveAbs(pos0[0, i]); //PVT模式开始后先移动到各关节初始位置
+                    motors.ampObj[i].WaitMoveDone(10000); //等待各关节回到初始位置的最大时间
+                }
+
+                motors.Linkage.TrajectoryInitialize(pos3, vel, times, 100); //开始步态
+
+                File.WriteAllText(@"C:\Users\Administrator\Desktop\龙兴国\ExoGaitMonitor\ExoGaitMonitor\ExoGaitMonitor\bin\Debug\PVT_ExoGaitData.txt", string.Empty);
+
                 bt.Content = "Stop";
-                pvt.StartPVT();
             }
 
             else
@@ -575,10 +652,11 @@ namespace ExoGaitMonitorVer2
                 angleSetButton.IsEnabled = true;
                 getZeroPointButton.IsEnabled = true;
 
+                motors.Linkage.HaltMove();
+
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
                 statusInfoTextBlock.Text = "PVT控制模式已停止";
                 bt.Content = "PVT Mode";
-                pvt.StopPVT();
             }
         }
 
