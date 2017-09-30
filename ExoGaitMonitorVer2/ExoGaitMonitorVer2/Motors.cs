@@ -75,15 +75,5 @@ namespace ExoGaitMonitorVer2
                 ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI;//角加速度单位从counts/s^2转化为rad/s^2
             }
         }
-
-        #region PVT
-
-        public void StartPVT()//执行PVT
-        {
-
-        }
-
-        #endregion
-
     }
 }

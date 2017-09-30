@@ -66,6 +66,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Motors.cs" />
+    <Compile Include="PVT.cs" />
     <Compile Include="SAC.cs" />
     <Compile Include="Sensors.cs" />
     <Page Include="MainWindow.xaml">
@@ -112,6 +113,7 @@
   <ItemGroup>
     <Content Include="DLL\CMO.dll" />
     <Content Include="DLL\DynamicDataDisplay.dll" />
+    <Resource Include="InputData\GaitData.txt" />
     <Resource Include="SingleLong.ico" />
     <Resource Include="Images\SingleLong.ico" />
     <Resource Include="Images\SingleLong.png" />
