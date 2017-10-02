@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Text;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.IO;
 using System.Windows.Threading;
 using CMLCOMLib;
-using System.Windows.Input;
-using Microsoft.Research.DynamicDataDisplay;
-using Microsoft.Research.DynamicDataDisplay.DataSources;
 using System.Windows.Controls.Primitives;
 
 namespace ExoGaitMonitorVer2
@@ -211,7 +205,7 @@ namespace ExoGaitMonitorVer2
             timer.Start();
         }
 
-        public void getZeroPointTimer_Tick(object sender, EventArgs e)//回归原点的委托
+        private void getZeroPointTimer_Tick(object sender, EventArgs e)//回归原点的委托
         {
             statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
             statusInfoTextBlock.Text = "正在回归原点";

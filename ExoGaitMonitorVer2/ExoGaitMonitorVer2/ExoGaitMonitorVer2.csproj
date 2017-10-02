@@ -45,6 +45,11 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>DLL\DynamicDataDisplay.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+      <HintPath>DLL\Microsoft.Office.Interop.Excel.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -71,6 +76,7 @@
     <Compile Include="PVT.cs" />
     <Compile Include="SAC.cs" />
     <Compile Include="Sensors.cs" />
+    <Compile Include="WriteExcel.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

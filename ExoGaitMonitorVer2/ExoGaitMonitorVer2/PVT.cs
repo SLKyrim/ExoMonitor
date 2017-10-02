@@ -1,14 +1,8 @@
 ﻿using System;
 using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
 using System.IO;
-using System.Windows.Threading;
 using CMLCOMLib;
-using System.Windows.Input;
-using Microsoft.Research.DynamicDataDisplay;
-using Microsoft.Research.DynamicDataDisplay.DataSources;
+
 
 namespace ExoGaitMonitorVer2
 {

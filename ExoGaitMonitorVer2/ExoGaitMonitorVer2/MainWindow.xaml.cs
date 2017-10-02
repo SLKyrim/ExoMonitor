@@ -202,6 +202,9 @@ namespace ExoGaitMonitorVer2
         //SAC模式
         private bool SAC_flag = false;
 
+        //写数据
+        private WriteExcel writeExcel = new WriteExcel();
+
         #endregion
 
         #region 界面初始化
@@ -508,6 +511,26 @@ namespace ExoGaitMonitorVer2
         private void SAC_Button_Click(object sender, RoutedEventArgs e)//进入SAC模式
         {
 
+        }
+
+        private void WriteExcel_Button_Click(object sender, RoutedEventArgs e)
+        {
+            Button bt = sender as Button;
+            if (bt.Content.ToString() == "写入数据")
+            {
+                if (!writeExcel.writeStart(statusBar, statusInfoTextBlock))
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                    statusInfoTextBlock.Text = "写入数据失败！";
+                    return;
+                }
+                bt.Content = "停止写入";
+            }
+            else
+            {
+                writeExcel.writeStop();
+                bt.Content = "写入数据";
+            }
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.Research.DynamicDataDisplay.Common;
-using System.ComponentModel;
 using System.Windows.Threading;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;

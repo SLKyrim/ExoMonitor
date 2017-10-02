@@ -310,7 +310,9 @@
                                     <DockPanel>
                                         <StackPanel>
                                             <Button x:Name="Plot_Button" Content="停止绘图" Margin="3" Padding="3" Click="Plot_Button_Click"/>
+                                            <Button x:Name="WriteExcel_Button" Content="写入数据" Margin="3" Padding="3" Click="WriteExcel_Button_Click"/>
                                         </StackPanel>
+
                                     </DockPanel>
                                 </GroupBox>
 
