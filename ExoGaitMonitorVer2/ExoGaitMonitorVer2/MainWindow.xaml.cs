@@ -518,7 +518,7 @@ namespace ExoGaitMonitorVer2
             Button bt = sender as Button;
             if (bt.Content.ToString() == "写入数据")
             {
-                if (!writeExcel.writeStart(statusBar, statusInfoTextBlock))
+                if (!writeExcel.writeStart(statusBar, statusInfoTextBlock, motors))
                 {
                     statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
                     statusInfoTextBlock.Text = "写入数据失败！";

@@ -28,10 +28,11 @@ namespace ExoGaitMonitorVer2
         #endregion
 
 
-        public bool writeStart(StatusBar statusBarIn, TextBlock statusInfoTextBlockIn)
+        public bool writeStart(StatusBar statusBarIn, TextBlock statusInfoTextBlockIn, Motors motorsIn)
         {
             statusBar = statusBarIn;
             statusInfoTextBlock = statusInfoTextBlockIn;
+            motors = motorsIn;
 
             ExcelApp = new Excel.Application();
             if (ExcelApp == null)
@@ -91,7 +92,7 @@ namespace ExoGaitMonitorVer2
             {
                 if (ExcelWorkbook != null)
                 {
-                    ExcelWorkbook.SaveAs(@"..\..\OutputData\GaitData.xlsx");
+                    ExcelWorkbook.SaveAs(@"C:\Users\Administrator\Desktop\GaitData.xlsx"); //默认保存路径为C:\Users\Administrator\Documents
 
                     timer.Stop();
                     timer.Tick -= new EventHandler(writeExcel_Tick);
