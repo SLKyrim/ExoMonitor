@@ -201,6 +201,8 @@ namespace ExoGaitMonitorVer2
 
         //SAC模式
         private bool SAC_flag = false;
+        private SAC sac = new SAC();
+
 
         //写数据
         private WriteExcel writeExcel = new WriteExcel();
@@ -219,7 +221,7 @@ namespace ExoGaitMonitorVer2
             try
             {
                 motors.motors_Init();
-                cp.plotStart(motors, statusBar, statusInfoTextBlock);
+                //cp.plotStart(motors, statusBar, statusInfoTextBlock);
             }
             catch
             {
@@ -488,11 +490,11 @@ namespace ExoGaitMonitorVer2
                     SAC_flag = false;
                 }
 
-                pvt.StartPVT(motors);
-
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
                 statusInfoTextBlock.Text = "PVT模式";
                 bt.Content = "Stop";
+
+                pvt.StartPVT(motors);
             }
 
             else
@@ -510,10 +512,36 @@ namespace ExoGaitMonitorVer2
 
         private void SAC_Button_Click(object sender, RoutedEventArgs e)//进入SAC模式
         {
+            Button bt = sender as Button;
 
+            if (bt.Content.ToString() == "SAC Mode")
+            {
+                PVT_Button.IsEnabled = false;
+                angleSetButton.IsEnabled = false;
+                getZeroPointButton.IsEnabled = false;
+
+                sac.StartSAC(motors);
+
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                statusInfoTextBlock.Text = "SAC模式";
+                bt.Content = "Stop";
+            }
+
+            else
+            {
+                PVT_Button.IsEnabled = true;
+                angleSetButton.IsEnabled = true;
+                getZeroPointButton.IsEnabled = true;
+
+                motors.Linkage.HaltMove();
+
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+                statusInfoTextBlock.Text = "SAC控制模式已停止";
+                bt.Content = "SAC Mode";
+            }
         }
 
-        private void WriteExcel_Button_Click(object sender, RoutedEventArgs e)
+        private void WriteExcel_Button_Click(object sender, RoutedEventArgs e)//写数据进Excel
         {
             Button bt = sender as Button;
             if (bt.Content.ToString() == "写入数据")
