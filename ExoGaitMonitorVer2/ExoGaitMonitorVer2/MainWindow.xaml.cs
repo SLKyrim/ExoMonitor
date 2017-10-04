@@ -520,7 +520,7 @@ namespace ExoGaitMonitorVer2
                 angleSetButton.IsEnabled = false;
                 getZeroPointButton.IsEnabled = false;
 
-                sac.StartSAC(motors);
+                sac.StartSAC(motors, sensors, statusBar, statusInfoTextBlock);
 
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
                 statusInfoTextBlock.Text = "SAC模式";
@@ -533,7 +533,7 @@ namespace ExoGaitMonitorVer2
                 angleSetButton.IsEnabled = true;
                 getZeroPointButton.IsEnabled = true;
 
-                motors.Linkage.HaltMove();
+                sac.StopSAC(motors);
 
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
                 statusInfoTextBlock.Text = "SAC控制模式已停止";
