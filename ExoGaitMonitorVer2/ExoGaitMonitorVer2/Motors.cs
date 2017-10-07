@@ -30,9 +30,9 @@ namespace ExoGaitMonitorVer2
 
         public double[] userUnits = new double[MOTOR_NUM]; // 用户定义单位：编码器每圈计数
 
-        public double[] ampObjAngleActual = new double[MOTOR_NUM];//电机的转角，单位：°
-        public double[] ampObjAngleVelActual = new double[MOTOR_NUM];//电机的角速度，单位：rad/s
-        public double[] ampObjAngleAccActual = new double[MOTOR_NUM];//电机的角加速度，单位：rad/s^2
+        public double[] ampObjAngleActual = new double[MOTOR_NUM];//减速器的转角，单位：°
+        public double[] ampObjAngleVelActual = new double[MOTOR_NUM];//减速器的角速度，单位：rad/s
+        public double[] ampObjAngleAccActual = new double[MOTOR_NUM];//减速器的角加速度，单位：rad/s^2
 
         private DispatcherTimer motorsTimer;
         #endregion
@@ -71,8 +71,8 @@ namespace ExoGaitMonitorVer2
             for (int i = 0; i < MOTOR_NUM; i++)
             {
                 ampObjAngleActual[i] = (ampObj[i].PositionActual / userUnits[i]) * (360.0 / RATIO);//角度单位从counts转化为°
-                ampObjAngleVelActual[i] = (ampObj[i].VelocityActual / userUnits[i]) * 2.0 * Math.PI;//角速度单位从counts/s转化为rad/s
-                ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc / userUnits[i]) * 2.0 * Math.PI;//角加速度单位从counts/s^2转化为rad/s^2
+                ampObjAngleVelActual[i] = (ampObj[i].VelocityActual * 0.1 / userUnits[i]) * 2.0 * Math.PI / RATIO;//角速度单位从counts/s转化为rad/s
+                ampObjAngleAccActual[i] = (ampObj[i].TrajectoryAcc * 10 / userUnits[i]) * 2.0 * Math.PI / RATIO;//角加速度单位从counts/s^2转化为rad/s^2
             }
         }
     }

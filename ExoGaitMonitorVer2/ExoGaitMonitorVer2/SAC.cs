@@ -69,13 +69,13 @@ namespace ExoGaitMonitorVer2
         private void SACTimer_Tick(object sender, EventArgs e)
         {
             double[] radian = new double[motors.motor_num]; //角度矩阵，单位：rad
-            double[] ang_vel = new double[motors.motor_num]; //角速度矩阵，单位：rad/s
-            double[] ang_acc = new double[motors.motor_num]; //角加速度矩阵，单位：rad/s^2
+            double[] ang_vel = new double[motors.motor_num]; //输出电机角速度矩阵，单位：rad/s
+            double[] ang_acc = new double[motors.motor_num]; //输出电机角加速度矩阵，单位：rad/s^2
             double[] inertia = new double[motors.motor_num]; //惯性矩阵
             double[] coriolis = new double[motors.motor_num]; //科里奥利矩阵
             double[] gravity = new double[motors.motor_num]; //重力矩阵
             double[] torque = new double[motors.motor_num]; //减速器扭矩
-            double[] tempVel = new double[motors.motor_num]; //記錄上次的減速器角速度，单位：rad/s
+            //double[] tempVel = new double[motors.motor_num]; //記錄上次的減速器角速度，单位：rad/s
 
             motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_VELOCITY;
 
@@ -83,7 +83,7 @@ namespace ExoGaitMonitorVer2
             {
                 //电机的速度默认单位为0.1counts/s；加速度默认单位为10counts/s
                 radian[i] = Math.Abs(Math.PI / 180.0 * motors.ampObjAngleActual[i]);//减速器角度转换为弧度，取绝对值
-                tempVel[i] = motors.ampObjAngleVelActual[i];
+                //tempVel[i] = motors.ampObjAngleVelActual[i];
             }
 
             //左膝
@@ -139,8 +139,8 @@ namespace ExoGaitMonitorVer2
                     torque[0] *= -1.0;
                 }
 
-                ang_vel[0] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[0].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[0] * SHANK_MOMENT + torque[0]) / motors.RATIO)) * (motors.userUnits[0] / 60.0)) * 10 * SHANK_VEL_FAC; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
-                ang_acc[0] = Math.Abs(((torque[0] + sensors.presN[0] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) * (2.0 * Math.PI) * motors.userUnits[0] * 0.1 * SHANK_ACC_FAC; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
+                ang_vel[0] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[0].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / (sensors.presN[0] * SHANK_MOMENT + torque[0])) * (motors.userUnits[0] / 60.0)) * 10; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
+                ang_acc[0] = Math.Abs(((torque[0] + sensors.presN[0] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) / (2.0 * Math.PI) * motors.userUnits[0] * 0.1; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
 
                 motors.profileSettingsObj.ProfileVel = ang_vel[0];
                 motors.profileSettingsObj.ProfileAccel = ang_acc[0];
@@ -165,8 +165,8 @@ namespace ExoGaitMonitorVer2
                     torque[0] *= -1.0;
                 }
 
-                ang_vel[0] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[0].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[0] * SHANK_MOMENT + torque[0]) / motors.RATIO)) * (motors.userUnits[0] / 60.0)) * 10 * SHANK_VEL_FAC; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
-                ang_acc[0] = Math.Abs(((torque[0] + sensors.presN[0] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) * (2.0 * Math.PI) * motors.userUnits[0] * 0.1 * SHANK_ACC_FAC; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
+                ang_vel[0] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[0].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[0] * SHANK_MOMENT + torque[0]) / motors.RATIO)) * (motors.userUnits[0] / 60.0)) * 10; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
+                ang_acc[0] = Math.Abs(((torque[0] + sensors.presN[0] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) / (2.0 * Math.PI) * motors.userUnits[0] * 0.1; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
 
                 motors.profileSettingsObj.ProfileVel = ang_vel[0];
                 motors.profileSettingsObj.ProfileAccel = ang_acc[0];
@@ -200,8 +200,8 @@ namespace ExoGaitMonitorVer2
                     torque[1] *= -1.0;
                 }
 
-                ang_vel[1] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[1].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[1] * SHANK_MOMENT + torque[1]) / motors.RATIO)) * (motors.userUnits[1] / 60.0)) * 10 * SHANK_VEL_FAC; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
-                ang_acc[1] = Math.Abs(((torque[1] + sensors.presN[1] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) * (2.0 * Math.PI) * motors.userUnits[1] * 0.1 * SHANK_ACC_FAC; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
+                ang_vel[1] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[1].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[1] * SHANK_MOMENT + torque[1]) / motors.RATIO)) * (motors.userUnits[1] / 60.0)) * 10; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
+                ang_acc[1] = Math.Abs(((torque[1] + sensors.presN[1] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) / (2.0 * Math.PI) * motors.userUnits[1] * 0.1; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
 
                 motors.profileSettingsObj.ProfileVel = ang_vel[1];
                 motors.profileSettingsObj.ProfileAccel = ang_acc[1];
@@ -228,8 +228,8 @@ namespace ExoGaitMonitorVer2
                     torque[1] *= -1.0;
                 }
 
-                ang_vel[1] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[1].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[1] * SHANK_MOMENT + torque[1]) / motors.RATIO)) * (motors.userUnits[1] / 60.0)) * 10 * SHANK_VEL_FAC; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
-                ang_acc[1] = Math.Abs(((torque[1] + sensors.presN[1] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) * (2.0 * Math.PI) * motors.userUnits[1] * 0.1 * SHANK_ACC_FAC; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
+                ang_vel[1] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[1].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[1] * SHANK_MOMENT + torque[1]) / motors.RATIO)) * (motors.userUnits[1] / 60.0)) * 10; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
+                ang_acc[1] = Math.Abs(((torque[1] + sensors.presN[1] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) / (2.0 * Math.PI) * motors.userUnits[1] * 0.1; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
 
                 motors.profileSettingsObj.ProfileVel = ang_vel[1];
                 motors.profileSettingsObj.ProfileAccel = ang_acc[1];
@@ -262,8 +262,8 @@ namespace ExoGaitMonitorVer2
                     torque[2] *= -1.0;
                 }
 
-                ang_vel[2] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[2].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[2] * SHANK_MOMENT + torque[2]) / motors.RATIO)) * (motors.userUnits[2] / 60.0)) * 10 * SHANK_VEL_FAC; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
-                ang_acc[2] = Math.Abs(((torque[2] + sensors.presN[2] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) * (2.0 * Math.PI) * motors.userUnits[2] * 0.1 * SHANK_ACC_FAC; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
+                ang_vel[2] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[2].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[2] * SHANK_MOMENT + torque[2]) / motors.RATIO)) * (motors.userUnits[2] / 60.0)) * 10; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
+                ang_acc[2] = Math.Abs(((torque[2] + sensors.presN[2] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) / (2.0 * Math.PI) * motors.userUnits[2] * 0.1; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
 
                 motors.profileSettingsObj.ProfileVel = ang_vel[2];
                 motors.profileSettingsObj.ProfileAccel = ang_acc[2];
@@ -289,8 +289,8 @@ namespace ExoGaitMonitorVer2
                     torque[2] *= -1.0;
                 }
 
-                ang_vel[2] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[2].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[2] * SHANK_MOMENT + torque[2]) / motors.RATIO)) * (motors.userUnits[2] / 60.0)) * 10 * SHANK_VEL_FAC; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
-                ang_acc[2] = Math.Abs(((torque[2] + sensors.presN[2] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) * (2.0 * Math.PI) * motors.userUnits[2] * 0.1 * SHANK_ACC_FAC; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
+                ang_vel[2] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[2].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[2] * SHANK_MOMENT + torque[2]) / motors.RATIO)) * (motors.userUnits[2] / 60.0)) * 10; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
+                ang_acc[2] = Math.Abs(((torque[2] + sensors.presN[2] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) / (2.0 * Math.PI) * motors.userUnits[2] * 0.1; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
 
                 motors.profileSettingsObj.ProfileVel = ang_vel[2];
                 motors.profileSettingsObj.ProfileAccel = ang_acc[2];
@@ -322,8 +322,8 @@ namespace ExoGaitMonitorVer2
                     torque[3] *= -1.0;
                 }
 
-                ang_vel[3] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[3].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[3] * SHANK_MOMENT + torque[3]) / motors.RATIO)) * (motors.userUnits[3] / 60.0)) * 10 * SHANK_VEL_FAC; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
-                ang_acc[3] = Math.Abs(((torque[3] + sensors.presN[3] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) * (2.0 * Math.PI) * motors.userUnits[3] * 0.1 * SHANK_ACC_FAC; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
+                ang_vel[3] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[3].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[3] * SHANK_MOMENT + torque[3]) / motors.RATIO)) * (motors.userUnits[3] / 60.0)) * 10; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
+                ang_acc[3] = Math.Abs(((torque[3] + sensors.presN[3] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) / (2.0 * Math.PI) * motors.userUnits[3] * 0.1; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
 
                 motors.profileSettingsObj.ProfileVel = ang_vel[3];
                 motors.profileSettingsObj.ProfileAccel = ang_acc[3];
@@ -349,8 +349,8 @@ namespace ExoGaitMonitorVer2
                     torque[3] *= -1.0;
                 }
 
-                ang_vel[3] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[3].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[3] * SHANK_MOMENT + torque[3]) / motors.RATIO)) * (motors.userUnits[3] / 60.0)) * 10 * SHANK_VEL_FAC; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
-                ang_acc[3] = Math.Abs(((torque[3] + sensors.presN[3] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) * (2.0 * Math.PI) * motors.userUnits[3] * 0.1 * SHANK_ACC_FAC; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
+                ang_vel[3] = Math.Abs(((9550.0 * (Math.Abs(motors.ampObj[3].CurrentActual * 0.01) * BATVOL / 1000.0) * ETA) / ((sensors.presN[3] * SHANK_MOMENT + torque[3]) / motors.RATIO)) * (motors.userUnits[3] / 60.0)) * 10; //电机转速，单位：0.1counts/s；SHANK_VEL_FAC为定义可执行调整系数
+                ang_acc[3] = Math.Abs(((torque[3] + sensors.presN[3] * SHANK_MOMENT) / motors.RATIO) / MOTOR_INERTIA) / (2.0 * Math.PI) * motors.userUnits[3] * 0.1; //电机角加速度，单位：10counts/s^2；SHANK_ACC_FAC为定义可执行调整系数
 
                 motors.profileSettingsObj.ProfileVel = ang_vel[3];
                 motors.profileSettingsObj.ProfileAccel = ang_acc[3];
