@@ -203,10 +203,11 @@ namespace ExoGaitMonitorVer2
         private bool SAC_flag = false;
         private SAC sac = new SAC();
 
-
         //写数据
         private WriteExcel writeExcel = new WriteExcel();
 
+        //力学模式
+        private Force force = new Force();
         #endregion
 
         #region 界面初始化
@@ -405,6 +406,7 @@ namespace ExoGaitMonitorVer2
             sensors.pressInit();
             SAC_Button.IsEnabled = true;
             initButton.IsEnabled = false;
+            Force_Button.IsEnabled = true;
         }
 
         #endregion
@@ -558,6 +560,37 @@ namespace ExoGaitMonitorVer2
             {
                 writeExcel.writeStop();
                 bt.Content = "写入数据";
+            }
+        }
+
+        private void Force_Button_Click(object sender, RoutedEventArgs e)
+        {
+            Button bt = sender as Button;
+
+            if (bt.Content.ToString() == "Force Mode")
+            {
+                PVT_Button.IsEnabled = false;
+                angleSetButton.IsEnabled = false;
+                getZeroPointButton.IsEnabled = false;
+
+                force.StartForce(motors, sensors, statusBar, statusInfoTextBlock);
+
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                statusInfoTextBlock.Text = "力学模式";
+                bt.Content = "Stop";
+            }
+
+            else
+            {
+                PVT_Button.IsEnabled = true;
+                angleSetButton.IsEnabled = true;
+                getZeroPointButton.IsEnabled = true;
+
+                force.StopForce(motors);
+
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+                statusInfoTextBlock.Text = "力学模式已停止";
+                bt.Content = "Force Mode";
             }
         }
     }

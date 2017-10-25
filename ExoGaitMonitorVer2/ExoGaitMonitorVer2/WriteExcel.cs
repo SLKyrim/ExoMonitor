@@ -27,7 +27,6 @@ namespace ExoGaitMonitorVer2
 
         #endregion
 
-
         public bool writeStart(StatusBar statusBarIn, TextBlock statusInfoTextBlockIn, Motors motorsIn)
         {
             statusBar = statusBarIn;

@@ -301,7 +301,8 @@
                                     <DockPanel>
                                         <StackPanel>
                                             <Button x:Name="PVT_Button" Content="PVT Mode" Margin="3" Padding="3" Click="PVT_Button_Click"/>
-                                            <Button x:Name="SAC_Button" IsEnabled="False" Content="SAC Mode" Margin="3" Padding="3" Click="SAC_Button_Click"/>                                  
+                                            <Button x:Name="SAC_Button" IsEnabled="False" Content="SAC Mode" Margin="3" Padding="3" Click="SAC_Button_Click"/>
+                                            <Button x:Name="Force_Button" IsEnabled="False" Content="Force Mode" Margin="3" Padding="3" Click="Force_Button_Click"/>
                                         </StackPanel>
                                     </DockPanel>
                                 </GroupBox>

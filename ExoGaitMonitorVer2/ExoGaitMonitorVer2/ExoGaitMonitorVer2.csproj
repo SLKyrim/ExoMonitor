@@ -71,6 +71,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="ChartPlotter.cs" />
+    <Compile Include="Force.cs" />
     <Compile Include="Manumotive.cs" />
     <Compile Include="Motors.cs" />
     <Compile Include="PVT.cs" />

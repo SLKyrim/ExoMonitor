@@ -61,7 +61,6 @@ namespace ExoGaitMonitorVer2
             {
                 motors.ampObj[i].HaltMove();
             }
-
             timer.Stop();
             timer.Tick -= new EventHandler(SACTimer_Tick);
         }
