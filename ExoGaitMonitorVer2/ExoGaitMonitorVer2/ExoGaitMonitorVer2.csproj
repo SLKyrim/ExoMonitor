@@ -45,10 +45,23 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>DLL\DynamicDataDisplay.dll</HintPath>
     </Reference>
+    <Reference Include="gaitplan">
+      <HintPath>D:\matlab2016\bin\gaitplan\for_redistribution_files_only\gaitplan.dll</HintPath>
+    </Reference>
+    <Reference Include="lvbo">
+      <HintPath>D:\matlab2016\bin\lvbo\for_redistribution_files_only\lvbo.dll</HintPath>
+    </Reference>
+    <Reference Include="lvbo2">
+      <HintPath>D:\matlab2016\bin\lvbo2\for_redistribution_files_only\lvbo2.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <EmbedInteropTypes>True</EmbedInteropTypes>
       <HintPath>DLL\Microsoft.Office.Interop.Excel.dll</HintPath>
+    </Reference>
+    <Reference Include="MWArray, Version=2.16.0.0, Culture=neutral, PublicKeyToken=e1d84a0da19db86f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>D:\matlab2016\toolbox\dotnetbuilder\bin\win64\v2.0\MWArray.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -70,13 +83,19 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Arduino.cs" />
     <Compile Include="ChartPlotter.cs" />
+    <Compile Include="Flat.cs" />
     <Compile Include="Force.cs" />
+    <Compile Include="gaitup.cs" />
     <Compile Include="Manumotive.cs" />
     <Compile Include="Motors.cs" />
     <Compile Include="PVT.cs" />
     <Compile Include="SAC.cs" />
     <Compile Include="Sensors.cs" />
+    <Compile Include="Server.cs" />
+    <Compile Include="Sitdown.cs" />
+    <Compile Include="Standup.cs" />
     <Compile Include="WriteExcel.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

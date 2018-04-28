@@ -10,7 +10,7 @@ namespace ExoGaitMonitorVer2
     class Manumotive
     {
         #region 声明
-
+         
         //设置角度
         private Motors motors = new Motors();
         private double angleSet;
@@ -234,7 +234,6 @@ namespace ExoGaitMonitorVer2
                             motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
                             motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
                         }
-
                         try
                         {
                             motors.ampObj[i].MoveRel(-1);
@@ -261,7 +260,6 @@ namespace ExoGaitMonitorVer2
                             motors.profileSettingsObj.ProfileDecel = motors.profileSettingsObj.ProfileAccel;
                             motors.ampObj[i].ProfileSettings = motors.profileSettingsObj;
                         }
-
                         try
                         {
                             motors.ampObj[i].MoveRel(1);
@@ -304,7 +302,6 @@ namespace ExoGaitMonitorVer2
                 timer.Tick -= new EventHandler(getZeroPointTimer_Tick);
             }
         }
-
         #endregion
     }
 }
