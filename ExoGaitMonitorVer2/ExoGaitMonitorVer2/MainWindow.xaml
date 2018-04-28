@@ -244,13 +244,13 @@
                         </GroupBox>
                     </Grid>
                 </ScrollViewer>
-                
+
                 <!--控制面板-->
                 <Grid DockPanel.Dock="Right" Visibility="Visible">
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                         <GroupBox Header="控制面板" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
                             <StackPanel>
-                                
+
                                 <GroupBox Header="手动操作设置" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
                                     <DockPanel>
                                         <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
@@ -266,7 +266,7 @@
                                                 <ColumnDefinition Width="10*"/>
                                                 <ColumnDefinition Width="10*"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Text="电机号数(1-4)" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                            <TextBlock Text="电机号数(1-4)" VerticalAlignment="Bottom" Grid.Column="0" Margin="1,0,5,3"/>
                                             <TextBox x:Name="motorNumberTextBox" Grid.Column="1" Padding="1" Width="80">1</TextBox>
                                         </Grid>
                                         <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
@@ -279,8 +279,8 @@
                                         </Grid>
                                         <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="10*"/>
-                                                <ColumnDefinition Width="10*"/>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition Width="81"/>
                                             </Grid.ColumnDefinitions>
                                             <Button x:Name="zeroPointSetButton" Grid.Column="0" IsEnabled="False" Margin="1" Height="20" Click="zeroPointSetButton_Click">设置原点</Button>
                                             <Button x:Name="getZeroPointButton" Grid.Column="1" Margin="1" Height="20" Click="getZeroPointButton_Click">回归原点</Button>
@@ -297,36 +297,65 @@
                                     </DockPanel>
                                 </GroupBox>
 
-                                <GroupBox Header="控制模式选择" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
+                                <GroupBox Header="控制模式选择" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}" Height="176">
                                     <DockPanel>
                                         <StackPanel>
                                             <Button x:Name="PVT_Button" Content="PVT Mode" Margin="3" Padding="3" Click="PVT_Button_Click"/>
                                             <Button x:Name="SAC_Button" IsEnabled="False" Content="SAC Mode" Margin="3" Padding="3" Click="SAC_Button_Click"/>
                                             <Button x:Name="Force_Button" IsEnabled="False" Content="Force Mode" Margin="3" Padding="3" Click="Force_Button_Click"/>
+                                            <Button x:Name="Sit_button" Content="Sit Down" Margin="3" Padding="3" Click="Sit_button_Click"/>
+                                            <Button x:Name="Stand_up_Button" Content="Stand Up" Margin="3" Padding="3" Click="Stand_up_Button_Click"/>
                                         </StackPanel>
                                     </DockPanel>
                                 </GroupBox>
-
-                                <GroupBox Header="数据记录" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
+                                <GroupBox Header="数据记录" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}" Height="78">
                                     <DockPanel>
                                         <StackPanel>
                                             <Button x:Name="Plot_Button" Content="开始绘图" Margin="3" Padding="3" Click="Plot_Button_Click"/>
                                             <Button x:Name="WriteExcel_Button" Content="写入数据" Margin="3" Padding="3" Click="WriteExcel_Button_Click"/>
                                         </StackPanel>
-
+                                    </DockPanel>
+                                </GroupBox>
+                                <GroupBox x:Name="groupBox" Header="平地行走" Margin="1" Height="136"  BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}" >
+                                    <DockPanel>
+                                        <Grid Margin="2,0,0,0" DockPanel.Dock="Top">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="10*"/>
+                                                <ColumnDefinition Width="10*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="步长" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                            <TextBox x:Name="textBox"  Grid.Column="1" Padding="1" Width="100" SpellCheck.IsEnabled="True" />
+                                        </Grid>
+                                        <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="10*"/>
+                                                <ColumnDefinition Width="10*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="步高" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                            <TextBox x:Name="textBox1"  Grid.Column="1" Padding="1" Width="100" SpellCheck.IsEnabled="True"/>
+                                        </Grid>
+                                        <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="10*"/>
+                                                <ColumnDefinition Width="10*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Button x:Name="button" Content="Flat" VerticalAlignment="Center" Grid.Column="0" Margin="10,0,5,0" Height="30" Width="150" Click="yunsuan_Click_1"/>
+                                        </Grid>
+                                        <Button x:Name="flat_button" Content="平地行走"  Padding="3" Height="30" Width="150" VerticalAlignment="Center" Click="flat_button_Click" Margin="10,0,5,0"/>
                                     </DockPanel>
                                 </GroupBox>
 
                             </StackPanel>
+
                         </GroupBox>
                     </ScrollViewer>
                 </Grid>
-                
+
                 <!--绘图面板-->
                 <Grid>
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                        <TabControl Margin="5,8,5,1">
-                            
+                        <TabControl>
+
                             <TabItem Header="整体系统">
                                 <Grid>
                                     <Grid.RowDefinitions>
@@ -357,24 +386,28 @@
 
                             <TabItem Header="电机1左膝">
                                 <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="154*"/>
+                                        <ColumnDefinition Width="597*"/>
+                                    </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="100*"/>
                                         <RowDefinition Height="100*"/>
                                         <RowDefinition Height="100*"/>
                                     </Grid.RowDefinitions>
-                                    <d3:ChartPlotter x:Name="PosPlot_M0" Grid.Row="0">
+                                    <d3:ChartPlotter x:Name="PosPlot_M0" Grid.Row="0" Grid.ColumnSpan="2">
                                         <d3:ChartPlotter.HorizontalAxis>
                                             <d3:HorizontalIntegerAxis x:Name="PosAx_M0"/>
                                         </d3:ChartPlotter.HorizontalAxis>
                                         <d3:Header FontFamily="Georgia" Content="关节角度 [°]"/>
                                     </d3:ChartPlotter>
-                                    <d3:ChartPlotter x:Name="VelPlot_M0" Grid.Row="1">
+                                    <d3:ChartPlotter x:Name="VelPlot_M0" Grid.Row="1" Grid.ColumnSpan="2">
                                         <d3:ChartPlotter.HorizontalAxis>
                                             <d3:HorizontalIntegerAxis x:Name="VelAx_M0"/>
                                         </d3:ChartPlotter.HorizontalAxis>
                                         <d3:Header FontFamily="Georgia" Content="电机转速 [rad/s]"/>
                                     </d3:ChartPlotter>
-                                    <d3:ChartPlotter x:Name="CurPlot_M0" Grid.Row="2">
+                                    <d3:ChartPlotter x:Name="CurPlot_M0" Grid.Row="2" Grid.ColumnSpan="2">
                                         <d3:ChartPlotter.HorizontalAxis>
                                             <d3:HorizontalIntegerAxis x:Name="CurAx_M0"/>
                                         </d3:ChartPlotter.HorizontalAxis>
@@ -467,6 +500,64 @@
                                 </Grid>
                             </TabItem>
 
+                            <TabItem Header="服务端">
+                                
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="200*"></ColumnDefinition>
+                                        <ColumnDefinition Width="200*"></ColumnDefinition>
+                                        <ColumnDefinition Width="200*"></ColumnDefinition>
+                                    </Grid.ColumnDefinitions>
+                                    <GroupBox Header="通信窗口" Grid.Column="0" BorderBrush="{Binding ElementName=GroupBox,Path=BorderBrush}">
+                                        <TextBox Name="ComWinTextBox" HorizontalScrollBarVisibility="Auto" TextChanged="ComWinTextBox_TextChanged"  ScrollViewer.VerticalScrollBarVisibility="Auto" Margin="2,5" BorderThickness="0"></TextBox>
+                                    </GroupBox>
+                                    <GroupBox Header="发送的信息" Grid.Column="1" IsEnabled="{Binding Path=IsServerActive}" BorderThickness="{Binding ElementName=GroupBox,Path=BorderThickness}" BorderBrush="{Binding ElementName=GroupBox,Path=BorderBrush}">
+                                        <TextBox Name="ComWinTextBox1" HorizontalScrollBarVisibility="Auto" TextChanged="ComWinTextBox1_TextChanged"  ScrollViewer.VerticalScrollBarVisibility="Auto" Margin="2,5" BorderThickness="0"></TextBox>
+                                    </GroupBox>
+                                    <GroupBox Header="操作面板" Grid.Column="2" Width="300">
+                                        <DockPanel>
+                                            <GroupBox Header="服务器开关" DockPanel.Dock="Top" Margin="1" BorderThickness="{Binding ElementName=GroupBox,Path=BorderThickness}" BorderBrush="{Binding ElementName=GroupBox,Path=BorderBrush}">
+                                                <DockPanel>
+                                                    <Grid DockPanel.Dock="Top">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="4*"></ColumnDefinition>
+                                                            <ColumnDefinition Width="6*"></ColumnDefinition>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" Text="IP地址" FontSize="12" ></TextBlock>
+                                                        <TextBox Name="IPAdressTextBox" Grid.Column="1" Text="172.20.15.186" Grid.Row="0"></TextBox>
+                                                    </Grid>
+                                                    <Grid DockPanel.Dock="Top">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="4*"></ColumnDefinition>
+                                                            <ColumnDefinition Width="6*"></ColumnDefinition>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" Margin="2" Text="端口号" FontSize="12"></TextBlock>
+                                                        <TextBox Name="PortTextBox" Grid.Column="1" Text="8080" Margin="2" Grid.Row="0"></TextBox>
+                                                    </Grid>
+                                                    <Button Name="switch" Content="侦听" DockPanel.Dock="Bottom" Click="switch_Click"></Button>
+                                                </DockPanel>
+                                            </GroupBox>
+                                            <GroupBox DockPanel.Dock="Top" Header="发送信息窗口"  Margin="1"  Height="200">
+                                                <DockPanel>
+                                                    <Grid DockPanel.Dock="Top">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="4*"></ColumnDefinition>
+                                                            <ColumnDefinition Width="6*"></ColumnDefinition>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" Text="发送目标" Name="send" FontSize="12"></TextBlock>
+                                                        <TextBox Name="stxtSendMsg" Text="" Margin="2" Grid.Column="1" Grid.Row="0"></TextBox>
+                                                    </Grid>
+                                                    <Button Name="btnSend" Content="发送" DockPanel.Dock="Bottom" Margin="3" Padding="3" Height="30" Click="btnSend_Click"></Button> 
+                                                </DockPanel>
+                                            </GroupBox>
+                                                </DockPanel>
+
+                                            </GroupBox>
+                                </Grid>
+                            </TabItem>
 
 
                         </TabControl>

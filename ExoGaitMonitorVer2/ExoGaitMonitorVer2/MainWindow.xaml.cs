@@ -9,6 +9,10 @@ using CMLCOMLib;
 using System.Windows.Input;
 using Microsoft.Research.DynamicDataDisplay;
 using Microsoft.Research.DynamicDataDisplay.DataSources;
+using LattePanda.Firmata;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading;
 
 namespace ExoGaitMonitorVer2
 {
@@ -196,18 +200,37 @@ namespace ExoGaitMonitorVer2
         private int comCount = 0; //用来存储计算机可用串口数目，初始化为0
         private bool scanPorts_flag = false;
 
+        private int value1;
+        private int value2;
+        private int value3;
+        private int value4;
+        private int _pattern;
         //PVT模式
         private PVT pvt = new PVT();
 
+        //Sit Down 模式
+        private Sitdown sit = new Sitdown();
+        //Stand up
+        private Standup stand = new Standup();
         //SAC模式
         private bool SAC_flag = false;
         private SAC sac = new SAC();
-
+        
         //写数据
         private WriteExcel writeExcel = new WriteExcel();
 
         //力学模式
         private Force force = new Force();
+        //平地行走模式
+        private Flat flat = new Flat();
+
+        Arduino arduino = new Arduino();
+
+        public delegate void showData(string msg);//通信窗口输出
+        private TcpClient client;
+        private TcpListener server;
+        private const int bufferSize = 8000;
+
         #endregion
 
         #region 界面初始化
@@ -234,6 +257,16 @@ namespace ExoGaitMonitorVer2
             showParaTimer.Tick += new EventHandler(showParaTimer_Tick);
             showParaTimer.Interval = TimeSpan.FromMilliseconds(100);
             showParaTimer.Start();
+
+            DispatcherTimer keystate = new DispatcherTimer(); //显示拐杖状态
+            keystate.Tick += new EventHandler(Keystate_Tick);
+            keystate.Interval = TimeSpan.FromMilliseconds(50);
+            keystate.Start();
+
+            DispatcherTimer Executekey = new DispatcherTimer();
+            Executekey.Tick += new EventHandler(Execute_Tick);
+            Executekey.Interval = TimeSpan.FromMilliseconds(100);
+            Executekey.Start();
         }
 
         private void Window_Closed(object sender, EventArgs e)
@@ -257,7 +290,94 @@ namespace ExoGaitMonitorVer2
 
             ScanPorts();
         }
+        private void Keystate_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                arduino.pinMode(9, Arduino.OUTPUT);
+                arduino.digitalWrite(9, Arduino.HIGH);
+                arduino.pinMode(9, Arduino.INPUT);
+                value1 = arduino.digitalRead(9);
+                arduino.pinMode(10, Arduino.OUTPUT);
+                arduino.digitalWrite(10, Arduino.HIGH);
+                arduino.pinMode(10, Arduino.INPUT);
+                value2 = arduino.digitalRead(10);
+                arduino.pinMode(11, Arduino.OUTPUT);
+                arduino.digitalWrite(11, Arduino.HIGH);
+                arduino.pinMode(11, Arduino.INPUT);
+                value3 = arduino.digitalRead(11);
+                value4 = arduino.analogRead(0);
 
+                if (value4 < 800)
+                {
+                    value4 = 0;
+                }
+                else
+                {
+                    value4 = 1;
+                }
+                if (value1 == 0 & value2 == 1 & value3 == 0 & value4 == 1)
+                {
+
+                    _pattern = 3;  //"Stand";  DoStandUp_Click(sender, e);
+
+                }
+                else
+                {
+                    if (value1 == 0 & value2 == 0 & value3 == 0 & value4 == 0)
+                    {
+
+                        _pattern = 16; //"Sit";   DoSitDown_Click(sender, e);
+
+                    }
+                    else
+                    {
+                        if (value1 == 0 & value2 == 1 & value3 == 0 & value4 == 0)
+                        {
+
+                            _pattern = 7;
+
+                        }
+                        else
+                        {
+                            if (value1 == 0 & value2 == 0 & value3 == 0 & value4 == 1)
+                            {
+                                _pattern = 11;
+
+                            }
+                            else
+                            {
+                                _pattern = 0;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("拐杖状态有错");
+            }
+        }
+
+        private void Execute_Tick(object sender, EventArgs e)
+        {
+            switch (_pattern)
+            {
+                case 3:
+                   stand.start_Standup(motors);
+                    break;
+                case 15:
+                    sit.StartSitdown(motors);
+                    break;
+                case 7:
+                case 11:
+                    pvt.StartPVT(motors);
+                    break;
+                default:
+                    break;
+
+            }
+        }
         private void showParaTimer_Tick(object sender, EventArgs e)//输出电机参数到相应文本框的委托
         {
             try
@@ -592,6 +712,185 @@ namespace ExoGaitMonitorVer2
                 statusInfoTextBlock.Text = "力学模式已停止";
                 bt.Content = "Force Mode";
             }
+        }
+
+        private void Sit_button_Click(object sender, RoutedEventArgs e)
+        {
+            Button bt = sender as Button;
+            if(bt.Content.ToString()=="Sit Down")
+            {
+                PVT_Button.IsEnabled = false;
+                SAC_Button.IsEnabled = false;
+                angleSetButton.IsEnabled = false;
+                getZeroPointButton.IsEnabled = false;
+                if(SAC_flag)//
+                {
+                    sensors.writeCommandStop();
+                    SAC_flag = false;
+                }
+
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                statusInfoTextBlock.Text = "坐下模式";
+                bt.Content = "Stop";
+
+                sit.StartSitdown(motors);
+            }
+            else
+            {
+                angleSetButton.IsEnabled = true;
+                getZeroPointButton.IsEnabled = true;
+
+                motors.Linkage.HaltMove();
+
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+                statusInfoTextBlock.Text = "坐下模式已停止";
+                bt.Content = "Sit Down";
+            }
+        }
+
+        private void Stand_up_Button_Click(object sender, RoutedEventArgs e)
+        {
+            Button bt = sender as Button;
+            if(bt.Content.ToString()=="Stand Up")
+            {
+                PVT_Button.IsEnabled = false;
+                angleSetButton.IsEnabled = false;
+                SAC_Button.IsEnabled = false;
+                Sit_button.IsEnabled = false;
+
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                statusInfoTextBlock.Text = "起立模式";
+                bt.Content = "Stop";
+
+                stand.start_Standup(motors);
+            }
+            else
+            {
+                PVT_Button.IsEnabled = true;
+                angleSetButton.IsEnabled = true;
+                SAC_Button.IsEnabled = true;
+                Sit_button.IsEnabled = true;
+
+                motors.Linkage.HaltMove();
+
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+                statusInfoTextBlock.Text = "起立模式已结束";
+                bt.Content = "Stand Up";
+            }
+        }
+                    
+        
+        private void flat_button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void yunsuan_Click_1(object sender, RoutedEventArgs e)
+        {
+            Button bt = sender as Button;
+            if (bt.Content.ToString() == "Flat")
+            {
+                flat.StartFlat(Convert.ToSingle(textBox1.Text), Convert.ToSingle(textBox.Text), textBox1, textBox);
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                statusInfoTextBlock.Text = "正在运算";
+                bt.Content = "Stop";
+
+            }
+            else
+            {
+                //flat.stopflat();
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+                statusInfoTextBlock.Text = "运算结束 可以开始行走";
+                bt.Content = "Flat";
+            }
+        }
+        struct IpAndPort
+        {
+            public string Ip;
+            public string Port;
+        }
+        private void switch_Click(object sender, RoutedEventArgs e)
+        {
+            if(IPAdressTextBox.Text.Trim()==string.Empty)
+            {
+                ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "请填入服务器IP地址\n");
+                return;
+            }
+            if (PortTextBox.Text.Trim() == string.Empty)
+            {
+                ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "请填入服务器端口号\n");
+                return;
+            }
+
+            Thread thread = new Thread(reciveAndListener);
+            IpAndPort ipHePort = new IpAndPort();
+            ipHePort.Ip = IPAdressTextBox.Text;
+            ipHePort.Port = PortTextBox.Text;
+
+            thread.Start((object)ipHePort);
+        }
+
+        private void btnSend_Click(object sender, RoutedEventArgs e)
+        {
+            if(stxtSendMsg.Text.Trim()!=string.Empty)
+            {
+                NetworkStream sendStream = client.GetStream();//获得用于数据传输的流
+                byte[] buffer = Encoding.Default.GetBytes(stxtSendMsg.Text.Trim());//将数据存在缓冲中
+                sendStream.Write(buffer, 0, buffer.Length);//最终写入流中
+                string showmsg = Encoding.Default.GetString(buffer, 0, buffer.Length);
+                ComWinTextBox1.AppendText("发送给服务端数据：" + showmsg + "\n");
+                stxtSendMsg.Text = string.Empty;
+            }
+        }
+        private void ComWinTextBox_TextChanged(object sender,TextChangedEventArgs e)
+        {
+            ComWinTextBox.ScrollToEnd();//当通信窗口内容变化时滚动条定位在最下面
+        }
+        private void ComWinTextBox1_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            ComWinTextBox1.ScrollToEnd();//当通信窗口内容变化时滚动条定位在最下面
+        }
+        private void reciveAndListener(object ipAndPort)
+        {
+            IpAndPort ipHePort = (IpAndPort)ipAndPort;
+
+            IPAddress ip = IPAddress.Parse(ipHePort.Ip);
+            server = new TcpListener(ip, int.Parse(ipHePort.Port));
+            server.Start();//启动监听
+
+            ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "服务端开启侦听....\n");
+
+            //获取连接的客户d端的对象
+            client = server.AcceptTcpClient();
+            ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "有客户端请求连接，连接已建立！");//AcceptTcpClient 是同步方法，会阻塞进程，得到连接对象后才会执行这一步  
+
+            //获得流
+            NetworkStream reciveStream = client.GetStream();
+            #region 循环监听客户端发来的信息
+            do
+            {
+                byte[] buffer = new byte[bufferSize];
+                int msgSize;
+                try
+                {
+                    lock (reciveStream)
+                    {
+                        msgSize = reciveStream.Read(buffer, 0, bufferSize);
+                    }
+
+                    if (msgSize == 0)
+                        return;
+                    string msg = Encoding.Default.GetString(buffer, 0, bufferSize);
+                    ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "\n客户端曰：" +
+                        Encoding.Default.GetString(buffer, 0, msgSize));
+                }
+                catch
+                {
+                    ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "\n 出现异常：连接被迫关闭");
+                    break;
+                }
+            } while (true);
+            #endregion
         }
     }
 }

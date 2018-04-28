@@ -80,7 +80,7 @@ namespace ExoGaitMonitorVer2
             statusInfoTextBlock = statusInfoTextBlockIn;
 
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(10);
+            timer.Interval = TimeSpan.FromMilliseconds(5);
             timer.Tick += new EventHandler(plotTimer_Tick);
             timer.Start();
         }
