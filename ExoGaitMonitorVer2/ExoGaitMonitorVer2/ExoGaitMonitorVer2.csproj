@@ -141,7 +141,9 @@
   <ItemGroup>
     <Content Include="DLL\CMO.dll" />
     <Content Include="DLL\DynamicDataDisplay.dll" />
-    <Resource Include="InputData\GaitData.txt" />
+    <Content Include="DLL\gaitplan.dll" />
+    <Content Include="DLL\lvbo.dll" />
+    <Content Include="DLL\lvbo2.dll" />
     <Resource Include="SingleLong.ico" />
     <Resource Include="Images\SingleLong.ico" />
     <Resource Include="Images\SingleLong.png" />
