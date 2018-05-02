@@ -8,7 +8,7 @@ using System.Windows.Threading;
 using CMLCOMLib;
 using System.Windows.Input;
 
-namespace ClassLib.Motors
+namespace ClassLib.Motor
 {
     public class Motors
     {

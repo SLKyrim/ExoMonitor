@@ -5,7 +5,7 @@ using System.Windows.Threading;
 using CMLCOMLib;
 using System.Windows.Controls.Primitives;
 
-namespace ClassLib.Motors
+namespace ClassLib.Motor
 {
     public class Manumotive
     {

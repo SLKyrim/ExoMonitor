@@ -66,6 +66,7 @@
     <Compile Include="Motors\Motors.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Walk\Flat.cs" />
+    <Compile Include="Walk\PVT.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="DLL\CMO.dll" />

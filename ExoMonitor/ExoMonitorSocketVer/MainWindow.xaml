@@ -9,7 +9,8 @@
         Title="外骨骼控制界面"
         Height="730" Width="1200" MinHeight="600" MinWidth="1000" 
         WindowState="Maximized"
-        Closing="Window_Closing">
+        Closing="Window_Closing"
+        Loaded="Window_Loaded">
 
     <DockPanel Background="White">
 
@@ -260,6 +261,7 @@
                                             <TextBlock Text="步高" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
                                             <TextBox x:Name="textBox1"  Grid.Column="1" Padding="1" Width="100" SpellCheck.IsEnabled="True"/>
                                         </Grid>
+                                        <Button x:Name="GenGait_Button" DockPanel.Dock="Top" Content="生成轨迹" VerticalAlignment="Center" Margin="2" Click="GenGait_Button_Click"/>
                                         <Button x:Name="Walk_Button" DockPanel.Dock="Top" Content="开始行走" VerticalAlignment="Center" Margin="2" Click="Walk_Button_Click"/>
                                     </DockPanel>
                                 </GroupBox>

@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using ClassLib.Motors;
+using ClassLib.Motor;
 using ClassLib.Walk;
 using System.Windows.Threading;
 using System.Net.Sockets;
@@ -36,9 +36,25 @@ namespace ExoMonitorSocketVer
         //平地行走模式
         private Flat flat = new Flat();
 
+        //PVT模式
+        private PVT pvt = new PVT();
+
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                motors.motors_Init();
+            }
+            catch
+            {
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                statusInfoTextBlock.Text = "窗口初始化失败！";
+            }
         }
 
         #region 手动操作设置 Manumotive
@@ -222,22 +238,39 @@ namespace ExoMonitorSocketVer
 
         #endregion
 
+        private void GenGait_Button_Click(object sender, RoutedEventArgs e)
+        {
+            flat.StartFlat(Convert.ToSingle(textBox1.Text), Convert.ToSingle(textBox.Text), textBox1, textBox);
+            statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+            statusInfoTextBlock.Text = "运算结束 可以开始行走";
+            Walk_Button.IsEnabled = true;
+        }
+
         private void Walk_Button_Click(object sender, RoutedEventArgs e)
         {
             Button bt = sender as Button;
+
             if (bt.Content.ToString() == "开始行走")
             {
-                flat.StartFlat(Convert.ToSingle(textBox1.Text), Convert.ToSingle(textBox.Text), textBox1, textBox);
+                angleSetButton.IsEnabled = false;
+                getZeroPointButton.IsEnabled = false;
+
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-                statusInfoTextBlock.Text = "正在运算";
+                statusInfoTextBlock.Text = "PVT模式";
                 bt.Content = "停止行走";
 
+                pvt.StartPVT(motors);
             }
+
             else
             {
-                //flat.stopflat();
+                angleSetButton.IsEnabled = true;
+                getZeroPointButton.IsEnabled = true;
+
+                motors.Linkage.HaltMove();
+
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
-                statusInfoTextBlock.Text = "运算结束 可以开始行走";
+                statusInfoTextBlock.Text = "PVT控制模式已停止";
                 bt.Content = "开始行走";
             }
         }
