@@ -8,19 +8,20 @@ using System.Windows.Threading;
 using System.Windows.Controls.Primitives;
 using System.Windows.Controls;
 using System.IO;
+using gaitplan;
 using lvbo2;
 using MathWorks.MATLAB.NET.Arrays;
 
-namespace ExoGaitMonitorVer2
+namespace ClassLib.Walk
 {
     
-    class Flat
+    public class Flat
     {
         private float buchang;
         private float bugao;
         TextBox Textbugao;
         TextBox textBuchang;
-        static DispatcherTimer timer;
+        //static DispatcherTimer timer;
         private double l1 = 0.4;//l1是大腿长度
         private double l2 = 0.4;//l2小腿长度
         private int T = 2;//T为步态周期
@@ -137,7 +138,7 @@ namespace ExoGaitMonitorVer2
             }
 
             //timer.Start();
-            gaitplan.gaitplane crossp = new gaitplan.gaitplane();
+            gaitplane crossp = new gaitplane();
             for (int i = 1; i <= 601; i++) //求解右膝关节位置
             {
                 double a1 = x0[i]; double b1 = xa[i]; double c1 = y0[i]; double a2 = ya[i];
@@ -237,6 +238,7 @@ namespace ExoGaitMonitorVer2
                 a_kl[i] = a_kl[i - 1] - 0.003;
 
             }
+
             #region
             for (int i = 701; i <= 701; i++)//滤波左膝
             {
@@ -281,8 +283,9 @@ namespace ExoGaitMonitorVer2
 
             }
 
-
             #endregion
+
+
             FileStream pw = new FileStream("positiont.txt", FileMode.Create, FileAccess.ReadWrite);
             StreamWriter psw = new StreamWriter(pw);
 
