@@ -79,6 +79,7 @@
     <Compile Include="Motors.cs" />
     <Compile Include="PVT.cs" />
     <Compile Include="Standup2.cs" />
+    <Compile Include="WriteExcel.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

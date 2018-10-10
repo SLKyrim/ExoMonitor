@@ -70,6 +70,7 @@
                             <TextBox x:Name="ComWinTextBox" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Center" Height="350" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="160" TextChanged="ComWinTextBox_TextChanged"/>
 
                             <Button x:Name="Plot_Button" Content="开始绘图" Margin="10" Padding="3" Click="Plot_Button_Click"/>
+                            <Button x:Name="WriteExcel_Button" Content="记录数据" Margin="10" Padding="3" Click="WriteExcel_Button_Click"/>
                         </StackPanel>
                     </GroupBox>
                 </Grid>

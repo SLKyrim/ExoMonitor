@@ -644,5 +644,33 @@ namespace ExoGaitMonitorVer2
             } while (true);
             Thread.Sleep(100);
         }
+
+        #region 记录数据
+
+        //写数据
+        private WriteExcel writeExcel = new WriteExcel();
+
+        private void WriteExcel_Button_Click(object sender, RoutedEventArgs e)//写数据进Excel
+        {
+            Button bt = sender as Button;
+            if (bt.Content.ToString() == "记录数据")
+            {
+                if (!writeExcel.writeStart(statusBar, statusInfoTextBlock, motors))
+                {
+                    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                    statusInfoTextBlock.Text = "写入数据失败！";
+                    return;
+                }
+                bt.Content = "停止记录";
+            }
+            else
+            {
+                writeExcel.writeStop();
+                bt.Content = "记录数据";
+            }
+        }
+
+        #endregion
+
     }
 }

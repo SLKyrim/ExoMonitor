@@ -20,7 +20,7 @@ namespace ExoGaitMonitorVer2
 
     public class PointCollection : RingArray<MyPoint> //一幅图中显示TOTAL_POINTS个点
     {
-        private const int TOTAL_POINTS = 5000; //图上最多保存的点数
+        private const int TOTAL_POINTS = 1000; //图上最多保存的点数
         public PointCollection() : base(TOTAL_POINTS) { }
     }
 
