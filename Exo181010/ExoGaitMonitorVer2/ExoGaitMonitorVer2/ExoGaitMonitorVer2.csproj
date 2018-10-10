@@ -74,6 +74,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Arduino.cs" />
+    <Compile Include="ChartPlotter.cs" />
     <Compile Include="Manumotive.cs" />
     <Compile Include="Motors.cs" />
     <Compile Include="PVT.cs" />

@@ -67,8 +67,9 @@
                             <Button x:Name="btnSend" Content="发送" HorizontalAlignment="Center" Height="23" Width="150" Margin="10,10,10,10" Click="btnSend_Click"/>
 
                             <TextBlock x:Name="textBlock3" HorizontalAlignment="Center" TextWrapping="Wrap" Text="通信窗口" Margin="10,10,10,1"/>
-                            <TextBox x:Name="ComWinTextBox" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Center" Height="400" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="160" TextChanged="ComWinTextBox_TextChanged"/>
-                            
+                            <TextBox x:Name="ComWinTextBox" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Center" Height="350" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="160" TextChanged="ComWinTextBox_TextChanged"/>
+
+                            <Button x:Name="Plot_Button" Content="开始绘图" Margin="10" Padding="3" Click="Plot_Button_Click"/>
                         </StackPanel>
                     </GroupBox>
                 </Grid>
@@ -147,8 +148,14 @@
 
                 <!--绘图面板开始-->
                 <Grid>
-                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                    </ScrollViewer>
+                    <GroupBox Header="绘图面板" Grid.Column="1" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
+                        <d3:ChartPlotter x:Name="CurPlot_total" HorizontalAlignment="Center">
+                            <d3:ChartPlotter.HorizontalAxis>
+                                <d3:HorizontalIntegerAxis x:Name="CurAx_total"/>
+                            </d3:ChartPlotter.HorizontalAxis>
+                            <d3:Header FontFamily="Georgia" Content="电机电流 [A]"/>
+                        </d3:ChartPlotter>
+                    </GroupBox>
                 </Grid>
                 <!--绘图面板结束-->
                 
