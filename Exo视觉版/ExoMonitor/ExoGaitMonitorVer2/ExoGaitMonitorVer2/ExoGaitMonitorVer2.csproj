@@ -50,16 +50,16 @@
     </Reference>
     <Reference Include="lvbo, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>E:\matlab2016\bin\lvbo3\for_redistribution_files_only\lvbo.dll</HintPath>
+      <HintPath>DLL\lvbo.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <EmbedInteropTypes>True</EmbedInteropTypes>
       <HintPath>DLL\Microsoft.Office.Interop.Excel.dll</HintPath>
     </Reference>
-    <Reference Include="MWArray, Version=2.16.0.0, Culture=neutral, PublicKeyToken=e1d84a0da19db86f, processorArchitecture=MSIL">
+    <Reference Include="MWArray, Version=2.16.1.0, Culture=neutral, PublicKeyToken=e1d84a0da19db86f, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\任豪步态版Csharp\ExoGaitMonitorVer2\ExoGaitMonitorVer2\bin\Debug\MWArray.dll</HintPath>
+      <HintPath>DLL\MWArray.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
