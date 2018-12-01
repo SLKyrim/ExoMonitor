@@ -4,6 +4,6 @@
              xmlns:local="clr-namespace:ExoGaitMonitorVer2"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <!--<local:ChartPlotter x:Key="Cp"></local:ChartPlotter>-->
+        <local:ChartPlotter x:Key="Cp"></local:ChartPlotter>
     </Application.Resources>
 </Application>

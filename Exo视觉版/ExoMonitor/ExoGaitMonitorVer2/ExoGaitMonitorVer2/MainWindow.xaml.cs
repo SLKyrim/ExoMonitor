@@ -23,6 +23,52 @@ namespace ExoGaitMonitorVer2
     public partial class MainWindow : Window
     {
 
+        #region 绘图
+
+        private ChartPlotter cp;
+
+        public MainWindow()
+        {
+            EnumerableDataSource<MyPoint> total_M0_Pos;
+            EnumerableDataSource<MyPoint> total_M1_Pos;
+            EnumerableDataSource<MyPoint> total_M2_Pos;
+            EnumerableDataSource<MyPoint> total_M3_Pos;
+
+            InitializeComponent();
+
+            cp = App.Current.Resources["Cp"] as ChartPlotter;
+
+            #region 整体系统绘图
+
+            total_M0_Pos = new EnumerableDataSource<MyPoint>(cp.M0_pointcollection_Pos);
+            total_M0_Pos.SetXMapping(x => PosAx_total.ConvertToDouble(x.Date));
+            total_M0_Pos.SetYMapping(y => y._point);
+            PosPlot_total.AddLineGraph(total_M0_Pos, Colors.Red, 2, "左膝实际位置");
+
+            total_M1_Pos = new EnumerableDataSource<MyPoint>(cp.M1_pointcollection_Pos);
+            total_M1_Pos.SetXMapping(x => PosAx_total.ConvertToDouble(x.Date));
+            total_M1_Pos.SetYMapping(y => y._point);
+            PosPlot_total.AddLineGraph(total_M1_Pos, Colors.Green, 2, "左髋实际位置");
+
+
+            total_M2_Pos = new EnumerableDataSource<MyPoint>(cp.M2_pointcollection_Pos);
+            total_M2_Pos.SetXMapping(x => PosAx_total.ConvertToDouble(x.Date));
+            total_M2_Pos.SetYMapping(y => y._point);
+            PosPlot_total.AddLineGraph(total_M2_Pos, Colors.Brown, 2, "右髋实际位置");
+
+
+            total_M3_Pos = new EnumerableDataSource<MyPoint>(cp.M3_pointcollection_Pos);
+            total_M3_Pos.SetXMapping(x => PosAx_total.ConvertToDouble(x.Date));
+            total_M3_Pos.SetYMapping(y => y._point);
+            PosPlot_total.AddLineGraph(total_M3_Pos, Colors.Purple, 2, "右膝实际位置");
+
+            #endregion
+        }
+
+
+
+        #endregion
+
         #region 声明
         //主界面窗口
 
@@ -520,8 +566,6 @@ namespace ExoGaitMonitorVer2
 
         #endregion
 
-
-
         #region 手动操作设置 Manumotive
 
         private void angleSetButton_Click(object sender, RoutedEventArgs e)//点击【执行命令】按钮时执行
@@ -847,6 +891,22 @@ namespace ExoGaitMonitorVer2
 
             visual.visualGaitGenerator(nStep, normalStepLength, normalStepHeight, lastStepLength,
                          lastStepHeight, overStepLength, overStepHeight, statusBar, statusInfoTextBlock);
+        }
+
+        private void Plot_Button_Click(object sender, RoutedEventArgs e)
+        {
+            Button bt = sender as Button;
+
+            if (bt.Content.ToString() == "开始绘图")
+            {
+                bt.Content = "停止绘图";
+                cp.plotStart(motors, statusBar, statusInfoTextBlock);
+            }
+            else
+            {
+                cp.plotStop();
+                bt.Content = "开始绘图";
+            }
         }
     }
 }

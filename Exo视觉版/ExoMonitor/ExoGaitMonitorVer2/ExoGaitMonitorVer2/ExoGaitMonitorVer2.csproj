@@ -81,6 +81,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Arduino.cs" />
+    <Compile Include="ChartPlotter.cs" />
     <Compile Include="Manumotive.cs" />
     <Compile Include="Motors.cs" />
     <Compile Include="PVT.cs" />
@@ -130,7 +131,6 @@
   <ItemGroup>
     <Content Include="DLL\CMO.dll" />
     <Content Include="DLL\DynamicDataDisplay.dll" />
-    <Resource Include="InputData\GaitData.txt" />
     <Resource Include="SingleLong.ico" />
     <Resource Include="Images\SingleLong.ico" />
     <Resource Include="Images\SingleLong.png" />
