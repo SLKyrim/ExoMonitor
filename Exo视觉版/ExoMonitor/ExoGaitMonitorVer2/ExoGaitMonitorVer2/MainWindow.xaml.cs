@@ -801,7 +801,7 @@ namespace ExoGaitMonitorVer2
                     }
                     ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "从服务端发来信息：" + Encoding.Default.GetString(buffer, 0, readSize) + "\n");
 
-                    nStep = Convert.ToInt16(Math.Ceiling(Convert.ToDouble(buffer[1]) )); // 任豪步态normal两步算一步，故除以2向上取整
+                    nStep = Convert.ToInt16(Math.Ceiling(Convert.ToDouble(buffer[1]) / 2)); // 任豪步态normal两步算一步，故除以2向上取整
                     lastStepLength = (buffer[2] << 8) | buffer[3];
                     lastStepHeight = (buffer[4] << 8) | buffer[5];
                     overStepLength = (buffer[6] << 8) | buffer[7];
@@ -832,7 +832,7 @@ namespace ExoGaitMonitorVer2
         {
             try
             {
-                pvt.StartPVT(motors, "..\\..\\bin\\Debug\\angle.txt", 360, 24, 32);
+                pvt.StartPVT(motors, "..\\..\\bin\\Debug\\angle.txt", 360, 24, 64);
             }
             catch (Exception)
             {
