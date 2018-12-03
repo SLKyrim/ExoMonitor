@@ -1,0 +1,1 @@
+Window.xaml.cs 放在路径【视觉Csharp\cs-tutorial-2-capture】下

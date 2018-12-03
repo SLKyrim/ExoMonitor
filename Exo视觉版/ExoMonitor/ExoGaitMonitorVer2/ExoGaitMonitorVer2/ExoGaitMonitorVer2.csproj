@@ -80,12 +80,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Arduino.cs" />
     <Compile Include="ChartPlotter.cs" />
     <Compile Include="Manumotive.cs" />
     <Compile Include="Motors.cs" />
     <Compile Include="PVT.cs" />
-    <Compile Include="Standup2.cs" />
     <Compile Include="Visual.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

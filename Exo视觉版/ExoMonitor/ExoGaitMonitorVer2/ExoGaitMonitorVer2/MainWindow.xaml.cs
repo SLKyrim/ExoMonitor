@@ -10,7 +10,6 @@ using System.Windows.Input;
 using Microsoft.Research.DynamicDataDisplay;
 using Microsoft.Research.DynamicDataDisplay.DataSources;
 using System.Threading;
-using LattePanda.Firmata;
 using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
@@ -78,26 +77,8 @@ namespace ExoGaitMonitorVer2
         //手动操作设置
         private Manumotive manumotive = new Manumotive();
 
-        //传感器
-
-        private int value1;
-        private int value2;
-        private int value3;
-        private int value4;
-        private int _pattern;
-        private int KeyTime = 0;
-
-        private int PositionState = 0;
-        private int Dete = 2;
-        private int ss = 0;
-
         //PVT模式
         private PVT pvt = new PVT();
-
-        //Stand up
-        private Standup2 stand2 = new Standup2();
-
-        Arduino arduino = new Arduino();
 
         DispatcherTimer Detection = new DispatcherTimer();
         public delegate void showData(string msg);//通信窗口输出
@@ -135,29 +116,13 @@ namespace ExoGaitMonitorVer2
                 statusInfoTextBlock.Text = "窗口初始化失败！";
             }
 
-
-            //DispatcherTimer keystate = new DispatcherTimer();
-            //keystate.Tick += new EventHandler(Keystate_Tick);
-            //keystate.Interval = TimeSpan.FromMilliseconds(200);
-            //keystate.Start();
-
-            DispatcherTimer Executekey = new DispatcherTimer();
-            Executekey.Tick += new EventHandler(Execute_Tick);
-            Executekey.Interval = TimeSpan.FromMilliseconds(200);
-            Executekey.Start();
-
-
-            Detection.Tick += Detection_Tick;
-            Detection.Interval = TimeSpan.FromMilliseconds(200);
-            Detection.Start();
-
-            Thread shoutdown = new Thread(Select);
-            shoutdown.Start();
+            DispatcherTimer showParaTimer = new DispatcherTimer(); //显示参数线程
+            showParaTimer.Tick += new EventHandler(showParaTimer_Tick);
+            showParaTimer.Interval = TimeSpan.FromMilliseconds(100);
+            showParaTimer.Start();
         }
 
-
-
-        private void Detection_Tick(object sender, EventArgs e)
+        private void showParaTimer_Tick(object sender, EventArgs e)//输出步态参数到相应文本框的委托
         {
             nStepTextBox.Text = nStep.ToString();
             normalStepLengthTextBox.Text = normalStepLength.ToString();
@@ -166,397 +131,6 @@ namespace ExoGaitMonitorVer2
             lastStepHeightTextBox.Text = lastStepHeight.ToString();
             overStepLengthTextBox.Text = overStepLength.ToString();
             overStepHeightTextBox.Text = overStepHeight.ToString();
-
-
-            if (PositionState == 0 && Dete == -1 && ss == 0)
-            {
-                PositionState = 1;
-                Dete = 2;
-                ss = 1;
-            }
-            if (PositionState == 0 && Dete == 1 && ss == 0)
-            {
-                PositionState = 2;
-                Dete = 2;
-                ss = 2;
-            }
-            if (PositionState == 1 && Dete == -1 && ss == 0)
-            {
-                PositionState = 3;
-                Dete = 2;
-                ss = 3;
-            }
-            if (PositionState == 1 && Dete == 1 && ss == 0)
-            {
-                PositionState = 4;
-                Dete = 2;
-                ss = 4;
-            }
-            if (PositionState == 2 && Dete == -1 && ss == 0)
-            {
-                PositionState = 3;
-                Dete = 2;
-                ss = 5;
-            }
-            if (PositionState == 2 && Dete == 1 && ss == 0)
-            {
-                PositionState = 4;
-                Dete = 2;
-                ss = 6;
-            }
-            if (PositionState == 3 && Dete == -1 && ss == 0)
-            {
-                PositionState = 1;
-                Dete = 2;
-                ss = 7;
-            }
-            if (PositionState == 3 && Dete == 1 && ss == 0)
-            {
-                PositionState = 2;
-                Dete = 2;
-                ss = 8;
-            }
-            if (PositionState == 4 && Dete == -1 && ss == 0)
-            {
-                PositionState = 1;
-                Dete = 2;
-                ss = 9;
-            }
-            if (PositionState == 4 && Dete == 1 && ss == 0)
-            {
-                PositionState = 2;
-                Dete = 2;
-                ss = 10;
-            }
-            //if(PositionState==3&&Dete==0&&ss==0)
-            //{
-            //    PositionState = 0;
-            //    Dete = 2;
-            //    ss = 11;
-            //}
-            //if(PositionState==4&&Dete==1&&ss==0)
-            //{
-            //    PositionState = 0;
-            //    Dete = 2;
-            //    ss = 12;
-            //}
-        }
-
-        private void Select()
-        {
-            while (true)
-            {
-                if (ss != 0)
-                {
-                    Detection.Stop();
-                    switch (ss)
-                    {
-                        case 1:
-                            MessageBox.Show("1");
-                            try
-                            {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\左脚起始步低.txt", 2 * Math.PI, 115, 95);
-                            }
-                            catch (Exception e)
-                            {
-                                MessageBox.Show(e.ToString());
-                            }
-                            break;
-                        case 2:
-                            MessageBox.Show("2");
-                            try
-                            {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\左脚起始步高.txt", 2 * Math.PI, 115, 95);
-                            }
-                            catch (Exception e)
-                            {
-                                MessageBox.Show(e.ToString());
-                            }
-                            break;
-                        case 3:
-                            MessageBox.Show("3");
-                            try
-                            {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\左脚在前低到右脚前伸低.txt", 2 * Math.PI, 115, 95);
-                            }
-                            catch (Exception e)
-                            {
-                                MessageBox.Show(e.ToString());
-                            }
-                            break;
-                        case 4:
-                            MessageBox.Show("4");
-                            try
-                            {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\左脚在前低到右脚前伸高.txt", 2 * Math.PI, 115, 95);
-                            }
-                            catch (Exception e)
-                            {
-                                MessageBox.Show(e.ToString());
-                            }
-                            break;
-                        case 5:
-                            MessageBox.Show("5");
-                            try
-                            {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\左脚在前高到右脚前伸低.txt", 2 * Math.PI, 115, 95);
-                            }
-                            catch (Exception e)
-                            {
-                                MessageBox.Show(e.ToString());
-                            }
-                            break;
-                        case 6:
-
-                            MessageBox.Show("6");
-                            try
-                            {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\左脚在前高到右脚前伸高.txt", 2 * Math.PI, 115, 95);
-                            }
-                            catch (Exception e)
-                            {
-                                MessageBox.Show(e.ToString());
-                            }
-                            break;
-                        case 7:
-                            MessageBox.Show("7");
-                            try
-                            {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\右脚在前低到左脚前伸低.txt", 2 * Math.PI, 115, 95);
-                            }
-                            catch (Exception e)
-                            {
-                                MessageBox.Show(e.ToString());
-                            }
-                            break;
-                        case 8:
-
-                            MessageBox.Show("8");
-                            try
-                            {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\右脚在前低到左脚前伸高.txt", 2 * Math.PI, 115, 105);
-                            }
-                            catch (Exception e)
-                            {
-                                MessageBox.Show(e.ToString());
-                            }
-                            break;
-                        case 9:
-                            MessageBox.Show("9");
-                            pvt.StartPVT(motors, "..\\..\\InputData\\右脚在前高到左脚前伸低.txt", 2 * Math.PI, 115, 95);
-                            break;
-                        case 10:
-                            MessageBox.Show("10");
-                            try
-                            {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\右脚在前高到左脚前伸高.txt", 2 * Math.PI, 115, 95);
-                            }
-                            catch (Exception e)
-                            {
-                                MessageBox.Show(e.ToString());
-                            }
-                            break;
-                        case 11:
-                            MessageBox.Show("11");
-                            try
-                            {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\左脚向前低收步.txt", 2 * Math.PI, 115, 95);
-                            }
-                            catch (Exception e)
-                            {
-                                MessageBox.Show(e.ToString());
-                            }
-                            break;
-                        case 12:
-                            MessageBox.Show("12");
-                            try
-                            {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\左脚向前高收步.txt", 2 * Math.PI, 115, 95);
-                            }
-                            catch (Exception e)
-                            {
-                                MessageBox.Show(e.ToString());
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-                    ss = 0;
-                    Detection.Start();
-                }
-                Thread.Sleep(100);
-            }
-
-
-
-        }
-
-
-
-
-
-        private void Keystate_Tick(object sender, EventArgs e)
-        {
-            try
-            {
-                arduino.pinMode(9, Arduino.OUTPUT);
-                arduino.digitalWrite(9, Arduino.HIGH);
-                arduino.pinMode(9, Arduino.INPUT);
-                value1 = arduino.digitalRead(9);
-                arduino.pinMode(10, Arduino.OUTPUT);
-                arduino.digitalWrite(10, Arduino.HIGH);
-                arduino.pinMode(10, Arduino.INPUT);
-                value2 = arduino.digitalRead(10);
-                arduino.pinMode(11, Arduino.OUTPUT);
-                arduino.digitalWrite(11, Arduino.HIGH);
-                arduino.pinMode(11, Arduino.INPUT);
-                value3 = arduino.digitalRead(11);
-                value4 = arduino.analogRead(0);
-                double valuepositon = motors.ampObj[3].PositionActual;
-                if (value4 < 800)
-                {
-                    value4 = 0;
-                }
-                else
-                {
-                    value4 = 1;
-                }
-                if (value1 == 0 & value2 == 1 & value3 == 0 & value4 == 1)
-                {
-                    if (valuepositon > 932977)
-                    {
-                        if (KeyTime == 0)
-                        {
-                            KeyTime = 1;
-                        }
-                        else if (KeyTime == 1)
-                        {
-                            _pattern = 3; ; //"Stand";  DoStandUp_Click(sender, e);
-                        }
-
-                    }
-
-
-                }
-                else
-                {
-                    if (value1 == 0 & value2 == 0 & value3 == 0 & value4 == 0)
-                    {
-                        if (valuepositon < 440000)
-                        {
-                            if (KeyTime == 0)
-                            {
-                                KeyTime = 1;
-                            }
-                            else if (KeyTime == 1)
-                            {
-                                _pattern = 15; //"Sit";   DoSitDown_Click(sender, e);
-                            }
-
-                        }
-
-
-                    }
-                    else
-                    {
-                        if (value1 == 0 & value2 == 1 & value3 == 0 & value4 == 0)
-                        {
-
-                            if (valuepositon < 100000)
-                            {
-                                if (KeyTime == 0)
-                                {
-                                    KeyTime = 1;
-                                }
-                                else if (KeyTime == 1)
-                                {
-                                    _pattern = 7;
-                                }
-
-                            }
-                        }
-                        else
-                        {
-                            if (value1 == 0 & value2 == 0 & value3 == 0 & value4 == 1)
-                            {
-
-                                if (valuepositon < 100000)
-                                {
-                                    if (KeyTime == 0)
-                                    {
-                                        KeyTime = 1;
-                                    }
-                                    else if (KeyTime == 1)
-                                    {
-                                        _pattern = 11;
-                                    }
-
-                                }
-
-                            }
-                            else
-                            {
-                                _pattern = 0;
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                MessageBox.Show("拐杖状态有错");
-            }
-        }
-
-        private void Execute_Tick(object sender, EventArgs e)
-        {
-            DispatcherTimer Executekey = new DispatcherTimer();
-            switch (_pattern)
-            {
-                case 3:
-                    _pattern = 0;
-                    try
-                    {
-                        stand2.start_Standup2(motors);
-                    }
-                    catch (Exception)
-                    {
-                        MessageBox.Show(e.ToString());
-                    }
-                    Thread.Sleep(6000);
-                    Executekey.IsEnabled = true;
-                    break;
-                case 15:
-                    _pattern = 0;
-                    try
-                    {
-                        pvt.start_Sitdown2(motors);
-                    }
-                    catch (Exception)
-                    {
-                        MessageBox.Show(e.ToString());
-                    }
-                    Thread.Sleep(5000);
-                    Executekey.IsEnabled = true;
-                    break;
-                case 7:
-                case 11:
-                    _pattern = 0;
-                    try
-                    {
-                        pvt.StartPVT(motors, "..\\..\\InputData\\6步新.txt", 360, 45, 15);
-                    }
-                    catch (Exception)
-                    {
-                        MessageBox.Show(e.ToString());
-                    }
-                    Thread.Sleep(10000);
-                    Executekey.IsEnabled = true;
-                    break;
-                default:
-                    break;
-
-            }
         }
 
         private void Window_Closed(object sender, EventArgs e)
@@ -673,103 +247,6 @@ namespace ExoGaitMonitorVer2
             }
         }
 
-
-
-        private void Sit_button_Click(object sender, RoutedEventArgs e)
-        {
-            Button bt = sender as Button;
-            double positon = motors.ampObj[3].PositionActual;
-            if (bt.Content.ToString() == "Sit Down")
-            {
-                PVT_Button.IsEnabled = false;
-                Stand_up_Button.IsEnabled = false;
-                angleSetButton.IsEnabled = false;
-                getZeroPointButton.IsEnabled = false;
-
-                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-                statusInfoTextBlock.Text = "坐下模式";
-                bt.Content = "Stop";
-                if (positon < 430000)
-                {
-                    try
-                    {
-                        pvt.start_Sitdown2(motors);
-                    }
-                    catch (Exception)
-                    { MessageBox.Show(e.ToString()); }
-                }
-
-            }
-            else
-            {
-                angleSetButton.IsEnabled = true;
-                getZeroPointButton.IsEnabled = true;
-                PVT_Button.IsEnabled = true;
-                Stand_up_Button.IsEnabled = true;
-
-                //motors.Linkage.HaltMove();
-
-                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
-                statusInfoTextBlock.Text = "坐下模式已停止";
-                bt.Content = "Sit Down";
-            }
-        }
-
-        private void Stand_up_Button_Click(object sender, RoutedEventArgs e)
-        {
-            Button bt = sender as Button;
-            double positon = motors.ampObj[3].PositionActual;
-            if (bt.Content.ToString() == "Stand Up")
-            {
-                PVT_Button.IsEnabled = false;
-                angleSetButton.IsEnabled = false;
-                Sit_button.IsEnabled = false;
-
-                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-                statusInfoTextBlock.Text = "起立模式";
-                bt.Content = "Stop";
-                if (positon > 1000000)
-                {
-                    try
-                    {
-                        stand2.start_Standup2(motors);
-                    }
-                    catch (Exception)
-                    {
-                        MessageBox.Show(e.ToString());
-                    }
-                }
-
-            }
-            else
-            {
-                PVT_Button.IsEnabled = true;
-                angleSetButton.IsEnabled = true;
-
-                Sit_button.IsEnabled = true;
-
-                //motors.Linkage.HaltMove();
-
-                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
-                statusInfoTextBlock.Text = "起立模式已结束";
-                bt.Content = "Stand Up";
-            }
-        }
-
-        private void Motor4_Pos_TextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-
-        }
-
-        private void button1_Click(object sender, RoutedEventArgs e)
-        {
-            Dete = 1;
-        }
-
-        private void button_1_Click(object sender, RoutedEventArgs e)
-        {
-            Dete = 0;
-        }
         struct IpAndPort
         {
             public string Ip;
@@ -778,6 +255,8 @@ namespace ExoGaitMonitorVer2
 
         private void switch_Click(object sender, RoutedEventArgs e)
         {
+            switch_Button.IsEnabled = false;
+
             if (IPAdressTextBox.Text.Trim() == string.Empty)
             {
                 ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "请填入服务器IP地址\n");
@@ -860,9 +339,6 @@ namespace ExoGaitMonitorVer2
                     lastStepHeight = lastStepHeight / 1000;
                     overStepLength = overStepLength / 1000;
                     overStepHeight = overStepHeight / 1000;
-
-                    //visual.visualGaitGenerator(nStep, normalStepLength, normalStepHeight, lastStepLength,
-                    //       lastStepHeight, overStepLength, overStepHeight);
                 }
                 catch
                 {
@@ -876,7 +352,13 @@ namespace ExoGaitMonitorVer2
         {
             try
             {
+                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
+                statusInfoTextBlock.Text = "开始执行步态";
+
                 pvt.StartPVT(motors, "..\\..\\bin\\Debug\\angle.txt", 360, 24, 64);
+
+                //statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+                //statusInfoTextBlock.Text = "步态执行完毕";
             }
             catch (Exception)
             {
@@ -906,6 +388,22 @@ namespace ExoGaitMonitorVer2
             {
                 cp.plotStop();
                 bt.Content = "开始绘图";
+            }
+        }
+
+        private void test_Button_Click(object sender, RoutedEventArgs e)
+        {
+            if (client != null)
+            {
+                //要发送的信息
+                string msg = "向服务端请求视觉反馈";
+
+                byte[] buffer = Encoding.Default.GetBytes(msg);
+                //lock (sendStream)
+                //{
+                sendStream.Write(buffer, 0, buffer.Length);
+                //}
+                ComWinTextBox.AppendText(msg + "\n");
             }
         }
     }

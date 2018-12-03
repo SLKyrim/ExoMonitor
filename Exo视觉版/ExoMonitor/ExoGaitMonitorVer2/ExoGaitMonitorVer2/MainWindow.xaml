@@ -132,11 +132,8 @@
                                     <DockPanel>
                                         <StackPanel>
                                             <Button x:Name="PVT_Button" Content="PVT Mode" Margin="3" Padding="3" Click="PVT_Button_Click"/>
-                                            <Button x:Name="Sit_button" Content="Sit Down" Margin="3" Padding="3" Click="Sit_button_Click"/>
-                                            <Button x:Name="Stand_up_Button" Content="Stand Up" Margin="3" Padding="3" Click="Stand_up_Button_Click"/>
-                                            <Button x:Name="button1" Content="1" Margin="3" Padding="3" Click="button1_Click"/>
-                                            <Button x:Name="button_1" Content="-1"  Margin="3" Padding="3" Click="button_1_Click"/>
-                                            <Button x:Name="switch" Content="请求视觉反馈" Margin="3" Padding="3" Click="switch_Click" />
+                                            <Button x:Name="switch_Button" Content="初次请求视觉反馈" Margin="3" Padding="3" Click="switch_Click" />
+                                            <Button x:Name="test_Button" Content="请求视觉反馈" Margin="3" Padding="3" Click="test_Button_Click" />
                                         </StackPanel>
                                     </DockPanel>
                                 </GroupBox>

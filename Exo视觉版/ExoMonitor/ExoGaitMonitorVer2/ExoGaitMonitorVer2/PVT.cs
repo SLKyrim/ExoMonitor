@@ -123,6 +123,7 @@ namespace ExoGaitMonitorVer2
             vel[lineCounter - 1, 2] = 0;
             vel[lineCounter - 1, 3] = 0;
             #endregion
+
             for (int i = 0; i < motors.motor_num; i++)//开始步态前各电机回到轨迹初始位置
             {
                 motors.profileSettingsObj = motors.ampObj[i].ProfileSettings;
@@ -140,112 +141,6 @@ namespace ExoGaitMonitorVer2
             //motors.ampObj[1].WaitMoveDone(10000);
             //motors.ampObj[2].WaitMoveDone(10000);
             //motors.ampObj[3].WaitMoveDone(10000);
-
-
-        }
-        public void start_Sitdown2(Motors motor)
-        {
-            #region
-              double[,] KeyPos ={ { -56888.88889, 227555.5556, -227555.5556, 56888.88889 },
-                                { -159288.8889, 599608.8889, -599608.8889, 159288.8889 },
-                                { -349297.7778, 893155.5556, -893155.5556, 349297.7778 },
-                                { -728177.7778, 1169635.556, -1169635.556, 728177.7778 },
-                                { -989866.6667, 1365333.333, -1365333.333, 989866.6667 },
-                                { -1035377.778, 1285688.889, -1285688.889, 1035377.778 },
-                                { -1137777.778, 1196942.222, -1196942.222, 1137777.778 }};
-                #endregion
-                ProfileSettingsObj profileParameters = new ProfileSettingsObj();    //用于设置电机参数
-                double MotorVelocity = 72;
-                double MotorAcceleration = 20;
-                double MotorDeceleration = 20;
-
-                double[,] DeltaP = new double[7, 4];
-                for (int s = 0; s < 7; s++)
-                {
-                    for (int j = 0; j < motor.motor_num; j++)
-                    {
-                        if (s == 0)
-                        {
-                            DeltaP[s, j] = Math.Abs(KeyPos[s, j] - 0);
-                        }
-                        else
-                        {
-                            DeltaP[s, j] = Math.Abs(KeyPos[s, j] - KeyPos[s - 1, j]);
-                        }
-
-                    }
-                    for (int i = 0; i < motor.motor_num; i++)
-                    {
-                        double MaxDeltaP = DeltaP[s, 0];
-                        if (MaxDeltaP < DeltaP[s, i])
-                        {
-                            MaxDeltaP = DeltaP[s, i];
-                        }
-                        profileParameters = motor.ampObj[i].ProfileSettings;
-                        profileParameters.ProfileVel = MotorVelocity * 6400 * 4 * 160 / 360 * DeltaP[s, i] / MaxDeltaP;    //单位为°/s
-                        profileParameters.ProfileAccel = MotorAcceleration * 6400 * 4 * 160 / 360;    //单位为°/s2
-                        profileParameters.ProfileDecel = MotorDeceleration * 6400 * 4 * 160 / 360;    //单位为°/s
-                        profileParameters.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
-                        motor.ampObj[i].ProfileSettings = profileParameters;
-                        motor.ampObj[i].MoveAbs(KeyPos[s, i]);
-                    }
-                  
-                }
-                                   
-        }
-        public void start_Standup2(Motors motor)
-        {
-            #region
-            double[,] KeyPos ={ { -1132088.889 , 1228800, -1228800 ,1132088.889 },
-                                { -1120711.111, 1251555.556, -1251555.556 ,1120711.111 },
-                                { -1092266.667, 1308444.444, -1308444.444,1092266.667 },
-                                { -1069511.111 , 1388088.889, -1388088.889,1069511.111},
-                                { -932977.7778, 1331200, -1331200,   932977.7778},
-                                { -762311.1111 ,1228800, -1228800,   762311.1111},
-                                { -568888.8889, 955733.3333, -955733.3333 , 568888.8889},
-                                {-443733.3333,  762311.1111, -762311.1111 , 443733.3333 },
-                                {-113777.7778, 432355.5556, -432355.5556 , 113777.7778  },
-                                { -56888.88889, 227555.5556, -227555.5556, 56888.88889 },
-                                {0 ,  0 ,  0 ,  0  } };
-            #endregion
-            ProfileSettingsObj profileParameters = new ProfileSettingsObj();    //用于设置电机参数
-                double MotorVelocity = 82;
-                double MotorAcceleration = 20;
-                double MotorDeceleration = 20;
-
-                double[,] DeltaP = new double[11, 4];
-                for (int s = 0; s < 11; s++)
-                {
-                    for (int j = 0; j < motor.motor_num; j++)
-                    {
-                        if (s == 0)
-                        {
-                            DeltaP[s, j] = Math.Abs(KeyPos[s, j] - motor.ampObj[j].PositionActual);
-                        }
-                        else
-                        {
-                            DeltaP[s, j] = Math.Abs(KeyPos[s, j] - KeyPos[s - 1, j]);
-                        }
-
-                    }
-                    for (int i = 0; i < motor.motor_num; i++)
-                    {
-                        double MaxDeltaP = DeltaP[s, 0];
-                        if (MaxDeltaP < DeltaP[s, i])
-                        {
-                            MaxDeltaP = DeltaP[s, i];
-                        }
-                        profileParameters = motor.ampObj[i].ProfileSettings;
-                        profileParameters.ProfileVel = MotorVelocity * 6400 * 4 * 160 / 360 * DeltaP[s, i] / MaxDeltaP;    //单位为°/s
-                        profileParameters.ProfileAccel = MotorAcceleration * 6400 * 4 * 160 / 360;    //单位为°/s2
-                        profileParameters.ProfileDecel = MotorDeceleration * 6400 * 4 * 160 / 360;    //单位为°/s
-                        profileParameters.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
-                        motor.ampObj[i].ProfileSettings = profileParameters;
-                        motor.ampObj[i].MoveAbs(KeyPos[s, i]);
-                    }
-
-                }
-                        
-             }
         }
     }
+}
