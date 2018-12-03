@@ -101,9 +101,11 @@ namespace ExoGaitMonitorVer2
         // 视觉
         Visual visual = new Visual();
 
+
         // 秒表
         private Stopwatch stopwatch = new Stopwatch();
-        const int RESET_TIME = 10000; // 秒表置零阈值，单位：毫秒
+        const int RESET_TIME = 5000; // 秒表置零阈值，单位：毫秒
+
         #endregion
 
         #region 界面初始化
@@ -122,13 +124,15 @@ namespace ExoGaitMonitorVer2
                 statusInfoTextBlock.Text = "窗口初始化失败！";
             }
 
-            DispatcherTimer showParaTimer = new DispatcherTimer(); //显示参数线程
+            // 显示参数和读表线程
+            DispatcherTimer showParaTimer = new DispatcherTimer(); 
             showParaTimer.Tick += new EventHandler(showParaTimer_Tick);
             showParaTimer.Interval = TimeSpan.FromMilliseconds(40);
             showParaTimer.Start();
 
-            //stopWatchTimer.Tick += new EventHandler(stopWatchTimer_Tick);
-            //stopWatchTimer.Interval = new TimeSpan(0, 0, 0, 0, 40);
+            // 选择调用的步态
+            Thread select_thread = new Thread(Select);
+            select_thread.Start();
         }
 
         private void showParaTimer_Tick(object sender, EventArgs e)//输出步态参数到相应文本框的委托
@@ -161,6 +165,221 @@ namespace ExoGaitMonitorVer2
             {
                 stopWatchTextBlock.Text = stopwatch.ElapsedMilliseconds.ToString(); // 秒表文本显示【以毫秒为单位】
             }
+        }
+
+        private void Select()
+        {
+            //while (true)
+            //{
+            //    if (PositionState == 0 && Dete == -1 && ss == 0)
+            //    {
+            //        PositionState = 1;
+            //        Dete = 2;
+            //        ss = 1;
+            //    }
+            //    if (PositionState == 0 && Dete == 1 && ss == 0)
+            //    {
+            //        PositionState = 2;
+            //        Dete = 2;
+            //        ss = 2;
+            //    }
+            //    if (PositionState == 1 && Dete == -1 && ss == 0)
+            //    {
+            //        PositionState = 3;
+            //        Dete = 2;
+            //        ss = 3;
+            //    }
+            //    if (PositionState == 1 && Dete == 1 && ss == 0)
+            //    {
+            //        PositionState = 4;
+            //        Dete = 2;
+            //        ss = 4;
+            //    }
+            //    if (PositionState == 2 && Dete == -1 && ss == 0)
+            //    {
+            //        PositionState = 3;
+            //        Dete = 2;
+            //        ss = 5;
+            //    }
+            //    if (PositionState == 2 && Dete == 1 && ss == 0)
+            //    {
+            //        PositionState = 4;
+            //        Dete = 2;
+            //        ss = 6;
+            //    }
+            //    if (PositionState == 3 && Dete == -1 && ss == 0)
+            //    {
+            //        PositionState = 1;
+            //        Dete = 2;
+            //        ss = 7;
+            //    }
+            //    if (PositionState == 3 && Dete == 1 && ss == 0)
+            //    {
+            //        PositionState = 2;
+            //        Dete = 2;
+            //        ss = 8;
+            //    }
+            //    if (PositionState == 4 && Dete == -1 && ss == 0)
+            //    {
+            //        PositionState = 1;
+            //        Dete = 2;
+            //        ss = 9;
+            //    }
+            //    if (PositionState == 4 && Dete == 1 && ss == 0)
+            //    {
+            //        PositionState = 2;
+            //        Dete = 2;
+            //        ss = 10;
+            //    }
+            //    if (ss != 0)
+            //    {
+            //        Detection.Stop();
+            //        switch (ss)
+            //        {
+            //            case 1:
+            //                //MessageBox.Show("1");
+            //                try
+            //                {
+            //                    pvt.StartPVT(motors, "..\\..\\InputData\\左脚起始步低.txt", ProportionValue, 115, TimeValue);
+            //                }
+            //                catch (Exception e)
+            //                {
+            //                    MessageBox.Show(e.ToString());
+            //                }
+            //                break;
+            //            case 2:
+            //                //MessageBox.Show("2");
+            //                try
+            //                {
+            //                    pvt.StartPVT(motors, "..\\..\\InputData\\左脚起始步高.txt", ProportionValue, 115, MiddleGaitTime);
+            //                }
+            //                catch (Exception e)
+            //                {
+            //                    MessageBox.Show(e.ToString());
+            //                }
+            //                break;
+            //            case 3:
+            //                //MessageBox.Show("3");
+            //                try
+            //                {
+            //                    pvt.StartPVT(motors, "..\\..\\InputData\\左脚在前低到右脚前伸低.txt", ProportionValue, 115, TimeValue);
+            //                }
+            //                catch (Exception e)
+            //                {
+            //                    MessageBox.Show(e.ToString());
+            //                }
+            //                break;
+            //            case 4:
+            //                //MessageBox.Show("4");
+            //                try
+            //                {
+            //                    pvt.StartPVT(motors, "..\\..\\InputData\\左脚在前低到右脚前伸高.txt", ProportionValue, 115, MiddleGaitTime);
+            //                }
+            //                catch (Exception e)
+            //                {
+            //                    MessageBox.Show(e.ToString());
+            //                }
+            //                break;
+            //            case 5:
+            //                //MessageBox.Show("5");
+            //                try
+            //                {
+            //                    pvt.StartPVT(motors, "..\\..\\InputData\\左脚在前高到右脚前伸低.txt", ProportionValue, 115, MiddleGaitTime);
+            //                }
+            //                catch (Exception e)
+            //                {
+            //                    MessageBox.Show(e.ToString());
+            //                }
+            //                break;
+            //            case 6:
+
+            //                //MessageBox.Show("6");
+            //                try
+            //                {
+            //                    pvt.StartPVT(motors, "..\\..\\InputData\\左脚在前高到右脚前伸高.txt", ProportionValue, 115, LongGiatTime);
+            //                }
+            //                catch (Exception e)
+            //                {
+            //                    MessageBox.Show(e.ToString());
+            //                }
+            //                break;
+            //            case 7:
+            //                //MessageBox.Show("7");
+            //                try
+            //                {
+            //                    pvt.StartPVT(motors, "..\\..\\InputData\\右脚在前低到左脚前伸低.txt", ProportionValue, 115, TimeValue);
+            //                }
+            //                catch (Exception e)
+            //                {
+            //                    MessageBox.Show(e.ToString());
+            //                }
+            //                break;
+            //            case 8:
+
+            //                //MessageBox.Show("8");
+            //                try
+            //                {
+            //                    pvt.StartPVT(motors, "..\\..\\InputData\\右脚在前低到左脚前伸高.txt", ProportionValue, 115, MiddleGaitTime);
+            //                }
+            //                catch (Exception e)
+            //                {
+            //                    MessageBox.Show(e.ToString());
+            //                }
+            //                break;
+            //            case 9:
+            //                //MessageBox.Show("9");
+            //                try
+            //                {
+            //                    pvt.StartPVT(motors, "..\\..\\InputData\\右脚在前高到左脚前伸低.txt", ProportionValue, 115, MiddleGaitTime);
+            //                }
+            //                catch (Exception e)
+            //                {
+            //                    MessageBox.Show(e.ToString());
+            //                }
+            //                break;
+            //            case 10:
+            //                //MessageBox.Show("10");
+            //                try
+            //                {
+            //                    pvt.StartPVT(motors, "..\\..\\InputData\\右脚在前高到左脚前伸高.txt", ProportionValue, 115, LongGiatTime);
+            //                }
+            //                catch (Exception e)
+            //                {
+            //                    MessageBox.Show(e.ToString());
+            //                }
+            //                break;
+            //            case 11:
+            //                MessageBox.Show("11");
+            //                try
+
+
+            //                {
+            //                    pvt.StartPVT(motors, "..\\..\\InputData\\左脚向前低收步.txt", ProportionValue, 115, TimeValue);
+            //                }
+            //                catch (Exception e)
+            //                {
+            //                    MessageBox.Show(e.ToString());
+            //                }
+            //                break;
+            //            case 12:
+            //                MessageBox.Show("12");
+            //                try
+            //                {
+            //                    pvt.StartPVT(motors, "..\\..\\InputData\\左脚向前高收步.txt", ProportionValue, 115, TimeValue);
+            //                }
+            //                catch (Exception e)
+            //                {
+            //                    MessageBox.Show(e.ToString());
+            //                }
+            //                break;
+            //            default:
+            //                break;
+            //        }
+            //        ss = 0;
+            //        Detection.Start();
+            //    }
+            //    Thread.Sleep(100);
+            //}
         }
 
         private void Window_Closed(object sender, EventArgs e)

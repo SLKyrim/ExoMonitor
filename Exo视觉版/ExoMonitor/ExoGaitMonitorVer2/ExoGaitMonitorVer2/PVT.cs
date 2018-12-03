@@ -12,7 +12,7 @@ namespace ExoGaitMonitorVer2
     class PVT
     {
 
-        public void StartPVT(Motors motors,  string adress,double unit,int timevalue1,int timevalue2)
+        public void StartPVT(Motors motors, string adress,double unit,int timevalue1,int timevalue2)
         {
             #region 
             //计算轨迹位置，速度和时间间隔序列

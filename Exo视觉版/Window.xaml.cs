@@ -399,22 +399,22 @@ namespace Intel.RealSense
                     //write_point_to_txt(pcx, pcy, pcz, "valid_pc");
                     //write_point_to_txt_1(bpa, bpb, bpc, "best_plane");
 
-                    //obsize_x.Content = size_x.ToString("f2");
-                    //obsize_y.Content = size_y.ToString("f2");
-                    //obsize_z.Content = size_z.ToString("f2");
-                    //obdist_y.Content = dist_y.ToString("f2");
+                    obsize_x.Content = size_x.ToString("f2");
+                    obsize_y.Content = size_y.ToString("f2");
+                    obsize_z.Content = size_z.ToString("f2");
+                    obdist_y.Content = dist_y.ToString("f2");
 
-                    //var bytes = new byte[HEIGHT * WIDTH];
-                    //for (int i = 0; i < HEIGHT; i++)
-                    //{
-                    //    for (int j = 0; j < WIDTH; j++)
-                    //    {
-                    //        bytes[i * WIDTH + j] = todisp[j, i];
-                    //    }
-                    //}
-                    //var bs = BitmapSource.Create(WIDTH, HEIGHT, 300, 300, PixelFormats.Gray8, null, bytes, WIDTH);
-                    //var imgSrc = bs as ImageSource;
-                    //imgObs.Source = imgSrc;
+                    var bytes = new byte[HEIGHT * WIDTH];
+                    for (int i = 0; i < HEIGHT; i++)
+                    {
+                        for (int j = 0; j < WIDTH; j++)
+                        {
+                            bytes[i * WIDTH + j] = todisp[j, i];
+                        }
+                    }
+                    var bs = BitmapSource.Create(WIDTH, HEIGHT, 300, 300, PixelFormats.Gray8, null, bytes, WIDTH);
+                    var imgSrc = bs as ImageSource;
+                    imgObs.Source = imgSrc;
 
                     //write_point_to_txt_2(bytes, "obstacle");
 
