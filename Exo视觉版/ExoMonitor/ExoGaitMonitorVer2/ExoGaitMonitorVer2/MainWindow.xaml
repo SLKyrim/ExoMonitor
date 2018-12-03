@@ -131,9 +131,8 @@
                                 <GroupBox Header="控制模式选择" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
                                     <DockPanel>
                                         <StackPanel>
-                                            <Button x:Name="PVT_Button" Content="PVT Mode" Margin="3" Padding="3" Click="PVT_Button_Click"/>
-                                            <Button x:Name="switch_Button" Content="初次请求视觉反馈" Margin="3" Padding="3" Click="switch_Click" />
-                                            <Button x:Name="test_Button" Content="请求视觉反馈" Margin="3" Padding="3" Click="test_Button_Click" />
+                                            <Button x:Name="switch_Button" Content="请求视觉反馈" Margin="3" Padding="3" Click="switch_Click" />
+                                            <Button x:Name="stop_Button" Content="停止视觉反馈" Margin="3" Padding="3" Click="stop_Button_Click" IsEnabled="False"/>
                                         </StackPanel>
                                     </DockPanel>
                                 </GroupBox>

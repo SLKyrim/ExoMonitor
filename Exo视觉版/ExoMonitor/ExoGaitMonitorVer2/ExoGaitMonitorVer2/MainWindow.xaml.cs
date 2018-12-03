@@ -148,7 +148,7 @@ namespace ExoGaitMonitorVer2
                 stopWatchTextBlock.Text = stopwatch.ElapsedMilliseconds.ToString(); // 秒表文本显示【以毫秒为单位】
 
                 // 向深度相机请求视觉反馈
-                string msg = "向服务端请求视觉反馈";
+                string msg = "外骨骼向服务端请求视觉反馈";
 
                 byte[] buffer = Encoding.Default.GetBytes(msg);
                 //lock (sendStream)
@@ -177,7 +177,6 @@ namespace ExoGaitMonitorVer2
             emergencyStopButton.IsEnabled = true;
             getZeroPointButton.IsEnabled = false;
             zeroPointSetButton.IsEnabled = false;
-            PVT_Button.IsEnabled = false;
 
             angleSetTextBox.IsReadOnly = true;
             motorNumberTextBox.IsReadOnly = true;
@@ -189,7 +188,7 @@ namespace ExoGaitMonitorVer2
             motors.ampObj[i].PositionActual = 0;
 
             manumotive.angleSetStart(motors, Convert.ToDouble(angleSetTextBox.Text), Convert.ToInt16(motorNumberTextBox.Text), statusBar, statusInfoTextBlock,
-                                     angleSetButton, emergencyStopButton, getZeroPointButton, zeroPointSetButton, PVT_Button, angleSetTextBox, motorNumberTextBox);
+                                     angleSetButton, emergencyStopButton, getZeroPointButton, zeroPointSetButton, angleSetTextBox, motorNumberTextBox);
         }
 
         private void emergencyStopButton_Click(object sender, RoutedEventArgs e)//点击【紧急停止】按钮时执行
@@ -223,58 +222,16 @@ namespace ExoGaitMonitorVer2
         {
             angleSetTextBox.IsReadOnly = true;
             motorNumberTextBox.IsReadOnly = true;
-            PVT_Button.IsEnabled = false;
             getZeroPointButton.IsEnabled = false;
             angleSetButton.IsEnabled = false;
             emergencyStopButton.IsEnabled = false;
             zeroPointSetButton.IsEnabled = false;
 
             manumotive.getZeroPointStart(motors, statusBar, statusInfoTextBlock, angleSetButton, emergencyStopButton, getZeroPointButton,
-                                          zeroPointSetButton, PVT_Button, angleSetTextBox, motorNumberTextBox);
+                                         zeroPointSetButton, angleSetTextBox, motorNumberTextBox);
         }
 
         #endregion
-
-        private void PVT_Button_Click(object sender, RoutedEventArgs e)//进入PVT模式
-        {
-            Button bt = sender as Button;
-            double positon = motors.ampObj[3].PositionActual;
-            if (bt.Content.ToString() == "PVT Mode")
-            {
-
-                angleSetButton.IsEnabled = false;
-                getZeroPointButton.IsEnabled = false;
-
-
-                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-                statusInfoTextBlock.Text = "PVT模式";
-                bt.Content = "Stop";
-                if (positon < 100000)
-                {
-                    try
-                    {
-                        pvt.StartPVT(motors, "..\\..\\InputData\\6步新.txt", 360, 45, 15);
-                    }
-                    catch (Exception)
-                    {
-                        MessageBox.Show(e.ToString());
-                    }
-                }
-
-            }
-
-            else
-            {
-                angleSetButton.IsEnabled = true;
-                getZeroPointButton.IsEnabled = true;
-
-                motors.Linkage.HaltMove();
-
-                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
-                statusInfoTextBlock.Text = "PVT控制模式已停止";
-                bt.Content = "PVT Mode";
-            }
-        }
 
         struct IpAndPort
         {
@@ -285,6 +242,7 @@ namespace ExoGaitMonitorVer2
         private void switch_Click(object sender, RoutedEventArgs e)
         {
             switch_Button.IsEnabled = false;
+            stop_Button.IsEnabled = true;
 
             if (IPAdressTextBox.Text.Trim() == string.Empty)
             {
@@ -425,19 +383,19 @@ namespace ExoGaitMonitorVer2
             }
         }
 
-        private void test_Button_Click(object sender, RoutedEventArgs e)
+        private void stop_Button_Click(object sender, RoutedEventArgs e)
         {
-            if (client != null)
-            {
-                //要发送的信息
-                string msg = "向服务端请求视觉反馈";
+            Button bt = sender as Button;
 
-                byte[] buffer = Encoding.Default.GetBytes(msg);
-                //lock (sendStream)
-                //{
-                sendStream.Write(buffer, 0, buffer.Length);
-                //}
-                ComWinTextBox.AppendText(msg + "\n");
+            if (bt.Content.ToString() == "停止视觉反馈")
+            {
+                bt.Content = "继续视觉反馈";
+                stopwatch.Reset();
+                stopwatch.Stop();
+            }
+            else
+            {
+                stopwatch.Start();
             }
         }
     }

@@ -38,7 +38,7 @@ namespace ExoGaitMonitorVer2
 
         public void angleSetStart(Motors motorsIn, double angleSetIn, int motorNumberIn, StatusBar statusBarIn, TextBlock statusInfoTextBlockIn, 
                                   Button angleSetButtonIn, Button emergencyStopButtonIn, Button getZeroPointButtonIn, Button zeroPointSetButtonIn,
-                                  Button PVT_ButtonIn, TextBox angleSetTextBoxIn, TextBox motorNumberTextBoxIn)//设置角度
+                                  TextBox angleSetTextBoxIn, TextBox motorNumberTextBoxIn)//设置角度
         {
             motors = motorsIn;
             angleSet = angleSetIn;
@@ -49,7 +49,6 @@ namespace ExoGaitMonitorVer2
             emergencyStopButton = emergencyStopButtonIn;
             getZeroPointButton = getZeroPointButtonIn;
             zeroPointSetButton = zeroPointSetButtonIn;
-            PVT_Button = PVT_ButtonIn;
             angleSetTextBox = angleSetTextBoxIn;
             motorNumberTextBox = motorNumberTextBoxIn;
 
@@ -186,7 +185,7 @@ namespace ExoGaitMonitorVer2
         #region 回归原点
 
         public void getZeroPointStart(Motors motorsIn, StatusBar statusBarIn, TextBlock statusInfoTextBlockIn, Button angleSetButtonIn, Button emergencyStopButtonIn, Button getZeroPointButtonIn, Button zeroPointSetButtonIn,
-                                      Button PVT_ButtonIn, TextBox angleSetTextBoxIn, TextBox motorNumberTextBoxIn)
+                                      TextBox angleSetTextBoxIn, TextBox motorNumberTextBoxIn)
         {
             motors = motorsIn;
             statusBar = statusBarIn;
@@ -195,7 +194,6 @@ namespace ExoGaitMonitorVer2
             emergencyStopButton = emergencyStopButtonIn;
             getZeroPointButton = getZeroPointButtonIn;
             zeroPointSetButton = zeroPointSetButtonIn;
-            PVT_Button = PVT_ButtonIn;
             angleSetTextBox = angleSetTextBoxIn;
             motorNumberTextBox = motorNumberTextBoxIn;
 
