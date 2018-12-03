@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
+using System.Diagnostics;
 
 namespace ExoGaitMonitorVer2
 {
@@ -97,7 +98,12 @@ namespace ExoGaitMonitorVer2
         private double overStepLength = 0; //跨越的步长
         private double overStepHeight = 0; //跨越的步高
 
+        // 视觉
         Visual visual = new Visual();
+
+        // 秒表
+        private Stopwatch stopwatch = new Stopwatch();
+        const int RESET_TIME = 10000; // 秒表置零阈值，单位：毫秒
         #endregion
 
         #region 界面初始化
@@ -118,8 +124,11 @@ namespace ExoGaitMonitorVer2
 
             DispatcherTimer showParaTimer = new DispatcherTimer(); //显示参数线程
             showParaTimer.Tick += new EventHandler(showParaTimer_Tick);
-            showParaTimer.Interval = TimeSpan.FromMilliseconds(100);
+            showParaTimer.Interval = TimeSpan.FromMilliseconds(40);
             showParaTimer.Start();
+
+            //stopWatchTimer.Tick += new EventHandler(stopWatchTimer_Tick);
+            //stopWatchTimer.Interval = new TimeSpan(0, 0, 0, 0, 40);
         }
 
         private void showParaTimer_Tick(object sender, EventArgs e)//输出步态参数到相应文本框的委托
@@ -131,13 +140,33 @@ namespace ExoGaitMonitorVer2
             lastStepHeightTextBox.Text = lastStepHeight.ToString();
             overStepLengthTextBox.Text = overStepLength.ToString();
             overStepHeightTextBox.Text = overStepHeight.ToString();
+
+            if (Convert.ToInt16(stopWatchTextBlock.Text) > RESET_TIME)
+            {
+                stopwatch.Reset();
+                stopwatch.Start();
+                stopWatchTextBlock.Text = stopwatch.ElapsedMilliseconds.ToString(); // 秒表文本显示【以毫秒为单位】
+
+                // 向深度相机请求视觉反馈
+                string msg = "向服务端请求视觉反馈";
+
+                byte[] buffer = Encoding.Default.GetBytes(msg);
+                //lock (sendStream)
+                //{
+                sendStream.Write(buffer, 0, buffer.Length);
+                //}
+                ComWinTextBox.AppendText(msg + "\n");
+            }
+            else
+            {
+                stopWatchTextBlock.Text = stopwatch.ElapsedMilliseconds.ToString(); // 秒表文本显示【以毫秒为单位】
+            }
         }
 
         private void Window_Closed(object sender, EventArgs e)
         {
-
+            this.Close();
         }
-
         #endregion
 
         #region 手动操作设置 Manumotive
@@ -281,6 +310,9 @@ namespace ExoGaitMonitorVer2
             sendStream = client.GetStream();
             Thread thread = new Thread(ListenerServer);
             thread.Start();
+
+            // 秒表开始
+            stopwatch.Start();
         }
 
         private void btnSend_Click(object sender, RoutedEventArgs e)
@@ -322,7 +354,7 @@ namespace ExoGaitMonitorVer2
                     {
                         return;
                     }
-                    ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "从服务端发来信息：" + Encoding.Default.GetString(buffer, 0, readSize) + "\n");
+                    //ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "从服务端发来信息：" + Encoding.Default.GetString(buffer, 0, readSize) + "\n");
 
                     nStep = Convert.ToInt16(Math.Ceiling(Convert.ToDouble(buffer[1]) / 2)); // 任豪步态normal两步算一步，故除以2向上取整
                     lastStepLength = (buffer[2] << 8) | buffer[3];
@@ -331,6 +363,8 @@ namespace ExoGaitMonitorVer2
                     overStepHeight = (buffer[8] << 8) | buffer[9];
                     normalStepHeight = 100;
                     normalStepLength = 400;
+
+                    ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "从服务端发来信息：" + lastStepLength.ToString() + lastStepHeight.ToString() + overStepLength.ToString() + overStepHeight.ToString() + "\n");
 
                     // 将单位转换为米(m)
                     normalStepLength = normalStepLength / 1000;

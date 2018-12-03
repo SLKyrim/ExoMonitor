@@ -375,6 +375,8 @@ namespace Intel.RealSense
                         overStepHeight = 0;
                     }
 
+                    ComWinTextBox.AppendText("发送给客户端数据：" + lastStepLength.ToString() + lastStepHeight.ToString() + overStepLength.ToString() + overStepHeight.ToString() +"\n");
+
                     //jiang
                     ethbuf[0] = 0xAA;   //起始标志
                     ethbuf[1] = (byte)nStep;
@@ -391,8 +393,8 @@ namespace Intel.RealSense
                     //将ethbuf通过网络发送出去
                     NetworkStream sendStream = client.GetStream();//获得用于数据传输的流
                     sendStream.Write(ethbuf, 0, ethbuf.Length);//最终写入流中
-                    string showmsg = Encoding.Default.GetString(ethbuf, 0, ethbuf.Length);
-                    ComWinTextBox.AppendText("发送给客户端数据：" + showmsg + "\n");
+                    //string showmsg = Encoding.Default.GetString(ethbuf, 0, ethbuf.Length);
+                    //ComWinTextBox.AppendText("发送给客户端数据：" + showmsg + "\n");
 
                     //write_point_to_txt(pcx, pcy, pcz, "valid_pc");
                     //write_point_to_txt_1(bpa, bpb, bpc, "best_plane");
@@ -716,6 +718,8 @@ namespace Intel.RealSense
 
         private void switch_Click(object sender, RoutedEventArgs e)
         {
+            switch_Button.IsEnabled = false;
+
             if (IPAdressTextBox.Text.Trim() == string.Empty)
             {
                 ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "请填入服务器IP地址\n");

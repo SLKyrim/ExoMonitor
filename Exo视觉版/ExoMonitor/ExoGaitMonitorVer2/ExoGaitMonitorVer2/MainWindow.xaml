@@ -220,6 +220,9 @@
 
                                     </StackPanel>
                                 </GroupBox>
+
+                                <TextBlock x:Name="stopWatchTextBlock" Height="20" TextWrapping="Wrap" VerticalAlignment="Center" Margin="5">0</TextBlock>
+                                
                             </StackPanel>
                         </GroupBox>
                     </ScrollViewer>
