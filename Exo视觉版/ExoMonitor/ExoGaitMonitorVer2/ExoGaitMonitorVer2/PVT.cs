@@ -20,7 +20,7 @@ namespace ExoGaitMonitorVer2
            
             string[] ral = File.ReadAllLines(adress, Encoding.Default); //相对目录是在bin/Debug下，所以要回溯到上两级目录
             int lineCounter = ral.Length; //获取步态数据行数
-            string[] col = (ral[0] ?? string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] col = (ral[0] ?? string.Empty).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             int colCounter = col.Length; //获取步态数据列数
             double[,] pos0 = new double[lineCounter, colCounter]; //原始位置数据
             double[,] vel = new double[lineCounter, colCounter]; //速度
@@ -38,7 +38,7 @@ namespace ExoGaitMonitorVer2
                     
                 
                 
-                string[] str = (ral[i] ?? string.Empty).Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] str = (ral[i] ?? string.Empty).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 for (int j = 0; j < colCounter; j++)
                 {
                     pos0[i, j] = double.Parse(str[j]) / (unit / motors.RATIO) * motors.userUnits[j] * -1;

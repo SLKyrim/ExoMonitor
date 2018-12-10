@@ -1,1 +1,1 @@
-Window.xaml.cs 放在路径【视觉Csharp\cs-tutorial-2-capture】下
+【Window.xaml.cs】和【Window.xaml】放在路径【视觉Csharp\cs-tutorial-2-capture】下

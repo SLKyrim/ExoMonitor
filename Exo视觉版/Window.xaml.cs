@@ -85,7 +85,7 @@ namespace Intel.RealSense
 
                 //初始化定时器
                 timer1.Tick += new EventHandler(timer1_cycle);
-                timer1.Interval = new TimeSpan(0, 0, 0, 0, 200);
+                timer1.Interval = new TimeSpan(0, 0, 0, 0, 1000);
             
 
                 pipeline = new Pipeline();
@@ -114,9 +114,6 @@ namespace Intel.RealSense
             }
 
             InitializeComponent();
-
-            
-
         }
 
         public void timer1_cycle(object sender, EventArgs e)
@@ -138,16 +135,18 @@ namespace Intel.RealSense
                 var dframe = frames.DepthFrame;
                 dframe.CopyTo(depth);
 
+                //Write_Flag = true;
 
-                
                 //是否开始识别
                 if (Write_Flag == true)
                 {
+                    Write_Flag = false;
+
                     //获取有效空间范围内的深度并转换为点云
                     int pc_cnt = 0;
                     for (int i = 0; i < W_H; i++)
                     {
-                        if (depth[i] > 400 && depth[i] < 3000)
+                        if (depth[i] > 400 && depth[i] < 6000)
                         {
                             ptx[pc_cnt] = (((i % WIDTH) - colorIntrinsics.ppx) / colorIntrinsics.fx) * depth[i];
                             pty[pc_cnt] = (((i / WIDTH) - colorIntrinsics.ppy) / colorIntrinsics.fy) * depth[i];
@@ -252,7 +251,8 @@ namespace Intel.RealSense
                         var cc_values = cc[key];
                         foreach (var val in cc_values)
                         {
-                            var d = val.X * val.X + (val.Y - 320) * (val.Y - 320);
+                            var d = (val.X-480) * (val.X-480) + (val.Y - 320) * (val.Y - 320);
+                            //var d = val.Y * val.Y + (val.X - 320) * (val.X - 320);
                             if (dist1[dist_cnt] == 0)
                             {
                                 dist1[dist_cnt] = d;
@@ -281,7 +281,7 @@ namespace Intel.RealSense
 
                     //将障碍物转换为点云
                     var obs_depth = cc[dist_key[index]];
-                    obsize_cnt.Content = obs_depth.Count.ToString();
+                    //obsize_cnt.Content = obs_depth.Count.ToString();
                     double[] obs_pcx = new double[obs_depth.Count];
                     double[] obs_pcy = new double[obs_depth.Count];
                     double[] obs_pcz = new double[obs_depth.Count];
@@ -349,7 +349,7 @@ namespace Intel.RealSense
                     if (((int)dist_y - Dmin) % Lnormal <= 80)
                     {
                         // 若最后一步小于80则使最后一步步长等于80
-                        lastStepLength = 80; 
+                        lastStepLength = 80;
                     }
                     else
                     {
@@ -375,7 +375,7 @@ namespace Intel.RealSense
                         overStepHeight = 0;
                     }
 
-                    ComWinTextBox.AppendText("发送给客户端数据：" + lastStepLength.ToString() + lastStepHeight.ToString() + overStepLength.ToString() + overStepHeight.ToString() +"\n");
+                    ComWinTextBox.AppendText("Send to Exoskeleton：" + lastStepLength.ToString() + lastStepHeight.ToString() + overStepLength.ToString() + overStepHeight.ToString() + "\n");
 
                     //jiang
                     ethbuf[0] = 0xAA;   //起始标志
@@ -396,8 +396,8 @@ namespace Intel.RealSense
                     //string showmsg = Encoding.Default.GetString(ethbuf, 0, ethbuf.Length);
                     //ComWinTextBox.AppendText("发送给客户端数据：" + showmsg + "\n");
 
-                    //write_point_to_txt(pcx, pcy, pcz, "valid_pc");
-                    //write_point_to_txt_1(bpa, bpb, bpc, "best_plane");
+                    ////write_point_to_txt(pcx, pcy, pcz, "valid_pc");
+                    ////write_point_to_txt_1(bpa, bpb, bpc, "best_plane");
 
                     obsize_x.Content = size_x.ToString("f2");
                     obsize_y.Content = size_y.ToString("f2");
@@ -417,8 +417,6 @@ namespace Intel.RealSense
                     imgObs.Source = imgSrc;
 
                     //write_point_to_txt_2(bytes, "obstacle");
-
-                    Write_Flag = false;
                 }
 
                 var colorized_depth = colorizer.Colorize(frames.DepthFrame);
@@ -722,12 +720,12 @@ namespace Intel.RealSense
 
             if (IPAdressTextBox.Text.Trim() == string.Empty)
             {
-                ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "请填入服务器IP地址\n");
+                ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Please enter the server IP address\n");
                 return;
             }
             if (PortTextBox.Text.Trim() == string.Empty)
             {
-                ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "请填入服务器端口号\n");
+                ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Please enter the server port\n");
                 return;
             }
             Thread thread = new Thread(reciveAndListener);
@@ -745,11 +743,11 @@ namespace Intel.RealSense
             server = new TcpListener(ip, int.Parse(ipHePort.Port));
             server.Start();//启动监听
 
-            ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "服务端开启侦听....\n");
+            ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Server starts listening...\n");
 
             //获取连接的客户d端的对象
             client = server.AcceptTcpClient();
-            ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "有客户端请求连接，连接已建立！\n");//AcceptTcpClient 是同步方法，会阻塞进程，得到连接对象后才会执行这一步  
+            ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Client requests connection. Connection established!\n");//AcceptTcpClient 是同步方法，会阻塞进程，得到连接对象后才会执行这一步  
 
             //获得流
             NetworkStream reciveStream = client.GetStream();
@@ -780,7 +778,7 @@ namespace Intel.RealSense
                 }
                 catch
                 {
-                    ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "\n 出现异常：连接被迫关闭");
+                    ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "\n An exception has occurred: the connection was forced to close");
                     break;
                 }
             } while (true);

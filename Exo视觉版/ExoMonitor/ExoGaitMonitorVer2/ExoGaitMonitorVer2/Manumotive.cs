@@ -29,7 +29,7 @@ namespace ExoGaitMonitorVer2
 
         const double FAST_VEL = 60000; //设置未到目标角度时较快的速度
         const double SLOW_VEL = 10000; //设置快到目标角度时较慢的速度
-        const double ORIGIN_POINT = 2; //原点阈值
+        const double ORIGIN_POINT = 1; //原点阈值
         const double TURN_POINT = 10; //快速转慢速的转变点
 
         #endregion
@@ -114,7 +114,6 @@ namespace ExoGaitMonitorVer2
                     emergencyStopButton.IsEnabled = false;
                     getZeroPointButton.IsEnabled = true;
                     zeroPointSetButton.IsEnabled = true;
-                    PVT_Button.IsEnabled = true;
 
                     angleSetTextBox.IsReadOnly = false;
                     motorNumberTextBox.IsReadOnly = false;
@@ -167,7 +166,6 @@ namespace ExoGaitMonitorVer2
                     emergencyStopButton.IsEnabled = false;
                     getZeroPointButton.IsEnabled = true;
                     zeroPointSetButton.IsEnabled = true;
-                    PVT_Button.IsEnabled = true;
 
                     angleSetTextBox.IsReadOnly = false;
                     motorNumberTextBox.IsReadOnly = false;
@@ -206,7 +204,7 @@ namespace ExoGaitMonitorVer2
         private void getZeroPointTimer_Tick(object sender, EventArgs e)//回归原点的委托
         {
             statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-            statusInfoTextBlock.Text = "正在回归原点";
+            statusInfoTextBlock.Text = "Returning to Origin";
 
 
 
@@ -279,7 +277,7 @@ namespace ExoGaitMonitorVer2
             if (Math.Abs(motors.ampObjAngleActual[0]) < ORIGIN_POINT && Math.Abs(motors.ampObjAngleActual[1]) < ORIGIN_POINT && Math.Abs(motors.ampObjAngleActual[2]) < ORIGIN_POINT && Math.Abs(motors.ampObjAngleActual[3]) < ORIGIN_POINT)
             {
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
-                statusInfoTextBlock.Text = "回归原点完毕";
+                statusInfoTextBlock.Text = "Origin Returned";
                 motors.profileSettingsObj.ProfileType = CML_PROFILE_TYPE.PROFILE_TRAP;
                 for (int i = 0; i < motors.motor_num; i++)
                 {
@@ -292,7 +290,6 @@ namespace ExoGaitMonitorVer2
                 emergencyStopButton.IsEnabled = false;
                 zeroPointSetButton.IsEnabled = false;
                 getZeroPointButton.IsEnabled = true;
-                PVT_Button.IsEnabled = true;
 
                 angleSetTextBox.IsReadOnly = false;
                 motorNumberTextBox.IsReadOnly = false;

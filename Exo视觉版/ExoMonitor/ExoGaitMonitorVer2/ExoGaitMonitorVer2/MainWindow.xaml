@@ -6,14 +6,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ExoGaitMonitorVer2"
         mc:Ignorable="d" WindowStartupLocation="CenterScreen"
-        Title="外骨骼控制界面" Icon="Images/SingleLong.png" 
+        Title="Exoskeleton Monitor" Icon="Images/SingleLong.png" 
         Height="730" Width="1000" MinHeight="600" MinWidth="1000" 
         Loaded="Window_Loaded" Closed="Window_Closed">
     <DockPanel Background="White">
         <!--状态栏开始-->
         <StatusBar DockPanel.Dock="Bottom" x:Name="statusBar" Background="#FF007ACC" Padding="2">
             <StatusBarItem HorizontalAlignment="Left">
-                <TextBlock x:Name="statusInfoTextBlock" Foreground="White"><Run Text="外骨骼控制界面"/></TextBlock>
+                <TextBlock x:Name="statusInfoTextBlock" Foreground="White"><Run Text="Exoskeleton Monitor"/></TextBlock>
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
                 <TextBlock x:Name="timeDateTextBlock" Foreground="White"/>
@@ -26,7 +26,7 @@
             <DockPanel>
                 <!--服务器面板开始-->
                 <Grid DockPanel.Dock="Right" Visibility="Visible">
-                    <GroupBox Name="ParaDispPanel" Header="服务器面板" Margin="1" BorderThickness="1" BorderBrush="#FF7199E0">
+                    <GroupBox Name="ParaDispPanel" Header="TCP Panel" Margin="1" BorderThickness="1" BorderBrush="#FF7199E0">
                         <StackPanel>
 
                             <DockPanel>
@@ -35,8 +35,8 @@
                                         <ColumnDefinition Width="10*"/>
                                         <ColumnDefinition Width="10*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock x:Name="textBlock" VerticalAlignment="Center" Grid.Column="0" Height="23" TextWrapping="Wrap" Margin="5,10,5,0" Text="IP地址"/>
-                                    <TextBox x:Name="IPAdressTextBox" Grid.Column="1" Height="23" TextWrapping="Wrap" Text="192.168.1.107" VerticalAlignment="Center" Margin="5,10,5,0" Width="100"/>
+                                    <TextBlock x:Name="textBlock" VerticalAlignment="Center" Grid.Column="0" Height="23" TextWrapping="Wrap" Margin="5,10,5,0" Text="IP Address"/>
+                                    <TextBox x:Name="IPAdressTextBox" Grid.Column="1" Height="23" TextWrapping="Wrap" Text="172.20.10.11" VerticalAlignment="Center" Margin="5,10,5,0" Width="100"/>
                                 </Grid>
                             </DockPanel>
 
@@ -46,7 +46,7 @@
                                         <ColumnDefinition Width="10*"/>
                                         <ColumnDefinition Width="10*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock x:Name="textBlock1"  VerticalAlignment="Center" Grid.Column="0" Height="23" TextWrapping="Wrap"  Margin="5,10,5,0" Text="端口号"/>
+                                    <TextBlock x:Name="textBlock1"  VerticalAlignment="Center" Grid.Column="0" Height="23" TextWrapping="Wrap"  Margin="5,10,5,0" Text="Port"/>
                                     <TextBox x:Name="PortTextBox"  Grid.Column="1" Height="23" TextWrapping="Wrap" Text="4484" VerticalAlignment="Center" Margin="5,10,5,0" Width="100"/>
                                 </Grid>
                             </DockPanel>
@@ -59,88 +59,16 @@
                                         <ColumnDefinition Width="10*"/>
                                         <ColumnDefinition Width="10*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock x:Name="textBlock2" VerticalAlignment="Center" Grid.Column="0" Height="23" TextWrapping="Wrap"  Margin="5,10,5,0" Text="发送目标"/>
-                                    <TextBox x:Name="stxtSendMsg"  Grid.Column="1" Height="23" TextWrapping="Wrap" Text="" VerticalAlignment="Center" Margin="5,10,5,0" Width="100"/>
                                 </Grid>
                             </DockPanel>
 
-                            <Button x:Name="btnSend" Content="发送" HorizontalAlignment="Center" Height="23" Width="150" Margin="10,10,10,10" Click="btnSend_Click"/>
+                            <TextBlock x:Name="textBlock3" HorizontalAlignment="Center" TextWrapping="Wrap" Text="Communication Window" Margin="10,10,10,1"/>
+                            <TextBox x:Name="ComWinTextBox" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Center" Height="200" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="190" TextChanged="ComWinTextBox_TextChanged"/>
 
-                            <TextBlock x:Name="textBlock3" HorizontalAlignment="Center" TextWrapping="Wrap" Text="通信窗口" Margin="10,10,10,1"/>
-                            <TextBox x:Name="ComWinTextBox" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Center" Height="350" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="160" TextChanged="ComWinTextBox_TextChanged"/>
-                            <Button x:Name="gait_generator" Content="生成视觉步态" HorizontalAlignment="Center" Height="23" Width="150" Margin="10,10,10,10" Click="gait_generator_Click"/>
-                            <Button x:Name="PVT_visual" Content="执行视觉步态" HorizontalAlignment="Center" Height="23" Width="150" Margin="10,10,10,10" Click="PVT_visual_Click"/>
-                            <Button x:Name="Plot_Button" Content="开始绘图" HorizontalAlignment="Center" Height="23" Width="150" Margin="10,10,10,10" Click="Plot_Button_Click"/>
-                        </StackPanel>
-                    </GroupBox>
-                </Grid>
-                <!--服务器面板结束-->
+                            <GroupBox Header="Visual Feedback Gait" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
+                                <StackPanel>
 
-                <!--控制面板开始-->
-                <Grid Visibility="Visible" DockPanel.Dock="Left">
-                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                        <GroupBox Header="控制面板" Grid.Column="1" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
-                            <StackPanel>
-
-                                <GroupBox Header="手动操作设置" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
-                                    <DockPanel>
-                                        <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="10*"/>
-                                                <ColumnDefinition Width="10*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Text="角度设定(  °  )" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
-                                            <TextBox x:Name="angleSetTextBox" Grid.Column="1" Padding="1" Width="80" Text="-30"/>
-                                        </Grid>
-                                        <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="10*"/>
-                                                <ColumnDefinition Width="10*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Text="电机号数(1-4)" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
-                                            <TextBox x:Name="motorNumberTextBox" Grid.Column="1" Padding="1" Width="80" Text="1"/>
-                                        </Grid>
-                                        <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="10*"/>
-                                                <ColumnDefinition Width="10*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Button x:Name="angleSetButton" Grid.Column="0" Margin="1" Height="20" Click="angleSetButton_Click" Content="执行命令"/>
-                                            <Button x:Name="emergencyStopButton" Grid.Column="1" IsEnabled="False" Margin="1" Height="20" Click="emergencyStopButton_Click" Content="紧急停止"/>
-                                        </Grid>
-                                        <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="10*"/>
-                                                <ColumnDefinition Width="10*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Button x:Name="zeroPointSetButton" Grid.Column="0" IsEnabled="False" Margin="1,1,1,0" Click="zeroPointSetButton_Click" Height="22" VerticalAlignment="Top" Content="设置原点"/>
-                                            <Button x:Name="getZeroPointButton" Grid.Column="1" Margin="1" Height="20" Click="getZeroPointButton_Click" Content="回归原点"/>
-                                        </Grid>
-                                        <Grid DockPanel.Dock="Top" Width="200">
-                                            <StackPanel Margin="0">
-                                                <TextBlock Foreground="#FF0078D7" FontSize="16" Padding="5"><Run Text="电机描述："/></TextBlock>
-                                                <TextBlock Padding="5"><Run Text="电机1左膝，向后弯曲角为负"/></TextBlock>
-                                                <TextBlock Padding="5"><Run Text="电机2左髋，向后弯曲角为负"/></TextBlock>
-                                                <TextBlock Padding="5"><Run Text="电机3右髋，向后弯曲角为正"/></TextBlock>
-                                                <TextBlock Padding="5"><Run Text="电机4右膝，向后弯曲角为正"/></TextBlock>
-                                            </StackPanel>
-                                        </Grid>
-                                    </DockPanel>
-                                </GroupBox>
-
-                                <GroupBox Header="控制模式选择" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
-                                    <DockPanel>
-                                        <StackPanel>
-                                            <Button x:Name="switch_Button" Content="请求视觉反馈" Margin="3" Padding="3" Click="switch_Click" />
-                                            <Button x:Name="stop_Button" Content="停止视觉反馈" Margin="3" Padding="3" Click="stop_Button_Click" IsEnabled="False"/>
-                                        </StackPanel>
-                                    </DockPanel>
-                                </GroupBox>
-
-                                <GroupBox Header="视觉反馈步态" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
-                                    <StackPanel>
-                                        
-                                        <DockPanel>
+                                    <!--<DockPanel>
                                             <Grid Margin="2,0,0,0" DockPanel.Dock="Top">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="10*"/>
@@ -193,34 +121,131 @@
                                                 <TextBlock x:Name="lastStepHeighttextBlock" VerticalAlignment="Center" Grid.Column="0" Height="20" TextWrapping="Wrap" Margin="3" Text="最后一步步高"/>
                                                 <TextBox x:Name="lastStepHeightTextBox" Grid.Column="1" Height="20" TextWrapping="Wrap" IsReadOnly="True" Text="" VerticalAlignment="Center" Margin="3" Width="100"/>
                                             </Grid>
-                                        </DockPanel>
+                                        </DockPanel>-->
 
-                                        <DockPanel>
-                                            <Grid Margin="2,0,0,0" DockPanel.Dock="Top">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="10*"/>
-                                                    <ColumnDefinition Width="10*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="overStepLengthtextBlock" VerticalAlignment="Center" Grid.Column="0" Height="20" TextWrapping="Wrap" Margin="3" Text="跨越步长"/>
-                                                <TextBox x:Name="overStepLengthTextBox" Grid.Column="1" Height="20" TextWrapping="Wrap" IsReadOnly="True" Text="" VerticalAlignment="Center" Margin="3" Width="100"/>
-                                            </Grid>
-                                        </DockPanel>
+                                    <DockPanel>
+                                        <Grid Margin="2,0,0,0" DockPanel.Dock="Top">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="10*"/>
+                                                <ColumnDefinition Width="10*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="overStepLengthtextBlock" VerticalAlignment="Center" Grid.Column="0" Height="20" TextWrapping="Wrap" Margin="3" Text="Step Length"/>
+                                            <TextBox x:Name="overStepLengthTextBox" Grid.Column="1" Height="20" TextWrapping="Wrap" IsReadOnly="True" Text="" VerticalAlignment="Center" Margin="3" Width="80"/>
+                                        </Grid>
+                                    </DockPanel>
 
-                                        <DockPanel>
-                                            <Grid Margin="2,0,0,0" DockPanel.Dock="Top">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="10*"/>
-                                                    <ColumnDefinition Width="10*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="overStepHeighttextBlock" VerticalAlignment="Center" Grid.Column="0" Height="20" TextWrapping="Wrap" Margin="3" Text="跨越步高"/>
-                                                <TextBox x:Name="overStepHeightTextBox" Grid.Column="1" Height="20" TextWrapping="Wrap" IsReadOnly="True" Text="" VerticalAlignment="Center" Margin="3" Width="100"/>
-                                            </Grid>
-                                        </DockPanel>
+                                    <DockPanel>
+                                        <Grid Margin="2,0,0,0" DockPanel.Dock="Top">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="10*"/>
+                                                <ColumnDefinition Width="10*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="overStepHeighttextBlock" VerticalAlignment="Center" Grid.Column="0" Height="20" TextWrapping="Wrap" Margin="3" Text="Step Height"/>
+                                            <TextBox x:Name="overStepHeightTextBox" Grid.Column="1" Height="20" TextWrapping="Wrap" IsReadOnly="True" Text="" VerticalAlignment="Center" Margin="3" Width="{Binding Width, ElementName=overStepLengthTextBox}"/>
+                                        </Grid>
+                                    </DockPanel>
 
+                                    <DockPanel>
+                                        <Grid Margin="2,0,0,0" DockPanel.Dock="Top">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="10*"/>
+                                                <ColumnDefinition Width="10*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="countTextBlock" VerticalAlignment="Center" Grid.Column="0" Height="20" TextWrapping="Wrap" Margin="3" Text="Fbk Counter"/>
+                                            <TextBox x:Name="countTextBox" Grid.Column="1" Height="20" TextWrapping="Wrap" IsReadOnly="True" Text="" VerticalAlignment="Center" Margin="3" Width="{Binding Width, ElementName=overStepLengthTextBox}" TextChanged="countTextBox_TextChanged"/>
+                                        </Grid>
+                                    </DockPanel>
+
+                                    <DockPanel>
+                                        <Grid Margin="2,0,0,0" DockPanel.Dock="Top">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="10*"/>
+                                                <ColumnDefinition Width="10*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="gaitTypeTextBlock" VerticalAlignment="Center" Grid.Column="0" Height="20" TextWrapping="Wrap" Margin="3" Text="Gait Type"/>
+                                            <TextBox x:Name="gaitTypeTextBox" Grid.Column="1" Height="20" TextWrapping="Wrap" IsReadOnly="True" Text="" VerticalAlignment="Center" Margin="3" Width="{Binding Width, ElementName=overStepLengthTextBox}"/>
+                                        </Grid>
+                                    </DockPanel>
+
+                                </StackPanel>
+                            </GroupBox>
+
+                            <GroupBox Header="Visual Control" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
+                                <DockPanel>
+                                    <StackPanel>
+                                        <Button x:Name="Plot_Button" Content="Start Plot" Margin="3" Padding="3" Click="Plot_Button_Click"/>
+                                        <Button x:Name="switch_Button" Content="Start" Margin="3" Padding="3" Click="switch_Click" IsEnabled="False"/>
+                                        <Button x:Name="stop_Button" Content="Stop Visual Feedback" Margin="3" Padding="3" Click="stop_Button_Click" IsEnabled="False"/>
                                     </StackPanel>
+                                </DockPanel>
+                            </GroupBox>
+
+                            <!--<Button x:Name="gait_generator" Content="生成视觉步态" HorizontalAlignment="Center" Height="23" Width="150" Margin="10,10,10,10" Click="gait_generator_Click"/>-->
+                            <!--<Button x:Name="PVT_visual" Content="执行视觉步态" HorizontalAlignment="Center" Height="23" Width="150" Margin="10,10,10,10" Click="PVT_visual_Click"/>-->
+
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+                <!--服务器面板结束-->
+
+                <!--控制面板开始-->
+                <Grid Visibility="Visible" DockPanel.Dock="Left">
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                        <GroupBox Header="Control Panel" Grid.Column="1" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
+                            <StackPanel>
+
+                                <GroupBox Header="Manual Operation Setting" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
+                                    <DockPanel>
+                                        <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="10*"/>
+                                                <ColumnDefinition Width="10*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Angle Set   ( ° )" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                            <TextBox x:Name="angleSetTextBox" Grid.Column="1" Padding="1" Width="80" Text="-30"/>
+                                        </Grid>
+                                        <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="10*"/>
+                                                <ColumnDefinition Width="10*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Motor ID  (1-4)" VerticalAlignment="Center" Grid.Column="0" Margin="1,0,5,0"/>
+                                            <TextBox x:Name="motorNumberTextBox" Grid.Column="1" Padding="1" Width="80" Text="1"/>
+                                        </Grid>
+                                        <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="10*"/>
+                                                <ColumnDefinition Width="10*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Button x:Name="angleSetButton" Grid.Column="0" Margin="1" Height="20" Click="angleSetButton_Click" Content="Execute"/>
+                                            <Button x:Name="emergencyStopButton" Grid.Column="1" IsEnabled="False" Margin="1" Height="20" Click="emergencyStopButton_Click" Content="Stop"/>
+                                        </Grid>
+                                        <Grid Margin="2,2,0,0" DockPanel.Dock="Top">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="10*"/>
+                                                <ColumnDefinition Width="10*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Button x:Name="zeroPointSetButton" Grid.Column="0" IsEnabled="False" Margin="1,1,1,0" Click="zeroPointSetButton_Click" Height="22" VerticalAlignment="Top" Content="Origin Set"/>
+                                            <Button x:Name="getZeroPointButton" Grid.Column="1" Margin="1" Height="20" Click="getZeroPointButton_Click" Content="Origin"/>
+                                        </Grid>
+                                        <Grid DockPanel.Dock="Top" Width="200">
+                                            <!--<StackPanel Margin="0">
+                                                <TextBlock Foreground="#FF0078D7" FontSize="16" Padding="5"><Run Text="电机描述："/></TextBlock>
+                                                <TextBlock Padding="5"><Run Text="电机1左膝，向后弯曲角为负"/></TextBlock>
+                                                <TextBlock Padding="5"><Run Text="电机2左髋，向后弯曲角为负"/></TextBlock>
+                                                <TextBlock Padding="5"><Run Text="电机3右髋，向后弯曲角为正"/></TextBlock>
+                                                <TextBlock Padding="5"><Run Text="电机4右膝，向后弯曲角为正"/></TextBlock>
+                                            </StackPanel>-->
+                                        </Grid>
+                                    </DockPanel>
                                 </GroupBox>
 
-                                <TextBlock x:Name="stopWatchTextBlock" Height="20" TextWrapping="Wrap" VerticalAlignment="Center" Margin="5">0</TextBlock>
+
+
+
+
+                                <!--<TextBlock x:Name="stopWatchStartTextBlock" Height="20" TextWrapping="Wrap" VerticalAlignment="Center" Margin="5">0</TextBlock>-->
+                                <!--<TextBlock x:Name="stopWatchTextBlock" Height="20" TextWrapping="Wrap" VerticalAlignment="Center" Margin="5">0</TextBlock>-->
                                 
                             </StackPanel>
                         </GroupBox>
@@ -232,12 +257,12 @@
 
                 <!--绘图面板开始-->
                 <Grid>
-                    <GroupBox Header="绘图面板" Grid.Column="1" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
+                    <GroupBox Header="Plot Panel" Grid.Column="1" Margin="1" BorderThickness="{Binding BorderThickness, ElementName=ParaDispPanel}" BorderBrush="{Binding BorderBrush, ElementName=ParaDispPanel}">
                         <d3:ChartPlotter x:Name="PosPlot_total">
                             <d3:ChartPlotter.HorizontalAxis>
                                 <d3:HorizontalIntegerAxis x:Name="PosAx_total"/>
                             </d3:ChartPlotter.HorizontalAxis>
-                            <d3:Header FontFamily="Georgia" Content="关节角度 (Gait Trajectory) [°]"/>
+                            <d3:Header FontFamily="Georgia" Content="Gait Trajectory [°]"/>
                         </d3:ChartPlotter>
                     </GroupBox>
                 </Grid>
