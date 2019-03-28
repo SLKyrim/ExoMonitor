@@ -1,16 +1,21 @@
 clear all;
+
+
 gait_length_normal=0.4;
-gait_length_change=1.006;
+gait_length_change_big=1.006;
 gait_length_change_small=0.153;
 gait_height_normal=0.09;
 gait_height_change=0.177;
 gait_height_finish=0.088;
 gait_height_change_small=0.06;
+
+
+
 [state,a_hl,a_hr,a_kl,a_kr]=gait_start(gait_length_normal,gait_height_normal);
 [state,a_hl_n,a_hr_n,a_kl_n,a_kr_n]=gait_normal(gait_length_normal,gait_height_normal);
 [state,a_hl_c_small,a_hr_c_small,a_kl_c_small,a_kr_c_small]=gait_change(gait_length_change_small,gait_height_change_small,gait_length_normal);%change的最后一个输入参数要和上一个函数的输入步长一致
-[state,a_hl_c,a_hr_c,a_kl_c,a_kr_c]=gait_change(gait_length_change,gait_height_change,gait_length_change_small);%change的最后一个输入参数要和上一个函数的输入步长一致
-[state,a_hl_f,a_hr_f,a_kl_f,a_kr_f]=gait_finish(gait_length_change,gait_height_finish,gait_length_normal,gait_length_change);%finish的最后一个输入参数要和上一个函数的输入步长一致
+[state,a_hl_c,a_hr_c,a_kl_c,a_kr_c]=gait_change(gait_length_change_big,gait_height_change,gait_length_change_small);%change的最后一个输入参数要和上一个函数的输入步长一致
+[state,a_hl_f,a_hr_f,a_kl_f,a_kr_f]=gait_finish(gait_length_change_big,gait_height_finish,gait_length_normal,gait_length_change_big);%finish的最后一个输入参数要和上一个函数的输入步长一致
 a_hl=-1*[a_hl,a_hl_n,a_hl_c_small,a_hl_c,a_hl_f];
 a_hr=[a_hr,a_hr_n,a_hr_c_small,a_hr_c,a_hr_f];
 a_kl=[a_kl,a_kl_n,a_kl_c_small,a_kl_c,a_kl_f];
