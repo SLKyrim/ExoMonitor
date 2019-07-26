@@ -23,16 +23,16 @@ ahr = filtfilt(B, A, a_hr);
 akr = filtfilt(B, A, a_kr); 
 hold on;
 plot(a_kl, 'b');
-plot(akl, 'r');
-
-plot(a_hl, 'b');
-plot(ahl, 'r');
-
-plot(a_hr, 'b');
-plot(ahr, 'r');
-
-plot(a_kr, 'b');
-plot(akr, 'r');
+% %plot(akl, 'r');
+% 
+% plot(a_hl, 'b');
+% %plot(ahl, 'r');
+% 
+% plot(a_hr, 'b');
+% %plot(ahr, 'r');
+% 
+% plot(a_kr, 'b');
+% %plot(akr, 'r');
 grid on;
 start_kl = akl(1:400);
 start_hl = ahl(1:400);

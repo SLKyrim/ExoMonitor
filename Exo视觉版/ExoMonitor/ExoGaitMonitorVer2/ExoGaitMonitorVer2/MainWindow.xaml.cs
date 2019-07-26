@@ -124,7 +124,7 @@ namespace ExoGaitMonitorVer2
         {
             try
             {
-                motors.motors_Init();
+                motors.motors_Init();     //   
                 //cp.plotStart(motors, statusBar, statusInfoTextBlock);
             }
             catch (Exception)
@@ -143,6 +143,17 @@ namespace ExoGaitMonitorVer2
             // 选择调用的步态
             //Thread select_thread = new Thread(Select);
             //select_thread.Start();
+
+            GaitPlanning gp = new GaitPlanning();
+            var b = gp.StartPattern(0.4, 0.09, 201);
+            var d = gp.TransitionPattern(0.4, 0.153, 0.06, 401);
+            var pos = gp.TerminalPattern(0.4, 1.006, 0.088, 201);
+            var hl = pos.Item1;
+            var hr = pos.Item2;
+            var kr = pos.Item3;
+            var kl = pos.Item4;
+
+            var a = 0;
         }
 
         private void showParaTimer_Tick(object sender, EventArgs e)//输出步态参数到相应文本框的委托
@@ -320,7 +331,7 @@ namespace ExoGaitMonitorVer2
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
                 statusInfoTextBlock.Text = "Start";
 
-                pvt.StartPVT(motors, "..\\..\\bin\\Debug\\Once_Step.txt", 360, 20, 20);
+                pvt.StartPVT(motors, "..\\..\\bin\\Debug\\Once_Step.txt", 360, 20, 20);   
 
 
                 //statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
@@ -505,12 +516,12 @@ namespace ExoGaitMonitorVer2
                     zeroPointSetButton.IsEnabled = false;
 
                     manumotive.getZeroPointStart(motors, statusBar, statusInfoTextBlock, angleSetButton, emergencyStopButton, getZeroPointButton,
-                                                 zeroPointSetButton, angleSetTextBox, motorNumberTextBox);
+                                                zeroPointSetButton, angleSetTextBox, motorNumberTextBox);  //   20190725-Hided-2
                     break;
             }
 
 
-            //#region 两步Demo
+            ////#region 两步Demo
             //// 使用时注释掉一步Demo
 
             //#region 两步跨越Demo

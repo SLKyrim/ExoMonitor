@@ -37,15 +37,15 @@ for i=1:401 %求解右膝关节位置
     theat1=acos((l2^2+l^2-l1^2)/(2*l*l2));
     theat2=atan((y0_c(i)-ya_c(i))/(x0_c(i)-xa_c(i)));
     if(xa_c(i)<x0_c(i))
-    x1=real(xa_c(i)+l2*cos(theat2-theat1));
-    x2=real(xa_c(i)+l2*cos(theat2+theat1));
-    y1=real(ya_c(i)+abs(l2*sin(theat2-theat1)));
-    y2=real(ya_c(i)+abs(l2*sin(theat2+theat1)));
+        x1=real(xa_c(i)+l2*cos(theat2-theat1));
+        x2=real(xa_c(i)+l2*cos(theat2+theat1));
+        y1=real(ya_c(i)+abs(l2*sin(theat2-theat1)));
+        y2=real(ya_c(i)+abs(l2*sin(theat2+theat1)));
     else
-       x1=real(xa_c(i)-l2*cos(theat2-theat1));
-    x2=real(xa_c(i)-l2*cos(theat2+theat1));
-    y1=real(ya_c(i)+abs(l2*sin(theat2-theat1)));
-    y2=real(ya_c(i)+abs(l2*sin(theat2+theat1))); 
+        x1=real(xa_c(i)-l2*cos(theat2-theat1));
+        x2=real(xa_c(i)-l2*cos(theat2+theat1));
+        y1=real(ya_c(i)+abs(l2*sin(theat2-theat1)));
+        y2=real(ya_c(i)+abs(l2*sin(theat2+theat1))); 
     end
     xb_c(i)=max(x1,x2);
     yb_c(i)=max(y1,y2);

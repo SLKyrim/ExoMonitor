@@ -12,7 +12,7 @@ ya(i)=0;
 x0(i)=(vb/2)*t(i);%x0,y0为髋关节位置
 y0(i)=(((l1+l2)-sqrt((l1+l2)^2-(S/2)^2))/2)*sin((2*pi/S)*x0(i)+(pi/2))+(l1+l2+sqrt((l1+l2)^2-(S/2)^2))/2;
 xc(i)=vb*t(i);%xc,yc为左脚位置
-yc(i)=(H/2)*sin((2*pi/(S))*xc(i)-(pi/2))+(H/2);
+yc(i)=(H/2)*sin((2*pi/S)*xc(i)-(pi/2))+(H/2);
 end 
 for i=1:201 %求解左膝关节位置
 l=sqrt((xc(i)-x0(i))^2+(yc(i)-y0(i))^2);

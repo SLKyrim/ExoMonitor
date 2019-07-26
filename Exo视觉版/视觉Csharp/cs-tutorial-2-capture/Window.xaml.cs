@@ -17,6 +17,7 @@ using System.IO;
 using System.IO.Ports;
 using System.Net.Sockets;
 using System.Net;
+using System.Timers;
 //using MathNet.Numerics.LinearAlgebra;
 //using MathNet.Numerics.LinearAlgebra.Double;
 
@@ -35,9 +36,9 @@ namespace Intel.RealSense
         private const short HEIGHT = 480;//720;
         static bool Write_Flag = false;
         static int W_H = WIDTH * HEIGHT;
-        
-        
-        static Pipeline  pipeline;
+
+
+        static Pipeline pipeline;
         static Colorizer colorizer;
         static CancellationTokenSource tokenSource = new CancellationTokenSource();
 
@@ -45,8 +46,34 @@ namespace Intel.RealSense
         System.Windows.Threading.DispatcherTimer timer1 = new System.Windows.Threading.DispatcherTimer();
         static PipelineProfile pProfile;
 
+
+        //ushort[] depth = new ushort[W_H];    //640*480
+        Intrinsics colorIntrinsics;
+        Thread newThread;
+
         // TCP
         public delegate void showData(string msg);//通信窗口输出
+        public delegate void delegate1();//定义委托
+
+
+        // 定义约束参数
+        int dsafe = 0;
+        static int dmin = 30;          //预留脚离障碍物的最小距离
+        static int hmin = 30;          //预留脚离障碍物的最小距离
+        static int lmax = 800;         //机器人允许的最大步长
+        static int hmax = 100;         //机器人允许的最大步高
+        static int deltal = 20;        //测量的最大误差
+        static int deltah = 20;        //测量的最大误差
+        static int lnormal = 400;      //正常行走的步长
+        static int hnormal = 100;      //正常行走的步高
+        static int wbody = 400;
+        static int ha = 100;
+        static int lf = 350;
+
+        int pStepLen = 0;
+        int pStepHgt = 0;
+        int Pattern = 0;
+
 
         struct IpAndPort
         {
@@ -59,34 +86,32 @@ namespace Intel.RealSense
         private const int bufferSize = 8000;
 
 
-        static void UploadImage(Image img, VideoFrame frame)
-        {
-            var bytes = new byte[frame.Stride * frame.Height];
-            frame.CopyTo(bytes);
-            var bs = BitmapSource.Create(frame.Width, frame.Height, 300, 300, PixelFormats.Rgb24, null, bytes, frame.Stride);
-            var imgSrc = bs as ImageSource;
-            img.Source = imgSrc;
-            
-        }
 
         public CaptureWindow()
         {
-            
+            InitializeComponent();
+
             try
             {
-                //窗口最大化
-                //WindowState = WindowState.Maximized;
-                //imgColor.Width = WIDTH;
-                //imgColor.Height = HEIGHT;
-                //imgDepth.Width = WIDTH;
-                //imgDepth.Height = HEIGHT;
-                //imgObs.Width = WIDTH;
-                //imgObs.Height = HEIGHT;
+                dsafe = dmin + lnormal + deltal;
+
+                Dsafe.Text = dsafe.ToString()+" mm";
+                Dmin.Text=dmin.ToString() + " mm";
+                Hmin.Text=hmin.ToString() + " mm";
+                Wbody.Text=wbody.ToString() + " mm";
+                Lmax.Text=lmax.ToString() + " mm";
+                Hmax.Text=hmax.ToString() + " mm";
+                DeltaL.Text=deltal.ToString() + " mm";
+                DeltaH.Text=deltah.ToString() + " mm";
+                Ha.Text=ha.ToString() + " mm";
+                Lf.Text=lf.ToString() + " mm";
+                Ln.Text=lnormal.ToString() + " mm";
+                Hn.Text=hnormal.ToString() + " mm";
+
 
                 //初始化定时器
                 timer1.Tick += new EventHandler(timer1_cycle);
-                timer1.Interval = new TimeSpan(0, 0, 0, 0, 1000);
-            
+                timer1.Interval = new TimeSpan(0, 0, 0, 0, 200);
 
                 pipeline = new Pipeline();
                 colorizer = new Colorizer();
@@ -94,18 +119,12 @@ namespace Intel.RealSense
                 var cfg = new Config();
                 cfg.EnableStream(Stream.Depth, WIDTH, HEIGHT);
                 cfg.EnableStream(Stream.Color, WIDTH, HEIGHT, Format.Rgb8);
-                //cfg.EnableStream(Stream.Gyro, Format.Z16);
 
                 pProfile = pipeline.Start(cfg);
                 //var gyro = pProfile.GetStream(Stream.Gyro);
-
-
-                imgColor = new Image();
-                imgDepth = new Image();
-                
-
-                timer1.Start();
-
+                newThread = new Thread(ProcessObs); // 开启新线程
+                newThread.Priority = ThreadPriority.Highest;
+                newThread.Start();
             }
             catch (Exception ex)
             {
@@ -113,321 +132,360 @@ namespace Intel.RealSense
                 Application.Current.Shutdown();
             }
 
-            InitializeComponent();
         }
 
         public void timer1_cycle(object sender, EventArgs e)
         {
             try
             {
+                var start_time = System.Environment.TickCount;
+                timer1.Stop();
+
+                ushort[] depth = new ushort[W_H];
+                //获取深度图像
+                var frames = pipeline.WaitForFrames();
+                var dframe = frames.DepthFrame;
+                dframe.CopyTo(depth);
+                
                 double[] ptx = new double[W_H];    //640*480
                 double[] pty = new double[W_H];    //640*480
                 double[] ptz = new double[W_H];    //640*480
-                ushort[] depth = new ushort[W_H];    //640*480
-
 
                 //获取相机内参                 
                 var stream = (VideoStreamProfile)pProfile.GetStream(Stream.Color);
                 var colorIntrinsics = stream.GetIntrinsics();
 
-                //获取深度图像
-                var frames = pipeline.WaitForFrames();
-                var dframe = frames.DepthFrame;
-                dframe.CopyTo(depth);
 
-                //Write_Flag = true;
-
-                //是否开始识别
-                if (Write_Flag == true)
+                //获取有效空间范围内的深度并转换为点云
+                int pc_cnt = 0;
+                for (int i = 0; i < W_H; i++)
                 {
-                    Write_Flag = false;
-
-                    //获取有效空间范围内的深度并转换为点云
-                    int pc_cnt = 0;
-                    for (int i = 0; i < W_H; i++)
+                    if (depth[i] > 500 && depth[i] < 2500)
                     {
-                        if (depth[i] > 400 && depth[i] < 6000)
+                        ptx[pc_cnt] = (((i % WIDTH) - colorIntrinsics.ppx) / colorIntrinsics.fx) * depth[i];
+                        pty[pc_cnt] = (((i / WIDTH) - colorIntrinsics.ppy) / colorIntrinsics.fy) * depth[i];
+                        ptz[pc_cnt] = depth[i];
+                        pc_cnt++;
+                    }
+                }
+                double[] pcx = new double[pc_cnt];    //640*480
+                double[] pcy = new double[pc_cnt];    //640*480
+                double[] pcz = new double[pc_cnt];    //640*480
+                Array.Copy(ptx, pcx, pc_cnt);
+                Array.Copy(pty, pcy, pc_cnt);
+                Array.Copy(ptz, pcz, pc_cnt);
+
+                //********************************************************
+                //RANSAC地面提取
+                int ITER = 100;
+                double bpa = 0;
+                double bpb = 0;
+                double bpc = 0;
+                int best_count = 0;
+                Random rd = new Random(Guid.NewGuid().GetHashCode());
+                var rd1 = rd.Next(1, pcx.Length);
+                var rd2 = rd.Next(1, pcx.Length);
+                var rd3 = rd.Next(1, pcx.Length);
+                for (int i = 0; i < ITER; i++)
+                {
+                    rd1 = rd.Next(1, pcx.Length);
+                    rd2 = rd.Next(1, pcx.Length);
+                    rd3 = rd.Next(1, pcx.Length);
+                    //拟合直线方程z=ax+by+c
+                    double[] plane = new double[3];
+                    double a = ((pcz[rd1] - pcz[rd2]) * (pcy[rd2] - pcy[rd3]) - (pcz[rd2] - pcz[rd3]) * (pcy[rd1] - pcy[rd2])) / ((pcx[rd1] - pcx[rd2]) * (pcy[rd2] - pcy[rd3]) - (pcx[rd2] - pcx[rd3]) * (pcy[rd1] - pcy[rd2]));
+                    double b = ((pcz[rd1] - pcz[rd2]) - a * (pcx[rd1] - pcx[rd2])) / (pcy[rd1] - pcy[rd2]);
+                    double c = pcz[rd1] - a * pcx[rd1] - b * pcy[rd1];
+
+                    double[] dist = new double[pcx.Length];
+                    int m = 0;
+                    for (int k = 0; k < pcx.Length; k++)
+                    {
+                        dist[k] = Math.Abs(a * pcx[k] + b * pcy[k] + c - pcz[k]);
+                        if (dist[k] < 1.0)
                         {
-                            ptx[pc_cnt] = (((i % WIDTH) - colorIntrinsics.ppx) / colorIntrinsics.fx) * depth[i];
-                            pty[pc_cnt] = (((i / WIDTH) - colorIntrinsics.ppy) / colorIntrinsics.fy) * depth[i];
-                            ptz[pc_cnt] = depth[i];
-                            pc_cnt++;
+                            m++;
                         }
                     }
-                    double[] pcx = new double[pc_cnt];    //640*480
-                    double[] pcy = new double[pc_cnt];    //640*480
-                    double[] pcz = new double[pc_cnt];    //640*480
-                    Array.Copy(ptx, pcx, pc_cnt);
-                    Array.Copy(pty, pcy, pc_cnt);
-                    Array.Copy(ptz, pcz, pc_cnt);
-
-                    //********************************************************
-                    //RANSAC地面提取
-                    int ITER = 200;
-                    double bpa = 0;
-                    double bpb = 0;
-                    double bpc = 0;
-                    int best_count = 0;
-                    Random rd = new Random(Guid.NewGuid().GetHashCode());
-                    var rd1 = rd.Next(1, pcx.Length);
-                    var rd2 = rd.Next(1, pcx.Length);
-                    var rd3 = rd.Next(1, pcx.Length);
-                    for (int i = 0; i < ITER; i++)
+                    if (m > best_count)
                     {
-                        rd1 = rd.Next(1, pcx.Length);
-                        rd2 = rd.Next(1, pcx.Length);
-                        rd3 = rd.Next(1, pcx.Length);
-                        //拟合直线方程z=ax+by+c
-                        double[] plane = new double[3];
-                        double a = ((pcz[rd1] - pcz[rd2]) * (pcy[rd2] - pcy[rd3]) - (pcz[rd2] - pcz[rd3]) * (pcy[rd1] - pcy[rd2])) / ((pcx[rd1] - pcx[rd2]) * (pcy[rd2] - pcy[rd3]) - (pcx[rd2] - pcx[rd3]) * (pcy[rd1] - pcy[rd2]));
-                        double b = ((pcz[rd1] - pcz[rd2]) - a * (pcx[rd1] - pcx[rd2])) / (pcy[rd1] - pcy[rd2]);
-                        double c = pcz[rd1] - a * pcx[rd1] - b * pcy[rd1];
-
-                        double[] dist = new double[pcx.Length];
-                        int m = 0;
-                        for (int k = 0; k < pcx.Length; k++)
-                        {
-                            dist[k] = Math.Abs(a * pcx[k] + b * pcy[k] + c - pcz[k]);
-                            if (dist[k] < 1.0)
-                            {
-                                m++;
-                            }
-                        }
-                        if (m > best_count)
-                        {
-                            best_count = m;
-                            bpa = a;
-                            bpb = b;
-                            bpc = c;
-                        }
+                        best_count = m;
+                        bpa = a;
+                        bpb = b;
+                        bpc = c;
                     }
-
-                    //将点云分为地面点和其他点
-                    double[] o_pcx = new double[pcx.Length];
-                    double[] o_pcy = new double[pcx.Length];
-                    double[] o_pcz = new double[pcx.Length];
-                    int o_pc_cnt = 0;
-                    for (int i = 0; i < pcx.Length; i++)
-                    {
-                        double dist = bpa * pcx[i] + bpb * pcy[i] + bpc - pcz[i];
-                        if (dist < -20 || dist > 20)
-                        {
-                            o_pcx[o_pc_cnt] = pcx[i];
-                            o_pcy[o_pc_cnt] = pcy[i];
-                            o_pcz[o_pc_cnt] = pcz[i];
-                            o_pc_cnt++;
-                        }
-                    }
-
-                    double[] on_pcx = new double[o_pc_cnt];
-                    double[] on_pcy = new double[o_pc_cnt];
-                    double[] on_pcz = new double[o_pc_cnt];
-                    Array.Copy(o_pcx, on_pcx, o_pc_cnt);
-                    Array.Copy(o_pcy, on_pcy, o_pc_cnt);
-                    Array.Copy(o_pcz, on_pcz, o_pc_cnt);
-
-                    //获取新的深度图，不包含地面
-                    int[,] new_depth = new int[WIDTH, HEIGHT];
-                    double[,] depth_label = new double[WIDTH, HEIGHT];
-                    for (int i = 0; i < on_pcx.Length; i++)
-                    {
-                        var x = Math.Round((on_pcx[i] / on_pcz[i]) * colorIntrinsics.fx + colorIntrinsics.ppx);
-                        var y = Math.Round((on_pcy[i] / on_pcz[i]) * colorIntrinsics.fy + colorIntrinsics.ppy);
-                        if (x < WIDTH && y < HEIGHT)
-                        {
-                            new_depth[(int)x, (int)y] = 1;
-                            depth_label[(int)x, (int)y] = on_pcz[i];
-                        }
-                    }
-
-                    //连通域标记
-                    var cc = CalConnections(new_depth);
-                    //获取距离人中心最近的地面物体
-                    double[] dist1 = new double[cc.Count];
-                    int[] dist_key = new int[cc.Count];
-                    int dist_cnt = 0;
-                    foreach (int key in cc.Keys)
-                    {
-                        var cc_values = cc[key];
-                        foreach (var val in cc_values)
-                        {
-                            var d = (val.X-480) * (val.X-480) + (val.Y - 320) * (val.Y - 320);
-                            //var d = val.Y * val.Y + (val.X - 320) * (val.X - 320);
-                            if (dist1[dist_cnt] == 0)
-                            {
-                                dist1[dist_cnt] = d;
-                            }
-                            if (d < dist1[dist_cnt])
-                            {
-                                dist1[dist_cnt] = d;
-                            }
-                        }
-                        dist_key[dist_cnt] = key;
-                        dist_cnt++;
-                    }
-
-                    //获取最近区域
-                    int ii = 0;
-                    int index = 0;
-                    while (true)
-                    {
-                        if (dist1[ii] == dist1.Min())
-                        {
-                            index = ii;
-                            break;
-                        }
-                        ii++;
-                    }
-
-                    //将障碍物转换为点云
-                    var obs_depth = cc[dist_key[index]];
-                    //obsize_cnt.Content = obs_depth.Count.ToString();
-                    double[] obs_pcx = new double[obs_depth.Count];
-                    double[] obs_pcy = new double[obs_depth.Count];
-                    double[] obs_pcz = new double[obs_depth.Count];
-                    byte[,] todisp = new byte[WIDTH, HEIGHT];
-                    
-                    for (int i = 0; i < obs_depth.Count; i++)
-                    {
-                        todisp[obs_depth[i].Y, obs_depth[i].X] = 255;
-
-                        obs_pcx[i] = ((obs_depth[i].Y - colorIntrinsics.ppx) / colorIntrinsics.fx) * depth_label[obs_depth[i].Y, obs_depth[i].X];
-                        obs_pcy[i] = ((obs_depth[i].X - colorIntrinsics.ppy) / colorIntrinsics.fy) * depth_label[obs_depth[i].Y, obs_depth[i].X];
-                        obs_pcz[i] = depth_label[obs_depth[i].Y, obs_depth[i].X];
-                    }
-
-                    //计算障碍物尺寸、距离等信息
-                    double[] size_zs = new double[obs_pcz.Length];
-                    for (int i = 0; i < size_zs.Length; i++)
-                    {
-                        size_zs[i] = Math.Abs((bpa * obs_pcx[i] + bpb * obs_pcy[i] - obs_pcz[i] + bpc) / (Math.Sqrt(bpa * bpa + bpb * bpb + 1)));
-                    }
-                    double size_z = size_zs.Max();
-
-                    var theta = Math.Acos(1 / Math.Sqrt(bpa * bpa + bpb * bpb + 1));//夹角要加绝对值
-
-                    double[] obs_pcx_pj = new double[obs_pcx.Length];
-                    double[] obs_pcy_pj = new double[obs_pcx.Length];
-                    double[] obs_pcz_pj = new double[obs_pcx.Length];
-                    double[] dist_ys = new double[obs_pcx.Length];
-                    for (int i = 0; i < obs_pcx_pj.Length; i++)
-                    {
-                        var T = (bpa * obs_pcx[i] + bpb * obs_pcy[i] - obs_pcz[i] + bpc) / (bpa * bpa + bpb * bpb + 1);
-                        obs_pcx_pj[i] = obs_pcx[i] - bpa * T;
-                        obs_pcy_pj[i] = obs_pcy[i] - bpb * T;
-                        obs_pcz_pj[i] = obs_pcz[i] + T;
-                        dist_ys[i] = Math.Abs(obs_pcz_pj[i] * Math.Sin(theta) - obs_pcy_pj[i] * Math.Cos(theta));
-                    }
-
-                    var size_x = Math.Abs(obs_pcx_pj.Max() - obs_pcx_pj.Min());
-                    var size_y = Math.Abs((obs_pcy_pj.Max() - obs_pcy_pj.Min()) * (-1 / Math.Sqrt(bpa * bpa + bpb * bpb + 1)));
-                    var dist_y = dist_ys.Min();
-                    //********************************************************
-
-                    obsize_x.Content = size_x.ToString("f2");
-                    obsize_y.Content = size_y.ToString("f2");
-                    obsize_z.Content = size_z.ToString("f2");
-                    obdist_y.Content = dist_y.ToString("f2");
-
-                    byte[] ethbuf = new byte[11];
-                    //新增加：将障碍物高度、长度和距离转换为下一步的步长和步高
-                    int Dmin = 80;          //预留脚离障碍物的最小距离
-                    int Lmax = 800;         //机器人允许的最大步长
-                    int Hmax = 500;         //机器人允许的最大步高
-                    int DeltaL = 30;        //测量的最大误差
-                    int DeltaH = 30;        //测量的最大误差
-                    int Lnormal = 400;      //正常行走的步长
-                    int Hnormal = 100;      //正常行走的步高
-
-                    int nStep = 0;  //接下来应该按正常步长走nStep步
-                    int lastStepLength = 0; //走完nStep步后最后一小步的步长
-                    int lastStepHeight = 0; //走完nStep步后最后一小步的步高
-                    int overStepLength = 0; //跨越的步长
-                    int overStepHeight = 0; //跨越的步高
-
-                    nStep = ((int)dist_y - Dmin) / Lnormal;
-                    if (((int)dist_y - Dmin) % Lnormal <= 80)
-                    {
-                        // 若最后一步小于80则使最后一步步长等于80
-                        lastStepLength = 80;
-                    }
-                    else
-                    {
-                        lastStepLength = ((int)dist_y - Dmin) % Lnormal;
-                    }
-                    lastStepHeight = Hnormal;
-
-                    if ((int)size_z + DeltaH < 200)
-                    {
-                        // 若跨越步高小于200则设为200
-                        overStepHeight = 200;
-                    }
-                    else
-                    {
-                        //overStepHeight = (int)size_z + DeltaH;
-                        overStepHeight = 400;
-                    }
-                    overStepLength = 2 * Dmin + (int)size_y + DeltaL;
-
-                    if (overStepLength > Lmax || overStepHeight > Hmax)  //如果步长或步高有一个超限了，将跨越步长和步高都置0，即不跨越
-                    {
-                        overStepLength = 0;
-                        overStepHeight = 0;
-                    }
-
-                    ComWinTextBox.AppendText("Send to Exoskeleton：" + lastStepLength.ToString() + lastStepHeight.ToString() + overStepLength.ToString() + overStepHeight.ToString() + "\n");
-
-                    //jiang
-                    ethbuf[0] = 0xAA;   //起始标志
-                    ethbuf[1] = (byte)nStep;
-                    ethbuf[2] = (byte)((lastStepLength >> 8) & 0x000000FF);//取最后一步步长的高8位
-                    ethbuf[3] = (byte)(lastStepLength & 0x000000FF);    //取最后一步步长的低8位
-                    ethbuf[4] = (byte)((lastStepHeight >> 8) & 0x000000FF);//取最后一步步高的高8位
-                    ethbuf[5] = (byte)(lastStepHeight & 0x000000FF);    //取最后一步步高的低8位
-                    ethbuf[6] = (byte)((overStepLength >> 8) & 0x000000FF);//取跨越步长的高8位
-                    ethbuf[7] = (byte)(overStepLength & 0x000000FF);    //取跨越步长的低8位
-                    ethbuf[8] = (byte)((overStepHeight >> 8) & 0x000000FF);//取跨越步高的高8位
-                    ethbuf[9] = (byte)(overStepHeight & 0x000000FF);    //取跨越步高的低8位
-                    ethbuf[10] = 0xEE;  //结束标志
-
-                    //将ethbuf通过网络发送出去
-                    NetworkStream sendStream = client.GetStream();//获得用于数据传输的流
-                    sendStream.Write(ethbuf, 0, ethbuf.Length);//最终写入流中
-                    //string showmsg = Encoding.Default.GetString(ethbuf, 0, ethbuf.Length);
-                    //ComWinTextBox.AppendText("发送给客户端数据：" + showmsg + "\n");
-
-                    ////write_point_to_txt(pcx, pcy, pcz, "valid_pc");
-                    ////write_point_to_txt_1(bpa, bpb, bpc, "best_plane");
-
-                    obsize_x.Content = size_x.ToString("f2");
-                    obsize_y.Content = size_y.ToString("f2");
-                    obsize_z.Content = size_z.ToString("f2");
-                    obdist_y.Content = dist_y.ToString("f2");
-
-                    var bytes = new byte[HEIGHT * WIDTH];
-                    for (int i = 0; i < HEIGHT; i++)
-                    {
-                        for (int j = 0; j < WIDTH; j++)
-                        {
-                            bytes[i * WIDTH + j] = todisp[j, i];
-                        }
-                    }
-                    var bs = BitmapSource.Create(WIDTH, HEIGHT, 300, 300, PixelFormats.Gray8, null, bytes, WIDTH);
-                    var imgSrc = bs as ImageSource;
-                    imgObs.Source = imgSrc;
-
-                    //write_point_to_txt_2(bytes, "obstacle");
                 }
 
-                var colorized_depth = colorizer.Colorize(frames.DepthFrame);
-                UploadImage(imgDepth, colorized_depth);
-                UploadImage(imgColor, frames.ColorFrame);
+                //将点云分为地面点和其他点
+                double[] o_pcx = new double[pcx.Length];
+                double[] o_pcy = new double[pcx.Length];
+                double[] o_pcz = new double[pcx.Length];
+                int o_pc_cnt = 0;
+                for (int i = 0; i < pcx.Length; i++)
+                {
+                    double dist = bpa * pcx[i] + bpb * pcy[i] + bpc - pcz[i];
+                    if (dist < -20 || dist > 20)
+                    {
+                        o_pcx[o_pc_cnt] = pcx[i];
+                        o_pcy[o_pc_cnt] = pcy[i];
+                        o_pcz[o_pc_cnt] = pcz[i];
+                        o_pc_cnt++;
+                    }
+                }
 
+                double[] on_pcx = new double[o_pc_cnt];
+                double[] on_pcy = new double[o_pc_cnt];
+                double[] on_pcz = new double[o_pc_cnt];
+                Array.Copy(o_pcx, on_pcx, o_pc_cnt);
+                Array.Copy(o_pcy, on_pcy, o_pc_cnt);
+                Array.Copy(o_pcz, on_pcz, o_pc_cnt);
+
+                //获取新的深度图，不包含地面
+                int[,] new_depth = new int[WIDTH, HEIGHT];
+                double[,] depth_label = new double[WIDTH, HEIGHT];
+                for (int i = 0; i < on_pcx.Length; i++)
+                {
+                    var x = Math.Round((on_pcx[i] / on_pcz[i]) * colorIntrinsics.fx + colorIntrinsics.ppx);
+                    var y = Math.Round((on_pcy[i] / on_pcz[i]) * colorIntrinsics.fy + colorIntrinsics.ppy);
+                    if (x < WIDTH && y < HEIGHT)
+                    {
+                        new_depth[(int)x, (int)y] = 1;
+                        depth_label[(int)x, (int)y] = on_pcz[i];
+                    }
+                }
+
+                //连通域标记
+                var cc = CalConnections(new_depth);
+                //获取距离人中心最近的地面物体
+                double[] dist1 = new double[cc.Count];
+                int[] dist_key = new int[cc.Count];
+                int dist_cnt = 0;
+                foreach (int key in cc.Keys)
+                {
+                    var cc_values = cc[key];
+                    foreach (var val in cc_values)
+                    {
+                        var d = (val.X - 480) * (val.X - 480) + (val.Y - 320) * (val.Y - 320);
+                        //var d = val.Y * val.Y + (val.X - 320) * (val.X - 320);
+                        if (dist1[dist_cnt] == 0)
+                        {
+                            dist1[dist_cnt] = d;
+                        }
+                        if (d < dist1[dist_cnt])
+                        {
+                            dist1[dist_cnt] = d;
+                        }
+                    }
+                    dist_key[dist_cnt] = key;
+                    dist_cnt++;
+                }
+
+                //获取最近区域
+                int ii = 0;
+                int index = 0;
+                while (true)
+                {
+                    if (dist1[ii] == dist1.Min())
+                    {
+                        index = ii;
+                        break;
+                    }
+                    ii++;
+                }
+
+                //将障碍物转换为点云
+                var obs_depth = cc[dist_key[index]];
+                //obsize_cnt.Content = obs_depth.Count.ToString();
+                double[] obs_pcx = new double[obs_depth.Count];
+                double[] obs_pcy = new double[obs_depth.Count];
+                double[] obs_pcz = new double[obs_depth.Count];
+                byte[,] todisp = new byte[WIDTH, HEIGHT];
+
+                for (int i = 0; i < obs_depth.Count; i++)
+                {
+                    todisp[obs_depth[i].Y, obs_depth[i].X] = 255;
+
+                    obs_pcx[i] = ((obs_depth[i].Y - colorIntrinsics.ppx) / colorIntrinsics.fx) * depth_label[obs_depth[i].Y, obs_depth[i].X];
+                    obs_pcy[i] = ((obs_depth[i].X - colorIntrinsics.ppy) / colorIntrinsics.fy) * depth_label[obs_depth[i].Y, obs_depth[i].X];
+                    obs_pcz[i] = depth_label[obs_depth[i].Y, obs_depth[i].X];
+                }
+
+                //计算障碍物尺寸、距离等信息
+                double[] size_zs = new double[obs_pcz.Length];
+                for (int i = 0; i < size_zs.Length; i++)
+                {
+                    size_zs[i] = Math.Abs((bpa * obs_pcx[i] + bpb * obs_pcy[i] - obs_pcz[i] + bpc) / (Math.Sqrt(bpa * bpa + bpb * bpb + 1)));
+                }
+                var size_z = (int)Math.Round(size_zs.Max());
+
+                var theta = Math.Acos(1 / Math.Sqrt(bpa * bpa + bpb * bpb + 1));//夹角要加绝对值
+
+                double[] obs_pcx_pj = new double[obs_pcx.Length];
+                double[] obs_pcy_pj = new double[obs_pcx.Length];
+                double[] obs_pcz_pj = new double[obs_pcx.Length];
+                double[] dist_ys = new double[obs_pcx.Length];
+                for (int i = 0; i < obs_pcx_pj.Length; i++)
+                {
+                    var T = (bpa * obs_pcx[i] + bpb * obs_pcy[i] - obs_pcz[i] + bpc) / (bpa * bpa + bpb * bpb + 1);
+                    obs_pcx_pj[i] = obs_pcx[i] - bpa * T;
+                    obs_pcy_pj[i] = obs_pcy[i] - bpb * T;
+                    obs_pcz_pj[i] = obs_pcz[i] + T;
+                    dist_ys[i] = Math.Abs(obs_pcz_pj[i] * Math.Sin(theta) - obs_pcy_pj[i] * Math.Cos(theta));
+                }
+
+                var size_x = (int)Math.Round(Math.Abs(obs_pcx_pj.Max() - obs_pcx_pj.Min()));
+                var size_y = (int)Math.Round(Math.Abs((obs_pcy_pj.Max() - obs_pcy_pj.Min()) * (-1 / Math.Sqrt(bpa * bpa + bpb * bpb + 1))));
+                var dist_y = (int)Math.Round(dist_ys.Min());
+                //********************************************************
+
+                obsize_x.Content = size_x.ToString() + " mm";
+                obsize_y.Content = size_y.ToString() + " mm";
+                obsize_z.Content = size_z.ToString() + " mm";
+                obdist_y.Content = dist_y.ToString() + " mm";
+
+                //新增加：将障碍物高度、长度和距离转换为下一步的步长和步高
+                byte[] ethbuf = new byte[11];
+                int cStepLen = 0;
+                int cStepHgt = 0;
+                int nStepLen = 0;
+                int nStepHgt = 0;
+                if (dist_y>dsafe)   //当前距离大于安全距离
+                {
+                    if (Pattern == 33)
+                    {
+                        Pattern = 3;//Normal模式
+                    }
+                    else
+                    {
+                        Pattern = 2;
+                    }
+                    cStepLen = lnormal;
+                    cStepHgt = hnormal;
+                    nStepLen = lnormal;
+                    nStepHgt = hnormal;
+                }
+                else
+                {
+                    var xStepHgt = size_z + hmin + deltah;
+                    var xStepLen = dist_y - pStepLen / 2 + size_x + dmin + deltal + lf;
+                    if (xStepHgt > hmax || xStepLen > lmax)
+                    {   
+                        Pattern = 4;    //结束
+                        cStepLen = dist_y - dmin-deltal;
+                        cStepHgt = hnormal;
+                        nStepLen = cStepLen - pStepLen / 2;
+                        nStepHgt = hnormal;
+                    }
+                    else
+                    {
+                        Pattern = 33;//转换模式
+                        cStepLen = dist_y - dmin - deltal;
+                        cStepHgt = hnormal;
+                        nStepLen = xStepLen;
+                        nStepHgt = size_z + hmin + deltah;
+                    }
+                }
+
+
+                ComWinTextBox.AppendText("Send to Exoskeleton：" + Pattern.ToString() +"-"+ cStepLen.ToString() + "-" + cStepHgt.ToString() + "-" + nStepLen.ToString() + "-" + nStepHgt.ToString() + "\n");
+
+                ////jiang
+                //ethbuf[0] = 0xAA;   //起始标志
+                //ethbuf[1] = (byte)nStep;
+                //ethbuf[2] = (byte)((lastStepLength >> 8) & 0x000000FF);//取最后一步步长的高8位
+                //ethbuf[3] = (byte)(lastStepLength & 0x000000FF);    //取最后一步步长的低8位
+                //ethbuf[4] = (byte)((lastStepHeight >> 8) & 0x000000FF);//取最后一步步高的高8位
+                //ethbuf[5] = (byte)(lastStepHeight & 0x000000FF);    //取最后一步步高的低8位
+                //ethbuf[6] = (byte)((overStepLength >> 8) & 0x000000FF);//取跨越步长的高8位
+                //ethbuf[7] = (byte)(overStepLength & 0x000000FF);    //取跨越步长的低8位
+                //ethbuf[8] = (byte)((overStepHeight >> 8) & 0x000000FF);//取跨越步高的高8位
+                //ethbuf[9] = (byte)(overStepHeight & 0x000000FF);    //取跨越步高的低8位
+                //ethbuf[10] = 0xEE;  //结束标志
+
+                ////将ethbuf通过网络发送出去
+                //NetworkStream sendStream = client.GetStream();//获得用于数据传输的流
+                //sendStream.Write(ethbuf, 0, ethbuf.Length);//最终写入流中
+                ////string showmsg = Encoding.Default.GetString(ethbuf, 0, ethbuf.Length);
+                ////ComWinTextBox.AppendText("发送给客户端数据：" + showmsg + "\n");
+
+                //////write_point_to_txt(pcx, pcy, pcz, "valid_pc");
+                //////write_point_to_txt_1(bpa, bpb, bpc, "best_plane");
+
+
+                var bytes = new byte[HEIGHT * WIDTH];
+                for (int i = 0; i < HEIGHT; i++)
+                {
+                    for (int j = 0; j < WIDTH; j++)
+                    {
+                        bytes[i * WIDTH + j] = todisp[j, i];
+                    }
+                }
+                var bs = BitmapSource.Create(WIDTH, HEIGHT, 300, 300, PixelFormats.Gray8, null, bytes, WIDTH);
+                var imgSrc = bs as ImageSource;
+                imgObs.Source = imgSrc;
+
+
+                cal_time.Content = (Environment.TickCount - start_time).ToString() + " ms"; ;
+                steplen.Content = cStepLen.ToString()+" mm";
+                stephei.Content = cStepHgt.ToString()+" mm";
+                pattern.Content = Pattern.ToString();
+                steplen_next.Content = nStepLen.ToString() + "mm";
+                stephei_next.Content = nStepHgt.ToString() + "mm";
+
+                pStepLen = cStepLen;
+                pStepHgt = cStepHgt;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
 
             }
+        }
+
+
+        private delegate void Upload_img(VideoFrame frame1, VideoFrame frame2);
+
+        private void ProcessObs()
+        {
+              
+            try
+            {
+                ushort[] depth = new ushort[W_H];
+
+                while (true)
+                {
+                    //获取深度图像
+                    var frames = pipeline.WaitForFrames();
+                    var dframe = frames.DepthFrame;
+                    dframe.CopyTo(depth);     
+                    var colorized_depth = colorizer.Colorize(frames.DepthFrame);
+                    imgColor.Dispatcher.Invoke(new Upload_img(UploadImage), frames.ColorFrame, colorized_depth);
+                    //Thread.Sleep(5);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+
+        public void UploadImage(VideoFrame frame1, VideoFrame frame2)
+        {
+            var bytes = new byte[frame1.Stride * frame1.Height];
+            frame1.CopyTo(bytes);
+            var bs = BitmapSource.Create(frame1.Width, frame1.Height, 300, 300, PixelFormats.Rgb24, null, bytes, frame1.Stride);
+            imgColor.Source = bs as ImageSource;
+
+            bytes = new byte[frame2.Stride * frame2.Height];
+            frame2.CopyTo(bytes);
+            bs = BitmapSource.Create(frame1.Width, frame1.Height, 300, 300, PixelFormats.Rgb24, null, bytes, frame2.Stride);
+            imgDepth.Source = bs as ImageSource;
+        }
+
+
+        public void timer2_cycle(object sender, EventArgs e)
+        {
+            
         }
 
         private void control_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -716,23 +774,25 @@ namespace Intel.RealSense
 
         private void switch_Click(object sender, RoutedEventArgs e)
         {
-            switch_Button.IsEnabled = false;
+            timer1.Start();
 
-            if (IPAdressTextBox.Text.Trim() == string.Empty)
-            {
-                ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Please enter the server IP address\n");
-                return;
-            }
-            if (PortTextBox.Text.Trim() == string.Empty)
-            {
-                ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Please enter the server port\n");
-                return;
-            }
-            Thread thread = new Thread(reciveAndListener);
-            IpAndPort ipHePort = new IpAndPort();
-            ipHePort.Ip = IPAdressTextBox.Text;
-            ipHePort.Port = PortTextBox.Text;
-            thread.Start((object)ipHePort);
+            //switch_Button.IsEnabled = false;
+
+            //if (IPAdressTextBox.Text.Trim() == string.Empty)
+            //{
+            //    ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Please enter the server IP address\n");
+            //    return;
+            //}
+            //if (PortTextBox.Text.Trim() == string.Empty)
+            //{
+            //    ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Please enter the server port\n");
+            //    return;
+            //}
+            //Thread thread = new Thread(reciveAndListener);
+            //IpAndPort ipHePort = new IpAndPort();
+            //ipHePort.Ip = IPAdressTextBox.Text;
+            //ipHePort.Port = PortTextBox.Text;
+            //thread.Start((object)ipHePort);
         }
 
         private void reciveAndListener(object ipAndPort)
