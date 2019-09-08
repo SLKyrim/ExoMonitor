@@ -9,7 +9,7 @@ namespace ExoGaitMonitorVer2
     public class GaitPlanning
     {
 
-        public Tuple<double[], double[], double[], double[]> StartPattern(double steplen, double stephgt, int len)
+        public double[,] StartPattern(double steplen, double stephgt, int len)
         {
             double[] pos_hl = new double[len];
             double[] pos_hr = new double[len];
@@ -173,13 +173,21 @@ namespace ExoGaitMonitorVer2
                     pos_kl[i] = 0;
                 }
             }
-            Tuple<double[], double[], double[], double[]> pos = new Tuple<double[], double[], double[], double[]>(pos_hl, pos_hr, pos_kr, pos_kl); 
+            //Tuple<double[], double[], double[], double[]> pos = new Tuple<double[], double[], double[], double[]>(pos_hl, pos_hr, pos_kr, pos_kl);
+            double[,] pos = new double[len, 4];
+            for (int i=0;i<len;i++)
+            {
+                pos[i, 0] = pos_hl[i];
+                pos[i, 1] = pos_hr[i];
+                pos[i, 2] = pos_kr[i];
+                pos[i, 3] = pos_kl[i];
+            }
 
             return pos;
         }
 
 
-        public Tuple<double[], double[], double[], double[]> NormalPattern(double steplen, double stephgt, int len)
+        public double[,] NormalPattern(double steplen, double stephgt, int len)
         {
             double[] pos_hl = new double[len];
             double[] pos_hr = new double[len];
@@ -326,14 +334,22 @@ namespace ExoGaitMonitorVer2
                     pos_kl[i] = 0;
                 }
             }
-            Tuple<double[], double[], double[], double[]> pos = new Tuple<double[], double[], double[], double[]>(pos_hl, pos_hr, pos_kr, pos_kl);
+            //Tuple<double[], double[], double[], double[]> pos = new Tuple<double[], double[], double[], double[]>(pos_hl, pos_hr, pos_kr, pos_kl);
+            double[,] pos = new double[len, 4];
+            for (int i = 0; i < len; i++)
+            {
+                pos[i, 0] = pos_hl[i];
+                pos[i, 1] = pos_hr[i];
+                pos[i, 2] = pos_kr[i];
+                pos[i, 3] = pos_kl[i];
+            }
 
             return pos;
         }
 
 
 
-        public Tuple<double[], double[], double[], double[]> TransitionPattern(double laststep, double steplen, double stephgt, int len)
+        public double[,] TransitionPattern(double laststep, double steplen, double stephgt, int len)
         {
             double[] pos_hl = new double[len];
             double[] pos_hr = new double[len];
@@ -495,13 +511,21 @@ namespace ExoGaitMonitorVer2
                     pos_kl[i] = 0;
                 }
             }
-            Tuple<double[], double[], double[], double[]> pos = new Tuple<double[], double[], double[], double[]>(pos_hl, pos_hr, pos_kr, pos_kl);
+            //Tuple<double[], double[], double[], double[]> pos = new Tuple<double[], double[], double[], double[]>(pos_hl, pos_hr, pos_kr, pos_kl);
+            double[,] pos = new double[len, 4];
+            for (int i = 0; i < len; i++)
+            {
+                pos[i, 0] = pos_hl[i];
+                pos[i, 1] = pos_hr[i];
+                pos[i, 2] = pos_kr[i];
+                pos[i, 3] = pos_kl[i];
+            }
 
             return pos;
         }
 
 
-        public Tuple<double[], double[], double[], double[]> TerminalPattern(double laststep, double steplen, double stephgt, int len)
+        public double[,] TerminalPattern(double laststep, double steplen, double stephgt, int len)
         {
             double[] pos_hl = new double[len];
             double[] pos_hr = new double[len];
@@ -644,7 +668,15 @@ namespace ExoGaitMonitorVer2
                     pos_kl[i] = 0;
                 }
             }
-            Tuple<double[], double[], double[], double[]> pos = new Tuple<double[], double[], double[], double[]>(pos_hl, pos_hr, pos_kr, pos_kl);
+            //Tuple<double[], double[], double[], double[]> pos = new Tuple<double[], double[], double[], double[]>(pos_hl, pos_hr, pos_kr, pos_kl);
+            double[,] pos = new double[len, 4];
+            for (int i = 0; i < len; i++)
+            {
+                pos[i, 0] = pos_hl[i];
+                pos[i, 1] = pos_hr[i];
+                pos[i, 2] = pos_kr[i];
+                pos[i, 3] = pos_kl[i];
+            }
 
             return pos;
         }

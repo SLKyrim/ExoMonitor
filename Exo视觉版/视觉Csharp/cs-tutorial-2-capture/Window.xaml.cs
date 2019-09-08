@@ -389,27 +389,22 @@ namespace Intel.RealSense
 
                 ComWinTextBox.AppendText("Send to Exoskeleton：" + Pattern.ToString() +"-"+ cStepLen.ToString() + "-" + cStepHgt.ToString() + "-" + nStepLen.ToString() + "-" + nStepHgt.ToString() + "\n");
 
-                ////jiang
-                //ethbuf[0] = 0xAA;   //起始标志
-                //ethbuf[1] = (byte)nStep;
-                //ethbuf[2] = (byte)((lastStepLength >> 8) & 0x000000FF);//取最后一步步长的高8位
-                //ethbuf[3] = (byte)(lastStepLength & 0x000000FF);    //取最后一步步长的低8位
-                //ethbuf[4] = (byte)((lastStepHeight >> 8) & 0x000000FF);//取最后一步步高的高8位
-                //ethbuf[5] = (byte)(lastStepHeight & 0x000000FF);    //取最后一步步高的低8位
-                //ethbuf[6] = (byte)((overStepLength >> 8) & 0x000000FF);//取跨越步长的高8位
-                //ethbuf[7] = (byte)(overStepLength & 0x000000FF);    //取跨越步长的低8位
-                //ethbuf[8] = (byte)((overStepHeight >> 8) & 0x000000FF);//取跨越步高的高8位
-                //ethbuf[9] = (byte)(overStepHeight & 0x000000FF);    //取跨越步高的低8位
-                //ethbuf[10] = 0xEE;  //结束标志
+                //
+                ethbuf[0] = 0xAA;   //起始标志
+                ethbuf[1] = (byte)Pattern;
+                ethbuf[2] = (byte)((cStepLen >> 8) & 0x000000FF);//取最后一步步长的高8位
+                ethbuf[3] = (byte)(cStepLen & 0x000000FF);    //取最后一步步长的低8位
+                ethbuf[4] = (byte)((cStepHgt >> 8) & 0x000000FF);//取最后一步步高的高8位
+                ethbuf[5] = (byte)(cStepHgt & 0x000000FF);    //取最后一步步高的低8位
+                ethbuf[6] = (byte)((nStepLen >> 8) & 0x000000FF);//取跨越步长的高8位
+                ethbuf[7] = (byte)(nStepLen & 0x000000FF);    //取跨越步长的低8位
+                ethbuf[8] = (byte)((nStepHgt >> 8) & 0x000000FF);//取跨越步高的高8位
+                ethbuf[9] = (byte)(nStepHgt & 0x000000FF);    //取跨越步高的低8位
+                ethbuf[10] = 0xEE;  //结束标志
 
-                ////将ethbuf通过网络发送出去
-                //NetworkStream sendStream = client.GetStream();//获得用于数据传输的流
-                //sendStream.Write(ethbuf, 0, ethbuf.Length);//最终写入流中
-                ////string showmsg = Encoding.Default.GetString(ethbuf, 0, ethbuf.Length);
-                ////ComWinTextBox.AppendText("发送给客户端数据：" + showmsg + "\n");
-
-                //////write_point_to_txt(pcx, pcy, pcz, "valid_pc");
-                //////write_point_to_txt_1(bpa, bpb, bpc, "best_plane");
+                //将ethbuf通过网络发送出去
+                NetworkStream sendStream = client.GetStream();//获得用于数据传输的流
+                sendStream.Write(ethbuf, 0, ethbuf.Length);//最终写入流中
 
 
                 var bytes = new byte[HEIGHT * WIDTH];
@@ -774,25 +769,25 @@ namespace Intel.RealSense
 
         private void switch_Click(object sender, RoutedEventArgs e)
         {
-            timer1.Start();
+            //timer1.Start();
 
-            //switch_Button.IsEnabled = false;
+            switch_Button.IsEnabled = false;
 
-            //if (IPAdressTextBox.Text.Trim() == string.Empty)
-            //{
-            //    ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Please enter the server IP address\n");
-            //    return;
-            //}
-            //if (PortTextBox.Text.Trim() == string.Empty)
-            //{
-            //    ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Please enter the server port\n");
-            //    return;
-            //}
-            //Thread thread = new Thread(reciveAndListener);
-            //IpAndPort ipHePort = new IpAndPort();
-            //ipHePort.Ip = IPAdressTextBox.Text;
-            //ipHePort.Port = PortTextBox.Text;
-            //thread.Start((object)ipHePort);
+            if (IPAdressTextBox.Text.Trim() == string.Empty)
+            {
+                ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Please enter the server IP address\n");
+                return;
+            }
+            if (PortTextBox.Text.Trim() == string.Empty)
+            {
+                ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Please enter the server port\n");
+                return;
+            }
+            Thread thread = new Thread(reciveAndListener);
+            IpAndPort ipHePort = new IpAndPort();
+            ipHePort.Ip = IPAdressTextBox.Text;
+            ipHePort.Port = PortTextBox.Text;
+            thread.Start((object)ipHePort);
         }
 
         private void reciveAndListener(object ipAndPort)
@@ -807,12 +802,11 @@ namespace Intel.RealSense
 
             //获取连接的客户d端的对象
             client = server.AcceptTcpClient();
-            ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Client requests connection. Connection established!\n");//AcceptTcpClient 是同步方法，会阻塞进程，得到连接对象后才会执行这一步  
+            ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Client requests connection, connection established!\n");//AcceptTcpClient 是同步方法，会阻塞进程，得到连接对象后才会执行这一步  
 
             //获得流
             NetworkStream reciveStream = client.GetStream();
             //外骨骼上位机发来连接请求后开始执行图像识别
-            Write_Flag = true;
 
             do
             {
@@ -825,13 +819,9 @@ namespace Intel.RealSense
                         msgSize = reciveStream.Read(buffer, 0, bufferSize);
                     }
 
-                    if (msgSize == 0)
+                    if (msgSize == 9)
                     {
-                        //获取连接的客户d端的对象
-                        client = server.AcceptTcpClient();
-                        //ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "有客户端请求连接，连接已建立！");//AcceptTcpClient 是同步方法，会阻塞进程，得到连接对象后才会执行这一步
-                        reciveStream = client.GetStream();
-                        continue;
+                        timer1.Start();
                     }
                     string msg = Encoding.Default.GetString(buffer, 0, bufferSize);
                     ComWinTextBox.Dispatcher.Invoke(new showData(ReceiveTextBox.AppendText), Encoding.Default.GetString(buffer, 0, msgSize) + "\n");

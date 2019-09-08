@@ -89,28 +89,24 @@ namespace ExoGaitMonitorVer2
         NetworkStream sendStream;
 
         // 视觉步态
-        private int nStep = 0;  //接下来应该按正常步长走nStep步
-        private double normalStepLength = 400; // 正常行走步长
-        private double normalStepHeight = 100; // 正常行走步高
-        private double lastStepLength = 0; //走完nStep步后最后一小步的步长
-        private double lastStepHeight = 0; //走完nStep步后最后一小步的步高
-        private double overStepLength = 0; //跨越的步长
-        private double overStepHeight = 0; //跨越的步高
-        private double demoStepLength = 0; //Demo用步长
-        private double demoStepHeight = 0; //Demo用步高
+        private double cStepLength = 0; //走完nStep步后最后一小步的步长
+        private double cStepHeight = 0; //走完nStep步后最后一小步的步高
+        private double nStepLength = 0; //跨越的步长
+        private double nStepHeight = 0; //跨越的步高
+        private int pattern = 0;
+        private double pStepLenth = 0;
+        private int go = 0;
+
 
         // 视觉
         Visual visual = new Visual();
         private int count = 0;
-        private int visual_count = 0; // 记录视觉反馈次数
+        private int gait_count = 0; // 记录视觉反馈次数
 
-        private string gaittype = "Static";
         private const int PVT_time1 = 24;
         private const int PVT_time2 = 20; //视觉PVT所用时间间隔
 
         // 秒表
-        private Stopwatch stopwatch = new Stopwatch(); // Demo视觉反馈后更新步态显示用秒表
-        private Stopwatch stopwatch_start = new Stopwatch(); // 开始请求视觉反馈用秒表
         private bool start_flag = false; // 开始步态的标志
         const int START_TIME = 4000; // 开始走一两步再请求视觉反馈，单位：毫秒
         const int RESET_TIME = 4000; // 更新步态状态用秒表，单位：毫秒
@@ -124,7 +120,7 @@ namespace ExoGaitMonitorVer2
         {
             try
             {
-                motors.motors_Init();     //   
+                //motors.motors_Init();     //   
                 //cp.plotStart(motors, statusBar, statusInfoTextBlock);
             }
             catch (Exception)
@@ -137,109 +133,88 @@ namespace ExoGaitMonitorVer2
             // 显示参数和读表线程
             DispatcherTimer showParaTimer = new DispatcherTimer(); 
             showParaTimer.Tick += new EventHandler(showParaTimer_Tick);
-            showParaTimer.Interval = TimeSpan.FromMilliseconds(40);
+            showParaTimer.Interval = TimeSpan.FromMilliseconds(30);
             showParaTimer.Start();
+
+            Thread thread_gait_action = new Thread(thread_Gait_Action);
+            thread_gait_action.Start();
 
             // 选择调用的步态
             //Thread select_thread = new Thread(Select);
             //select_thread.Start();
 
-            GaitPlanning gp = new GaitPlanning();
-            var b = gp.StartPattern(0.4, 0.09, 201);
-            var d = gp.TransitionPattern(0.4, 0.153, 0.06, 401);
-            var pos = gp.TerminalPattern(0.4, 1.006, 0.088, 201);
-            var hl = pos.Item1;
-            var hr = pos.Item2;
-            var kr = pos.Item3;
-            var kl = pos.Item4;
+            //GaitPlanning gp = new GaitPlanning();
+            //var b = gp.StartPattern(0.4, 0.09, 201);
+            //var d = gp.TransitionPattern(0.4, 0.153, 0.06, 401);
+            //var pos = gp.TerminalPattern(0.4, 1.006, 0.088, 201);
+            //var hl = pos.Item1;
+            //var hr = pos.Item2;
+            //var kr = pos.Item3;
+            //var kl = pos.Item4;
 
-            var a = 0;
+            //var a = 0;
+            //pvt.PVT_Action(motors, b , 360, 20, 20);
         }
 
-        private void showParaTimer_Tick(object sender, EventArgs e)//输出步态参数到相应文本框的委托
+        private void showParaTimer_Tick(object sender, EventArgs e)//输出步态参数到相应文本框的委托 ---主执行程序
         {
-            //nStepTextBox.Text = nStep.ToString();
-            //normalStepLengthTextBox.Text = normalStepLength.ToString();
-            //normalStepHeightTextBox.Text = normalStepHeight.ToString();
-            //lastStepLengthTextBox.Text = lastStepLength.ToString();
-            //lastStepHeightTextBox.Text = lastStepHeight.ToString();
-            //overStepLengthTextBox.Text = overStepLength.ToString();
-            //overStepHeightTextBox.Text = overStepHeight.ToString();
 
-            // Demo用显示步长步高
-            overStepLengthTextBox.Text = demoStepLength.ToString();
-            overStepHeightTextBox.Text = demoStepHeight.ToString();
-
-            gaitTypeTextBox.Text = gaittype;
-
-            //stopWatchStartTextBlock.Text = stopwatch_start.ElapsedMilliseconds.ToString(); // 秒表文本显示【以毫秒为单位】
-            //stopWatchTextBlock.Text = stopwatch.ElapsedMilliseconds.ToString(); // 秒表文本显示【以毫秒为单位】
-
-            if (start_flag)
+            if (start_flag == true && gait_count <= 999)
             {
+                gait_count = gait_count + 1;
+
+                //// 向深度相机请求视觉反馈
+                string msg = "VFR : " + gait_count.ToString().PadLeft(3, '0');
+                byte[] buffer = Encoding.Default.GetBytes(msg);
+                sendStream.Write(buffer, 0, buffer.Length);
+                ComWinTextBox.AppendText(msg + "\n");
+                countTextBox.Text = gait_count.ToString();
                 start_flag = false;
-                gaittype = "Initial Pattern";
-                demoStepLength = 0.2;
-                demoStepHeight = 0.09;
-                stopwatch_start.Start();
-            }
-            if (stopwatch_start.ElapsedMilliseconds > START_TIME)
+
+            }          
+        }
+
+
+        private void thread_Gait_Action()
+        {
+            GaitPlanning gp = new GaitPlanning();
+            while (true)
             {
-                stopwatch_start.Reset();
-                stopwatch_start.Stop();
-
-                IPAddress ip = IPAddress.Parse(IPAdressTextBox.Text);
-                client = new TcpClient();
-                ComWinTextBox.AppendText("Start connecting to the server...\n");
-                client.Connect(ip, int.Parse(PortTextBox.Text));
-                ComWinTextBox.AppendText("The server has been connected\n");
-                statusInfoTextBlock.Text = "A connection has been established to the server";
-
-                statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-                //statusInfoTextBlock.Text = "可以开始生成步态";
-
-                sendStream = client.GetStream();
-                Thread thread = new Thread(ListenerServer);
-                thread.Start();
-
-                // 秒表开始
-                stopwatch.Start();
-            }
-
-            if (visual_count <= GAIT_COUNT)
-            {
-                if (stopwatch.ElapsedMilliseconds > RESET_TIME)
+                if (pattern==0)
                 {
-                    stopwatch.Reset();
-                    stopwatch.Start();
-
-                    //if (count == 1)
-                    //{
-                    //    visual_count = 0;
-                    //}
-                    //else
-                    //{
-                    //    visual_count = count - 1;
-                    //}
-                    //stopWatchTextBlock.Text = stopwatch.ElapsedMilliseconds.ToString(); // 秒表文本显示【以毫秒为单位】
-
-                    //// 向深度相机请求视觉反馈
-                    //string msg = "The exoskeleton requests visual feedback from the server";
-
-                    //byte[] buffer = Encoding.Default.GetBytes(msg);
-                    ////lock (sendStream)
-                    ////{
-                    //sendStream.Write(buffer, 0, buffer.Length);
-                    ////}
-                    //ComWinTextBox.AppendText(msg + "\n");
-
-                    visual_count = count;
-
-                    count = count + 1;
+                    var pos = gp.StartPattern(cStepLength, cStepHeight, 201);
+                    pvt.PVT_Action(motors, pos, 360, 20, 20);   //是否等待执行完？
+                    pattern = 1;
+                    pStepLenth = cStepLength;
+                    start_flag = true;
+                }           
+                else if (pattern == 2)
+                {
+                    var pos = gp.NormalPattern(cStepLength, cStepHeight, 401);
+                    pvt.PVT_Action(motors, pos, 360, 20, 20);
+                    pStepLenth = cStepLength;
+                    start_flag = true;
                 }
-            }
+                else if (pattern == 3)
+                {
+                    var pos = gp.TransitionPattern(pStepLenth, cStepLength, cStepHeight, 401);
+                    pvt.PVT_Action(motors, pos, 360, 20, 20);
+                    pStepLenth = cStepLength;
+                    start_flag = true;
+                }
+                else if (pattern == 33)//连续两次转换模式
+                {
+                    var pos = gp.TransitionPattern(pStepLenth, cStepLength, cStepHeight, 401);
+                    pvt.PVT_Action(motors, pos, 360, 20, 20);
+                    pStepLenth = cStepLength;
 
-            countTextBox.Text = visual_count.ToString();
+                    pos = gp.TransitionPattern(pStepLenth, nStepLength, nStepHeight, 401);
+                    pvt.PVT_Action(motors, pos, 360, 20, 20);
+                    pStepLenth = nStepLength;
+                    start_flag = true;
+                }
+
+            }
         }
 
     
@@ -324,6 +299,17 @@ namespace ExoGaitMonitorVer2
             switch_Button.IsEnabled = false;
             stop_Button.IsEnabled = true;
 
+            
+            IPAddress ip = IPAddress.Parse(IPAdressTextBox.Text);
+            client = new TcpClient();
+            ComWinTextBox.AppendText("Start connecting to the server...\n");
+            client.Connect(ip, int.Parse(PortTextBox.Text));
+            ComWinTextBox.AppendText("The server has been connected\n");
+
+            sendStream = client.GetStream();
+            Thread thread = new Thread(ListenerServer);
+            thread.Start();
+                        
             start_flag = true;
 
             try
@@ -331,33 +317,22 @@ namespace ExoGaitMonitorVer2
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
                 statusInfoTextBlock.Text = "Start";
 
-                pvt.StartPVT(motors, "..\\..\\bin\\Debug\\Once_Step.txt", 360, 20, 20);   
 
+                //pvt.StartPVT(motors, "..\\..\\bin\\Debug\\Once_Step.txt", 360, 20, 20);   
 
-                //statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
-                //statusInfoTextBlock.Text = "步态执行完毕";
             }
             catch (Exception)
             {
                 MessageBox.Show(e.ToString());
             }
-
-            //if (IPAdressTextBox.Text.Trim() == string.Empty)
-            //{
-            //    ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Please enter the server IP address\n");
-            //    return;
-            //}
-            //if (PortTextBox.Text.Trim() == string.Empty)
-            //{
-            //    ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Please enter the server port\n");
-            //    return;
-            //}
         }
 
         private void ComWinTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             ComWinTextBox.ScrollToEnd();//当通信窗口内容变化时滚动条定位在最下面
         }
+
+
         private void ListenerServer(object ipAndPort)
         {
             do
@@ -374,27 +349,18 @@ namespace ExoGaitMonitorVer2
                     {
                         return;
                     }
-                    //ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "从服务端发来信息：" + Encoding.Default.GetString(buffer, 0, readSize) + "\n");
 
-                    nStep = Convert.ToInt16(Math.Ceiling(Convert.ToDouble(buffer[1]) / 2)); // 任豪步态normal两步算一步，故除以2向上取整
-                    lastStepLength = (buffer[2] << 8) | buffer[3];
-                    lastStepHeight = (buffer[4] << 8) | buffer[5];
-                    overStepLength = (buffer[6] << 8) | buffer[7];
-                    overStepHeight = (buffer[8] << 8) | buffer[9];
-                    normalStepHeight = 100;
-                    normalStepLength = 400;
+                    pattern = buffer[1]; 
+                    cStepLength = ((buffer[2] << 8) | buffer[3])*0.001;// 同时将单位转换为米(m)
+                    cStepHeight = ((buffer[4] << 8) | buffer[5])*0.001;
+                    nStepLength = ((buffer[6] << 8) | buffer[7])*0.001;
+                    nStepHeight = ((buffer[8] << 8) | buffer[9])*0.001;
+                    
+                    ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Message from the Server：" + cStepLength.ToString() + "-"+ cStepHeight.ToString() + "-" + nStepLength.ToString() + "-" + nStepHeight.ToString() + "\n");
 
-                    ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "Message from the Server：" + lastStepLength.ToString() + lastStepHeight.ToString() + overStepLength.ToString() + overStepHeight.ToString() + "\n");
-
-                    // 将单位转换为米(m)
-                    normalStepLength = normalStepLength / 1000;
-                    normalStepHeight = normalStepHeight / 1000;
-                    lastStepLength = lastStepLength / 1000;
-                    lastStepHeight = lastStepHeight / 1000;
-                    overStepLength = overStepLength / 1000;
-                    overStepHeight = overStepHeight / 1000;
-
-                    count = count + 1;
+                    
+                    
+                
                 }
                 catch
                 {
@@ -411,7 +377,7 @@ namespace ExoGaitMonitorVer2
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
                 statusInfoTextBlock.Text = "开始执行步态";
 
-                pvt.StartPVT(motors, "..\\..\\bin\\Debug\\angle.txt", 360, 24, 64);
+                //pvt.StartPVT(motors, "..\\..\\bin\\Debug\\angle.txt", 360, 24, 64);
 
                 //statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
                 //statusInfoTextBlock.Text = "步态执行完毕";
@@ -427,8 +393,8 @@ namespace ExoGaitMonitorVer2
             //statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
             //statusInfoTextBlock.Text = "步态生成进行中";
 
-            visual.visualGaitGenerator(nStep, normalStepLength, normalStepHeight, lastStepLength,
-                         lastStepHeight, overStepLength, overStepHeight, statusBar, statusInfoTextBlock);
+            //visual.visualGaitGenerator(nStep, normalStepLength, normalStepHeight, lastStepLength,
+            //             lastStepHeight, overStepLength, overStepHeight, statusBar, statusInfoTextBlock);
         }
 
         private void Plot_Button_Click(object sender, RoutedEventArgs e)
@@ -455,353 +421,18 @@ namespace ExoGaitMonitorVer2
             if (bt.Content.ToString() == "Stop Visual Feedback")
             {
                 bt.Content = "Continue Visual Feedback";
-                stopwatch.Reset();
-                stopwatch.Stop();
             }
             else
             {
                 bt.Content = "Stop Visual Feedback";
-                stopwatch.Start();
             }
         }
 
         private void countTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            // 该文本改变说明视觉已反馈
-
-            switch (visual_count)
-            {
-                case 1:
-                    demoStepLength = 0.2;
-                    demoStepHeight = 0.09;
-                    gaittype = "Normal Pattern";
-                    break;
-                case 2:
-                    demoStepLength = 0.076;
-                    demoStepHeight = 0.06;
-                    gaittype = "Transition Pattern";
-                    break;
-                case 3:
-                    demoStepLength = 0.076;
-                    demoStepHeight = 0.06;
-                    gaittype = "Transition Pattern";
-                    break;
-                case 4:
-                    demoStepLength = 0.503;
-                    demoStepHeight = 0.177;
-                    gaittype = "Transition Pattern";
-                    break;
-                case 5:
-                    demoStepLength = 0.503;
-                    demoStepHeight = 0.177;
-                    gaittype = "Transition Pattern";
-                    break;
-                case 6:
-                    demoStepLength = 0.503;
-                    demoStepHeight = 0.088;
-                    gaittype = "Terminal Pattern";
-                    break;
-                default:
-                    demoStepLength = 0;
-                    demoStepHeight = 0;
-                    stopwatch.Reset();
-                    stopwatch.Stop();
-
-
-                    angleSetTextBox.IsReadOnly = true;
-                    motorNumberTextBox.IsReadOnly = true;
-                    getZeroPointButton.IsEnabled = false;
-                    angleSetButton.IsEnabled = false;
-                    emergencyStopButton.IsEnabled = false;
-                    zeroPointSetButton.IsEnabled = false;
-
-                    manumotive.getZeroPointStart(motors, statusBar, statusInfoTextBlock, angleSetButton, emergencyStopButton, getZeroPointButton,
-                                                zeroPointSetButton, angleSetTextBox, motorNumberTextBox);  //   20190725-Hided-2
-                    break;
-            }
-
-
-            ////#region 两步Demo
-            //// 使用时注释掉一步Demo
-
-            //#region 两步跨越Demo
-            ////// 使用时注释掉两步无法跨越Demo
-
-            ////// 跨越Demo
-            ////switch (visual_count)
-            ////{
-            ////    case 1:
-            ////        demoStepLength = 0.2;
-            ////        demoStepHeight = 0.09;
-            ////        gaittype = "Initial Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\A_start.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 2:
-            ////        demoStepLength = 0.4;
-            ////        demoStepHeight = 0.09;
-            ////        gaittype = "Normal Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\A_normal.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 3:
-            ////        demoStepLength = 0.4;
-            ////        demoStepHeight = 0.09;
-            ////        gaittype = "Normal Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\A_normal.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 4:
-            ////        demoStepLength = 0.153;
-            ////        demoStepHeight = 0.06;
-            ////        gaittype = "Transition Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\A_change_small_y.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 5:
-            ////        demoStepLength = 0.8;
-            ////        demoStepHeight = 0.2;
-            ////        gaittype = "Transition Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\A_change_big.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 6:
-            ////        demoStepLength = 0.4;
-            ////        demoStepHeight = 0.09;
-            ////        gaittype = "Terminal Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\A_finish_y.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    default:
-            ////        demoStepLength = 0;
-            ////        demoStepHeight = 0;
-            ////        stopwatch.Reset();
-            ////        stopwatch.Stop();
-            ////        break;
-            ////}
-            //#endregion
-
-            //#region 两步无法跨越Demo
-            ////// 使用时注释掉跨越Demo
-
-            ////// 无法跨越Demo
-            ////switch (visual_count)
-            ////{
-            ////    case 1:
-            ////        demoStepLength = 0.2;
-            ////        demoStepHeight = 0.09;
-            ////        gaittype = "Initial Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\A_start.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 2:
-            ////        demoStepLength = 0.4;
-            ////        demoStepHeight = 0.09;
-            ////        gaittype = "Normal Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\A_normal.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 3:
-            ////        demoStepLength = 0.4;
-            ////        demoStepHeight = 0.09;
-            ////        gaittype = "Normal Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\A_normal.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 4:
-            ////        demoStepLength = 0.4;
-            ////        demoStepHeight = 0.09;
-            ////        gaittype = "Normal Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\A_normal.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 5:
-            ////        demoStepLength = 0.266;
-            ////        demoStepHeight = 0.07;
-            ////        gaittype = "Transition Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\A_change_small_n.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 6:
-            ////        demoStepLength = 0.133;
-            ////        demoStepHeight = 0.09;
-            ////        gaittype = "Terminal Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\A_finish_n.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    default:
-            ////        demoStepLength = 0;
-            ////        demoStepHeight = 0;
-            ////        stopwatch.Reset();
-            ////        stopwatch.Stop();
-            ////        break;
-            ////}
-            //#endregion
-
-            //#endregion
-
-            //#region 一步Demo
-            //// 使用时注释掉两步Demo
-
-            //#region 一步无跨越Demo
-            ////使用时注释掉一步跨越Demo
-
-            //switch (visual_count)
-            //{
-            //    case 1:
-            //        demoStepLength = 0.2;
-            //        demoStepHeight = 0.09;
-            //        gaittype = "Initial Pattern";
-            //        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\NoStep_1_start.txt", 360, PVT_time1, PVT_time2);
-            //        break;
-            //    case 2:
-            //        demoStepLength = 0.2;
-            //        demoStepHeight = 0.09;
-            //        gaittype = "Normal Pattern";
-            //        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\NoStep_2_normal.txt", 360, PVT_time1, PVT_time2);
-            //        break;
-            //    case 3:
-            //        demoStepLength = 0.2;
-            //        demoStepHeight = 0.09;
-            //        gaittype = "Normal Pattern";
-            //        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\NoStep_3_normal.txt", 360, PVT_time1, PVT_time2);
-            //        break;
-            //    case 4:
-            //        demoStepLength = 0.2;
-            //        demoStepHeight = 0.09;
-            //        gaittype = "Normal Pattern";
-            //        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\NoStep_2_normal.txt", 360, PVT_time1, PVT_time2);
-            //        break;
-            //    case 5:
-            //        demoStepLength = 0.2;
-            //        demoStepHeight = 0.09;
-            //        gaittype = "Normal Pattern";
-            //        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\NoStep_3_normal.txt", 360, PVT_time1, PVT_time2);
-            //        break;
-            //    case 6:
-            //        demoStepLength = 0.2;
-            //        demoStepHeight = 0.09;
-            //        gaittype = "Normal Pattern";
-            //        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\NoStep_2_normal.txt", 360, PVT_time1, PVT_time2);
-            //        break;
-            //    case 7:
-            //        demoStepLength = 0.2;
-            //        demoStepHeight = 0.09;
-            //        gaittype = "Normal Pattern";
-            //        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\NoStep_3_normal.txt", 360, PVT_time1, PVT_time2);
-            //        break;
-            //    case 8:
-            //        demoStepLength = 0.133;
-            //        demoStepHeight = 0.06;
-            //        gaittype = "Transition Pattern";
-            //        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\NoStep_4_change_small.txt", 360, PVT_time1, PVT_time2);
-            //        break;
-            //    case 9:
-            //        demoStepLength = 0.133;
-            //        demoStepHeight = 0.06;
-            //        gaittype = "Transition Pattern";
-            //        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\NoStep_5_change_small.txt", 360, PVT_time1, PVT_time2);
-            //        break;
-            //    case 10:
-            //        demoStepLength = 0.133;
-            //        demoStepHeight = 0.09;
-            //        gaittype = "Terminal Pattern";
-            //        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\NoStep_6_finish.txt", 360, PVT_time1, PVT_time2);
-            //        break;
-            //    default:
-            //        demoStepLength = 0;
-            //        demoStepHeight = 0;
-            //        stopwatch.Reset();
-            //        stopwatch.Stop();
-
-
-            //        angleSetTextBox.IsReadOnly = true;
-            //        motorNumberTextBox.IsReadOnly = true;
-            //        getZeroPointButton.IsEnabled = false;
-            //        angleSetButton.IsEnabled = false;
-            //        emergencyStopButton.IsEnabled = false;
-            //        zeroPointSetButton.IsEnabled = false;
-
-            //        manumotive.getZeroPointStart(motors, statusBar, statusInfoTextBlock, angleSetButton, emergencyStopButton, getZeroPointButton,
-            //                                     zeroPointSetButton, angleSetTextBox, motorNumberTextBox);
-            //        break;
-            //}
-            //#endregion
-
-            //#region 一步跨越Demo
-            ////// 使用时注释掉一步无跨越Demo
-
-            ////// 2018-12-4 障碍物长宽高尺寸：170-93-65
-            ////switch (visual_count)
-            ////{
-            ////    case 1:
-            ////        demoStepLength = 0.2;
-            ////        demoStepHeight = 0.09;
-            ////        gaittype = "Initial Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\Step_1_start.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 2:
-            ////        demoStepLength = 0.2;
-            ////        demoStepHeight = 0.09;
-            ////        gaittype = "Normal Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\Step_2_normal.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 3:
-            ////        demoStepLength = 0.2;
-            ////        demoStepHeight = 0.09;
-            ////        gaittype = "Normal Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\Step_3_normal.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 4:
-            ////        demoStepLength = 0.2;
-            ////        demoStepHeight = 0.09;
-            ////        gaittype = "Normal Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\Step_2_normal.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 5:
-            ////        demoStepLength = 0.2;
-            ////        demoStepHeight = 0.09;
-            ////        gaittype = "Normal Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\Step_3_normal.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 6:
-            ////        demoStepLength = 0.076;
-            ////        demoStepHeight = 0.06;
-            ////        gaittype = "Transition Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\Step_4_change_small.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 7:
-            ////        demoStepLength = 0.076;
-            ////        demoStepHeight = 0.06;
-            ////        gaittype = "Transition Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\Step_5_change_small.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 8:
-            ////        demoStepLength = 0.503;
-            ////        demoStepHeight = 0.177;
-            ////        gaittype = "Transition Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\Step_6_change_big.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 9:
-            ////        demoStepLength = 0.503;
-            ////        demoStepHeight = 0.177;
-            ////        gaittype = "Transition Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\Step_7_change_big.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    case 10:
-            ////        demoStepLength = 0.503;
-            ////        demoStepHeight = 0.088;
-            ////        gaittype = "Terminal Pattern";
-            ////        pvt.StartPVT(motors, "..\\..\\bin\\Debug\\Step_8_finish.txt", 360, PVT_time1, PVT_time2);
-            ////        break;
-            ////    default:
-            ////        demoStepLength = 0;
-            ////        demoStepHeight = 0;
-            ////        stopwatch.Reset();
-            ////        stopwatch.Stop();
-
-            ////        angleSetTextBox.IsReadOnly = true;
-            ////        motorNumberTextBox.IsReadOnly = true;
-            ////        getZeroPointButton.IsEnabled = false;
-            ////        angleSetButton.IsEnabled = false;
-            ////        emergencyStopButton.IsEnabled = false;
-            ////        zeroPointSetButton.IsEnabled = false;
-
-            ////        manumotive.getZeroPointStart(motors, statusBar, statusInfoTextBlock, angleSetButton, emergencyStopButton, getZeroPointButton,
-            ////                                     zeroPointSetButton, angleSetTextBox, motorNumberTextBox);
-            ////        break;
-            ////}
-            //#endregion
-
-            //#endregion
+           
         }
+
     }
+    
 }
