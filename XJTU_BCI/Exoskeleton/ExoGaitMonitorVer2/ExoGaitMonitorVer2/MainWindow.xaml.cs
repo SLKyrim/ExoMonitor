@@ -50,7 +50,7 @@ namespace ExoGaitMonitorVer2
         private int LongGiatTime = 85;
 
         //控制逻辑
-        private int state = 4; //外骨骼当前状态：0为坐下，1为直立状态，2位跨步状态，3为停止状态
+        private int state = 0; //外骨骼当前状态：0为坐下，1为直立状态，2位跨步状态，3为停止状态
         private int eeg_cm = 2; //脑电命令：在外骨骼坐下模式时，0为保持坐姿，1为站立；在外骨骼站起模式时，0为停止，1为允许肌电进行步态控制
         private int emg_cm = 0; //肌电命令：仅在外骨骼站立时且脑电命令为1时肌电可进行控制，1为走一个完整步态周期，0为不动
         private int pattern = 0; //外骨骼步态模式
@@ -59,8 +59,8 @@ namespace ExoGaitMonitorVer2
         private const int N = 1; // Demo越障前正常步步数
 
         // 测试用
-        private const int ENABLE = 0; // 使能外骨骼的命令
-        private const int DISABLE = 1; // 失能外骨骼的命令
+        private const int ENABLE = 1; // 使能外骨骼的命令
+        private const int DISABLE = 0; // 失能外骨骼的命令
         private const int RENHAO_V = 10; // 越障步态速度
 
         #endregion
@@ -99,7 +99,7 @@ namespace ExoGaitMonitorVer2
             {
                 if (main_s)
                 {
-                    if(control_tread.ThreadState == ThreadState.Unstarted)
+                    if (control_tread.ThreadState == ThreadState.Unstarted)
                     {
                         control_tread.Start();
                     }
@@ -121,8 +121,8 @@ namespace ExoGaitMonitorVer2
             while (true)
             {
                 // 起坐步态
-                if (state == 0 && eeg_cm == ENABLE && pattern == 0) 
-                {            
+                if (state == 0 && eeg_cm == ENABLE && pattern == 0)
+                {
                     pattern = 1; //由坐下到直立
                 }
 
@@ -167,7 +167,7 @@ namespace ExoGaitMonitorVer2
                     {
                         pattern = 11; // 有正常步迈右腿到接跨步前的正常步迈左腿，由右腿在前的站姿到左腿在前的站姿
                     }
-                    
+
                 }
                 if (state == 7 && eeg_cm == ENABLE && pattern == 0)
                 {
@@ -182,7 +182,7 @@ namespace ExoGaitMonitorVer2
 
                 if (pattern != 0)
                 {
-                  //  int walk_step = 0;
+                    //  int walk_step = 0;
                     //Detection.Stop();
                     switch (pattern)
                     {
@@ -227,7 +227,7 @@ namespace ExoGaitMonitorVer2
                             //MessageBox.Show("3");
                             try
                             {
-                              //  walk_step += 1;
+                                //  walk_step += 1;
                                 pvt.StartPVT(motors, "..\\..\\InputData\\Rr=0.65a=0.25.txt", 15);
                             }
                             catch (Exception e)
@@ -618,7 +618,7 @@ namespace ExoGaitMonitorVer2
             thread.Start((object)ipHePort);
 
             Thread thread_emg = new Thread(reciveAndListener_EMG);
-            
+
             IpAndPort ipPort_emg = new IpAndPort();
             ipPort_emg.Ip = IPAdressTextBox.Text;
             ipPort_emg.Port = "4485";
@@ -655,7 +655,7 @@ namespace ExoGaitMonitorVer2
 
             client_eeg = server_eeg.AcceptTcpClient();
             ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "有脑电客户端请求连接，连接已建立！");//AcceptTcpClient 是同步方法，会阻塞进程，得到连接对象后才会执行这一步
-            
+
             //获取流
             NetworkStream reciveStream = client_eeg.GetStream();
 
