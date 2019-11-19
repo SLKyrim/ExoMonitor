@@ -99,7 +99,7 @@ namespace ExoGaitMonitorVer2
             {
                 if (main_s)
                 {
-                    if (control_tread.ThreadState == ThreadState.Unstarted)
+                    if(control_tread.ThreadState == ThreadState.Unstarted)
                     {
                         control_tread.Start();
                     }
@@ -121,8 +121,8 @@ namespace ExoGaitMonitorVer2
             while (true)
             {
                 // 起坐步态
-                if (state == 0 && eeg_cm == ENABLE && pattern == 0)
-                {
+                if (state == 0 && eeg_cm == ENABLE && pattern == 0) 
+                {            
                     pattern = 1; //由坐下到直立
                 }
 
@@ -167,7 +167,7 @@ namespace ExoGaitMonitorVer2
                     {
                         pattern = 11; // 有正常步迈右腿到接跨步前的正常步迈左腿，由右腿在前的站姿到左腿在前的站姿
                     }
-
+                    
                 }
                 if (state == 7 && eeg_cm == ENABLE && pattern == 0)
                 {
@@ -182,7 +182,7 @@ namespace ExoGaitMonitorVer2
 
                 if (pattern != 0)
                 {
-                    //  int walk_step = 0;
+                  //  int walk_step = 0;
                     //Detection.Stop();
                     switch (pattern)
                     {
@@ -227,7 +227,7 @@ namespace ExoGaitMonitorVer2
                             //MessageBox.Show("3");
                             try
                             {
-                                //  walk_step += 1;
+                              //  walk_step += 1;
                                 pvt.StartPVT(motors, "..\\..\\InputData\\Rr=0.65a=0.25.txt", 15);
                             }
                             catch (Exception e)
@@ -618,7 +618,7 @@ namespace ExoGaitMonitorVer2
             thread.Start((object)ipHePort);
 
             Thread thread_emg = new Thread(reciveAndListener_EMG);
-
+            
             IpAndPort ipPort_emg = new IpAndPort();
             ipPort_emg.Ip = IPAdressTextBox.Text;
             ipPort_emg.Port = "4485";
@@ -655,7 +655,7 @@ namespace ExoGaitMonitorVer2
 
             client_eeg = server_eeg.AcceptTcpClient();
             ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "有脑电客户端请求连接，连接已建立！");//AcceptTcpClient 是同步方法，会阻塞进程，得到连接对象后才会执行这一步
-
+            
             //获取流
             NetworkStream reciveStream = client_eeg.GetStream();
 

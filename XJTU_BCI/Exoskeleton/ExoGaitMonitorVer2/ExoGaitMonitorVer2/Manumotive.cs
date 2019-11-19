@@ -197,10 +197,10 @@ namespace ExoGaitMonitorVer2
                     System.Windows.MessageBox.Show(ee.ToString());
                 }
             }
-            motors.ampObj[0].WaitMoveDone(10000);
-            motors.ampObj[1].WaitMoveDone(10000);
-            motors.ampObj[2].WaitMoveDone(10000);
-            motors.ampObj[3].WaitMoveDone(10000);
+            motors.ampObj[0].WaitMoveDone(30000);
+            motors.ampObj[1].WaitMoveDone(30000);
+            motors.ampObj[2].WaitMoveDone(30000);
+            motors.ampObj[3].WaitMoveDone(30000);
             //if (Math.Abs(motors.ampObjAngleActual[0]) < ORIGIN_POINT && Math.Abs(motors.ampObjAngleActual[1]) < ORIGIN_POINT && Math.Abs(motors.ampObjAngleActual[2]) < ORIGIN_POINT && Math.Abs(motors.ampObjAngleActual[3]) < ORIGIN_POINT)
             //{
             //    statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
