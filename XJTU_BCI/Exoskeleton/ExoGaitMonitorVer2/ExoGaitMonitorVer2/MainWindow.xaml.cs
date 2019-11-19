@@ -56,15 +56,18 @@ namespace ExoGaitMonitorVer2
         private int pattern = 0; //外骨骼步态模式
         private bool main_s = false; //总开关，0为停止外骨骼，1为使能外骨骼
         private int cnt = 0; // 进入越障步态后完成正常步的周期数
-        private int over_cnt = 0; // 越障个数
-        private int normal_cnt = 0; // 正常循环步步数
-        private const int NORMAL_MAX_CNT = 5; // 正常循环步最大步数，此处跨一小步记为一步
+        private int obstacle_cnt = 0; // 越障个数计数器
+        private int normal_cnt = 0; // 正常循环步步数计数器
+        private const int NORMAL_MAX_CNT = 5; // 正常循环步最大步数，此处跨一小步记为一步【收步不算】
+        private const int OBSTACLE_NUM = 1; // 设置越障个数
         private const int N = 1; // Demo越障前正常步步数
 
         // 测试用
         private const int ENABLE = 1; // 使能外骨骼的命令
         private const int DISABLE = 0; // 失能外骨骼的命令
         private const int RENHAO_V = 10; // 越障步态速度
+        private const int OBSTACLE_SPEED = 15; // 跨越那一步的速度
+        private const int NORMAL_SPEED = 15; // 正常循环步速度
 
         #endregion
 
@@ -102,7 +105,7 @@ namespace ExoGaitMonitorVer2
             {
                 if (main_s)
                 {
-                    if(control_tread.ThreadState == ThreadState.Unstarted)
+                    if (control_tread.ThreadState == ThreadState.Unstarted)
                     {
                         control_tread.Start();
                     }
@@ -124,8 +127,8 @@ namespace ExoGaitMonitorVer2
             while (true)
             {
                 // 起坐步态
-                if (state == 0 && eeg_cm == ENABLE && pattern == 0) 
-                {            
+                if (state == 0 && eeg_cm == ENABLE && pattern == 0)
+                {
                     pattern = 1; //由坐下到直立
                 }
 
@@ -145,11 +148,11 @@ namespace ExoGaitMonitorVer2
                     normal_cnt += 1;
                     pattern = 4; //由跨步到跨步（即走一个步态周期），由右腿在前的站姿到左腿在前的站姿
                 }
-                if (state == 2 && pattern == 0 && (eeg_cm == DISABLE || normal_cnt > NORMAL_MAX_CNT))
+                if (state == 2 && pattern == 0 && (eeg_cm == DISABLE || normal_cnt >= NORMAL_MAX_CNT))
                 {
                     pattern = 5; //由跨步到停止（收步为直立状态），由右腿在前的站姿到直立状态
                 }
-                if (state == 3 && pattern == 0 && (eeg_cm == DISABLE || normal_cnt > NORMAL_MAX_CNT))
+                if (state == 3 && pattern == 0 && (eeg_cm == DISABLE || normal_cnt >= NORMAL_MAX_CNT))
                 {
                     pattern = 6; //由跨步到跨步（即走一个步态周期），由左腿在前的站姿到直立状态
                 }
@@ -173,7 +176,7 @@ namespace ExoGaitMonitorVer2
                     {
                         pattern = 11; // 有正常步迈右腿到接跨步前的正常步迈左腿，由右腿在前的站姿到左腿在前的站姿
                     }
-                    
+
                 }
                 if (state == 7 && eeg_cm == ENABLE && pattern == 0)
                 {
@@ -188,7 +191,7 @@ namespace ExoGaitMonitorVer2
 
                 if (pattern != 0)
                 {
-                  //  int walk_step = 0;
+                    //  int walk_step = 0;
                     //Detection.Stop();
                     switch (pattern)
                     {
@@ -208,8 +211,16 @@ namespace ExoGaitMonitorVer2
                                 {
                                     MessageBox.Show("stand up 出错");
                                 }
+                            }                    
+                            obstacle_cnt += 1;
+                            if (obstacle_cnt > OBSTACLE_NUM)
+                            {
+                                state = 1;  // 进正常循环步
                             }
-                            state = 4;  //直立状态
+                            else
+                            {
+                                state = 4; // 循环越障步态
+                            }
                             break;
                         #endregion
 
@@ -219,7 +230,7 @@ namespace ExoGaitMonitorVer2
                             //MessageBox.Show("2");
                             try
                             {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\start.txt", 16);//"..\\..\\INPUT201908051539\\左脚起始步高.txt"
+                                pvt.StartPVT(motors, "..\\..\\InputData\\start.txt", NORMAL_SPEED);//"..\\..\\INPUT201908051539\\左脚起始步高.txt"
                             }
                             catch (Exception e)
                             {
@@ -233,8 +244,8 @@ namespace ExoGaitMonitorVer2
                             //MessageBox.Show("3");
                             try
                             {
-                              //  walk_step += 1;
-                                pvt.StartPVT(motors, "..\\..\\InputData\\Rr=0.65a=0.25.txt", 15);
+                                //  walk_step += 1;
+                                pvt.StartPVT(motors, "..\\..\\InputData\\Rr=0.65a=0.25.txt", NORMAL_SPEED);
                             }
                             catch (Exception e)
                             {
@@ -248,7 +259,7 @@ namespace ExoGaitMonitorVer2
                             //MessageBox.Show("3");
                             try
                             {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\Lr=0.65a=0.25.txt", 15);
+                                pvt.StartPVT(motors, "..\\..\\InputData\\Lr=0.65a=0.25.txt", NORMAL_SPEED);
                             }
                             catch (Exception e)
                             {
@@ -262,13 +273,13 @@ namespace ExoGaitMonitorVer2
                             //MessageBox.Show("4");
                             try
                             {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\Lr=1a01.15 end.txt", 15);
+                                pvt.StartPVT(motors, "..\\..\\InputData\\Lr=1a01.15 end.txt", NORMAL_SPEED);
                             }
                             catch (Exception e)
                             {
                                 MessageBox.Show(e.ToString());
                             }
-                            state = 1;  //直立状态
+                            state = -1;  //直立状态
                             break;
 
                         case 6:
@@ -276,13 +287,13 @@ namespace ExoGaitMonitorVer2
                             //MessageBox.Show("4");
                             try
                             {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\Rr=1a=0.15 end.txt", 15);
+                                pvt.StartPVT(motors, "..\\..\\InputData\\Rr=1a=0.15 end.txt", NORMAL_SPEED);
                             }
                             catch (Exception e)
                             {
                                 MessageBox.Show(e.ToString());
                             }
-                            state = 1;
+                            state = -1;
                             break;
                         #endregion
 
@@ -362,21 +373,13 @@ namespace ExoGaitMonitorVer2
                             //MessageBox.Show("2");
                             try
                             {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\越障并收步-扩展.txt", RENHAO_V);//"..\\..\\INPUT201908051539\\左脚起始步高.txt"
+                                pvt.StartPVT(motors, "..\\..\\InputData\\越障并收步-扩展.txt", OBSTACLE_SPEED);//"..\\..\\INPUT201908051539\\左脚起始步高.txt"
                             }
                             catch (Exception e)
                             {
                                 MessageBox.Show(e.ToString());
                             }
-                            if (over_cnt == 1)
-                            {
-                                state = 1;  // 越障步态完成后的状态
-                            }
-                            else
-                            {                   
-                                state = 4; // 循环越障步态
-                                over_cnt += 1;
-                            }
+                            state = 0;
                             break;
 
                         #endregion
@@ -632,7 +635,7 @@ namespace ExoGaitMonitorVer2
             thread.Start((object)ipHePort);
 
             Thread thread_emg = new Thread(reciveAndListener_EMG);
-            
+
             IpAndPort ipPort_emg = new IpAndPort();
             ipPort_emg.Ip = IPAdressTextBox.Text;
             ipPort_emg.Port = "4485";
@@ -669,7 +672,7 @@ namespace ExoGaitMonitorVer2
 
             client_eeg = server_eeg.AcceptTcpClient();
             ComWinTextBox.Dispatcher.Invoke(new showData(ComWinTextBox.AppendText), "有脑电客户端请求连接，连接已建立！");//AcceptTcpClient 是同步方法，会阻塞进程，得到连接对象后才会执行这一步
-            
+
             //获取流
             NetworkStream reciveStream = client_eeg.GetStream();
 
