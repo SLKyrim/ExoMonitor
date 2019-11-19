@@ -56,6 +56,9 @@ namespace ExoGaitMonitorVer2
         private int pattern = 0; //外骨骼步态模式
         private bool main_s = false; //总开关，0为停止外骨骼，1为使能外骨骼
         private int cnt = 0; // 进入越障步态后完成正常步的周期数
+        private int over_cnt = 0; // 越障个数
+        private int normal_cnt = 0; // 正常循环步步数
+        private const int NORMAL_MAX_CNT = 5; // 正常循环步最大步数，此处跨一小步记为一步
         private const int N = 1; // Demo越障前正常步步数
 
         // 测试用
@@ -362,7 +365,15 @@ namespace ExoGaitMonitorVer2
                             {
                                 MessageBox.Show(e.ToString());
                             }
-                            state = 1;  // 越障步态完成后的状态
+                            if (over_cnt == 1)
+                            {
+                                state = 1;  // 越障步态完成后的状态
+                            }
+                            else
+                            {                   
+                                state = 4; // 循环越障步态
+                                over_cnt += 1;
+                            }
                             break;
 
                         #endregion
