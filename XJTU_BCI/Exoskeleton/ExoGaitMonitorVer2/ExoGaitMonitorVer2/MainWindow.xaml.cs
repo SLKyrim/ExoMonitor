@@ -132,21 +132,24 @@ namespace ExoGaitMonitorVer2
                 // 走停步态
                 if (state == 1 && eeg_cm == ENABLE && pattern == 0)
                 {
+                    normal_cnt += 1;
                     pattern = 2; //由越障并收步后到跨步，由直立状态到左腿在前的站姿
                 }
                 if (state == 2 && eeg_cm == ENABLE && pattern == 0)
                 {
+                    normal_cnt += 1;
                     pattern = 3; //由跨步到跨步（即走一个步态周期），由左腿在前的站姿到右腿在前的站姿
                 }
                 if (state == 3 && eeg_cm == ENABLE && pattern == 0)
                 {
+                    normal_cnt += 1;
                     pattern = 4; //由跨步到跨步（即走一个步态周期），由右腿在前的站姿到左腿在前的站姿
                 }
-                if (state == 2 && eeg_cm == DISABLE && pattern == 0)
+                if (state == 2 && pattern == 0 && (eeg_cm == DISABLE || normal_cnt > NORMAL_MAX_CNT))
                 {
                     pattern = 5; //由跨步到停止（收步为直立状态），由右腿在前的站姿到直立状态
                 }
-                if (state == 3 && eeg_cm == DISABLE && pattern == 0)
+                if (state == 3 && pattern == 0 && (eeg_cm == DISABLE || normal_cnt > NORMAL_MAX_CNT))
                 {
                     pattern = 6; //由跨步到跨步（即走一个步态周期），由左腿在前的站姿到直立状态
                 }
