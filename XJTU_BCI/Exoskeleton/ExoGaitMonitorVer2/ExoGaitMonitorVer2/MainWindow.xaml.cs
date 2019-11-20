@@ -58,16 +58,16 @@ namespace ExoGaitMonitorVer2
         private int cnt = 0; // 进入越障步态后完成正常步的周期数
         private int obstacle_cnt = 0; // 越障个数计数器
         private int normal_cnt = 0; // 正常循环步步数计数器
-        private const int NORMAL_MAX_CNT = 5; // 正常循环步最大步数，此处跨一小步记为一步【收步不算】
+        private const int NORMAL_MAX_CNT = 3; // 正常循环步最大步数，此处跨一小步记为一步【收步不算】
         private const int OBSTACLE_NUM = 1; // 设置越障个数
-        private const int N = 1; // Demo越障前正常步步数
+        private const int N = 0; // Demo越障前正常步步数
 
         // 测试用
         private const int ENABLE = 1; // 使能外骨骼的命令
         private const int DISABLE = 0; // 失能外骨骼的命令
         private const int RENHAO_V = 10; // 越障步态速度
-        private const int OBSTACLE_SPEED = 15; // 跨越那一步的速度
-        private const int NORMAL_SPEED = 15; // 正常循环步速度
+        private const int OBSTACLE_SPEED = 13; // 跨越那一步的速度
+        private const int NORMAL_SPEED = 13; // 正常循环步速度
 
         #endregion
 
@@ -373,7 +373,7 @@ namespace ExoGaitMonitorVer2
                             //MessageBox.Show("2");
                             try
                             {
-                                pvt.StartPVT(motors, "..\\..\\InputData\\越障并收步-扩展.txt", OBSTACLE_SPEED);//"..\\..\\INPUT201908051539\\左脚起始步高.txt"
+                                pvt.StartPVT(motors, "..\\..\\InputData\\越障并收步-扩展.txt", OBSTACLE_SPEED + 1);//"..\\..\\INPUT201908051539\\左脚起始步高.txt"
                             }
                             catch (Exception e)
                             {
