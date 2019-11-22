@@ -71,7 +71,7 @@ namespace ExoGaitMonitorVer2
 
             motors.Linkage.TrajectoryInitialize(pos0, vel, times, 500); //开始步态
             motors.EventObj.Start(true, 5000);
-            motors.Linkage.WaitMoveDone(20000); // 20000毫秒内PVT未执行完毕则报错，并阻塞其它线程
+            motors.Linkage.WaitMoveDone(50000); // 20000毫秒内PVT未执行完毕则报错，并阻塞其它线程
             motors.EventObj.Stop();
             //motors.ampObj[0].WaitMoveDone(10000);
             //motors.ampObj[1].WaitMoveDone(10000);
@@ -95,9 +95,14 @@ namespace ExoGaitMonitorVer2
             double[,] KeyPos_s = new double[7, 4]; // 对KeyPos角度值的编码值
             #endregion
             ProfileSettingsObj profileParameters = new ProfileSettingsObj();    //用于设置电机参数
-            double MotorVelocity = 230; // 电机速度(越大越快)
-            double MotorAcceleration = 100; // 电机加速度(越大越快)
-            double MotorDeceleration = 100; // 电机减速度(越大越快)
+
+            //double MotorVelocity = 230; // 电机速度(越大越快)
+            //double MotorAcceleration = 100; // 电机加速度(越大越快)
+            //double MotorDeceleration = 100; // 电机减速度(越大越快)
+
+            double MotorVelocity = 280; // 电机速度(越大越快)
+            double MotorAcceleration = 150; // 电机加速度(越大越快)
+            double MotorDeceleration = 150; // 电机减速度(越大越快)
 
             double[,] DeltaP = new double[7, 4];
             for (int s = 0; s < 7; s++)

@@ -474,9 +474,9 @@ namespace ExoGaitMonitorVer2
         // 膝关节直立前，髋关节保持前倾25°（如下倒数第2行）
         // 最后髋关节再伸直
         double[,] KeyPos = { { 100, -90, 90, -100 },
-                             {102,-125,125,-102},
-                             { 102,-132,132,-102},
-                             { 94,-127,127,-94},
+                             {102,-110,110,-102},
+                             { 102,-117,117,-102},
+                             { 94,-112,112,-94},
                              { 71,-90,90,-71 },
                              {56,-84,84,-56 },
                              { 43,-61,61,-43},
@@ -484,6 +484,7 @@ namespace ExoGaitMonitorVer2
                              {29,-42,42,-29 },
                              {0,-25,25,-0 },
                              { 0,0,0,0,},}; // 站立动作的位置点(4列)（单位：°）
+        double[,] KeyPos_s = new double[11, 4]; // 对KeyPos角度值的编码值
 
         //double[,] KeyPos = { { 100, -90, 90, -100 },
         //                     {102,-115,115,-102},
@@ -497,13 +498,19 @@ namespace ExoGaitMonitorVer2
         //                     {0,-25,25,-0 },
         //                     { 0,0,0,0,},}; // 站立动作的位置点(4列)（单位：°）
 
-        double[,] KeyPos_s = new double[11, 4]; // 对KeyPos角度值的编码值
+        //double[,] KeyPos_s = new double[11, 4]; // 对KeyPos角度值的编码值
+
 
         AngleCoderTrans angletocoder = new AngleCoderTrans();
         ProfileSettingsObj profileParameters = new ProfileSettingsObj();    //用于设置电机参数
-        double MotorVelocity = 450; // 电机速度(越大越快)
-        double MotorAcceleration = 200; // 电机加速度(越大越快)
-        double MotorDeceleration = 200; // 电机减速度(越大越快)
+
+        //double MotorVelocity = 450; // 电机速度(越大越快)
+        //double MotorAcceleration = 200; // 电机加速度(越大越快)
+        //double MotorDeceleration = 200; // 电机减速度(越大越快)
+
+        double MotorVelocity = 550; // 电机速度(越大越快)
+        double MotorAcceleration = 300; // 电机加速度(越大越快)
+        double MotorDeceleration = 300; // 电机减速度(越大越快)
         // 求取从初始位置到第一个位置的电机转角变化量的绝对值
 
         public void start_Standup2(Motors motor) // 站立，原理同坐下
@@ -511,6 +518,7 @@ namespace ExoGaitMonitorVer2
             for (int s = 0; s < 11; s++)
             {
                 angletocoder.AngleToCoder((KeyPos[s, 0].ToString()), (KeyPos[s, 1].ToString()), (KeyPos[s, 2].ToString()), (KeyPos[s, 3].ToString()), ref KeyPos_s[s, 0], ref KeyPos_s[s, 1], ref KeyPos_s[s, 2], ref KeyPos_s[s, 3]);
+
                 double[,] DeltaP1 = new double[11, 4];
                 double MaxDeltaP = DeltaP1[s, 0];
                 for (int i = 0; i < motor.motor_num; i++)
@@ -547,23 +555,22 @@ namespace ExoGaitMonitorVer2
 
                 if (s == 3 || s == 9) // 起立时有两个停顿的地方
                 {
-                    motor.ampObj[0].WaitMoveDone(10000);
-                    motor.ampObj[1].WaitMoveDone(10000);
-                    motor.ampObj[2].WaitMoveDone(10000);
-                    motor.ampObj[3].WaitMoveDone(10000);
+                    motor.ampObj[0].WaitMoveDone(50000);
+                    motor.ampObj[1].WaitMoveDone(50000);
+                    motor.ampObj[2].WaitMoveDone(50000);
+                    motor.ampObj[3].WaitMoveDone(50000);
                     Task tasks = Task.Run(() =>
                     {
-                        Thread.Sleep(400);
+                        Thread.Sleep(300);
 
                     });
                     tasks.Wait();
                 }
             }
-            motor.ampObj[0].WaitMoveDone(10000);
-            motor.ampObj[1].WaitMoveDone(10000);
-            motor.ampObj[2].WaitMoveDone(10000);
-            motor.ampObj[3].WaitMoveDone(10000);
-
+            motor.ampObj[0].WaitMoveDone(50000);
+            motor.ampObj[1].WaitMoveDone(50000);
+            motor.ampObj[2].WaitMoveDone(50000);
+            motor.ampObj[3].WaitMoveDone(50000);
         }
     }
     #endregion

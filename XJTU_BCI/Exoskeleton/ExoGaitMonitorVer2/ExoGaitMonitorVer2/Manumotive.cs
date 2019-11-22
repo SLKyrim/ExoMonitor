@@ -122,7 +122,7 @@ namespace ExoGaitMonitorVer2
             catch (Exception ee)
             {
                 statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-                statusInfoTextBlock.Text = "电机" + (i + 1).ToString() + "已限位！";
+                statusInfoTextBlock.Text = "电机" + (i + 1).ToString() + "出错！";
                 System.Windows.MessageBox.Show(ee.ToString());
             }
 
@@ -193,7 +193,7 @@ namespace ExoGaitMonitorVer2
                 catch (Exception ee)
                 {
                     statusBar.Background = new SolidColorBrush(Color.FromArgb(255, 230, 20, 20));
-                    statusInfoTextBlock.Text = "电机" + (i + 1).ToString() + "已限位！";
+                    statusInfoTextBlock.Text = "电机" + (i + 1).ToString() + "出错！";
                     System.Windows.MessageBox.Show(ee.ToString());
                 }
             }
